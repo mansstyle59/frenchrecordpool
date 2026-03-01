@@ -1,16 +1,28 @@
-import { Link } from "react-router-dom";
+import { useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, Disc3 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-
-const mockSubs = [
-  { id: "1", djName: "DJ Laurent", plan: "Premium", status: "active", renewal: "2026-03-15", amount: "29,99 €" },
-  { id: "2", djName: "MC Blaze", plan: "Premium", status: "active", renewal: "2026-04-01", amount: "29,99 €" },
-  { id: "3", djName: "Soleil Noir", plan: "Basic", status: "expired", renewal: "2026-01-20", amount: "14,99 €" },
-  { id: "4", djName: "Funk Mafia", plan: "Premium", status: "active", renewal: "2026-03-28", amount: "29,99 €" },
-  { id: "5", djName: "Nina Soulful", plan: "Basic", status: "active", renewal: "2026-04-10", amount: "14,99 €" },
-];
+import { useAuth } from "@/contexts/AuthContext";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function AdminSubscriptions() {
+  const { user, loading, isAdmin } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!loading && (!user || !isAdmin)) navigate("/login");
+  }, [user, loading, isAdmin, navigate]);
+
+  const { data: subs = [] } = useQuery({
+    queryKey: ["admin-subscriptions"],
+    queryFn: async () => {
+      const { data } = await supabase.from("subscriptions").select("*, profiles!subscriptions_user_id_fkey(dj_name, email)");
+      return data ?? [];
+    },
+    enabled: isAdmin,
+  });
+
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b border-border glass">
@@ -24,10 +36,8 @@ export default function AdminSubscriptions() {
           </Link>
         </div>
       </header>
-
       <div className="container py-8">
         <h1 className="font-display text-2xl font-bold mb-6">Gestion des Abonnements</h1>
-
         <div className="rounded-xl border border-border overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -35,23 +45,25 @@ export default function AdminSubscriptions() {
                 <tr className="text-left text-xs text-muted-foreground">
                   <th className="px-4 py-3">Client</th>
                   <th className="px-4 py-3">Plan</th>
-                  <th className="px-4 py-3">Montant</th>
                   <th className="px-4 py-3">Statut</th>
-                  <th className="px-4 py-3">Renouvellement</th>
+                  <th className="px-4 py-3">Fin période</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {mockSubs.map((sub) => (
+                {subs.length === 0 ? (
+                  <tr><td colSpan={4} className="px-4 py-8 text-center text-muted-foreground">Aucun abonnement.</td></tr>
+                ) : subs.map((sub: any) => (
                   <tr key={sub.id} className="hover:bg-secondary/30">
-                    <td className="px-4 py-3 font-medium">{sub.djName}</td>
+                    <td className="px-4 py-3 font-medium">{sub.profiles?.dj_name || sub.profiles?.email || "-"}</td>
                     <td className="px-4 py-3"><Badge variant="outline" className="text-xs">{sub.plan}</Badge></td>
-                    <td className="px-4 py-3 text-muted-foreground">{sub.amount}</td>
                     <td className="px-4 py-3">
                       <Badge variant={sub.status === "active" ? "default" : "secondary"} className="text-xs">
                         {sub.status === "active" ? "Actif" : "Expiré"}
                       </Badge>
                     </td>
-                    <td className="px-4 py-3 text-muted-foreground">{new Date(sub.renewal).toLocaleDateString("fr-FR")}</td>
+                    <td className="px-4 py-3 text-muted-foreground">
+                      {sub.current_period_end ? new Date(sub.current_period_end).toLocaleDateString("fr-FR") : "-"}
+                    </td>
                   </tr>
                 ))}
               </tbody>

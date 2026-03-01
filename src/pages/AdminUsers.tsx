@@ -1,17 +1,28 @@
-import { Link } from "react-router-dom";
-import { ArrowLeft, Disc3, Shield, UserX } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { ArrowLeft, Disc3 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-
-const mockUsers = [
-  { id: "1", djName: "DJ Laurent", email: "laurent@example.com", role: "client", status: "active", plan: "Premium", joined: "2025-11-01" },
-  { id: "2", djName: "MC Blaze", email: "blaze@example.com", role: "client", status: "active", plan: "Premium", joined: "2025-12-15" },
-  { id: "3", djName: "Soleil Noir", email: "soleil@example.com", role: "client", status: "expired", plan: "Basic", joined: "2025-09-20" },
-  { id: "4", djName: "Funk Mafia", email: "funk@example.com", role: "client", status: "active", plan: "Premium", joined: "2026-01-03" },
-  { id: "5", djName: "Nina Soulful", email: "nina@example.com", role: "client", status: "active", plan: "Basic", joined: "2026-01-20" },
-];
+import { useAuth } from "@/contexts/AuthContext";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function AdminUsers() {
+  const { user, loading, isAdmin } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!loading && (!user || !isAdmin)) navigate("/login");
+  }, [user, loading, isAdmin, navigate]);
+
+  const { data: profiles = [] } = useQuery({
+    queryKey: ["admin-profiles"],
+    queryFn: async () => {
+      const { data } = await supabase.from("profiles").select("*");
+      return data ?? [];
+    },
+    enabled: isAdmin,
+  });
+
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b border-border glass">
@@ -25,10 +36,8 @@ export default function AdminUsers() {
           </Link>
         </div>
       </header>
-
       <div className="container py-8">
         <h1 className="font-display text-2xl font-bold mb-6">Gestion des Utilisateurs</h1>
-
         <div className="rounded-xl border border-border overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -36,30 +45,17 @@ export default function AdminUsers() {
                 <tr className="text-left text-xs text-muted-foreground">
                   <th className="px-4 py-3">Nom DJ</th>
                   <th className="px-4 py-3">Email</th>
-                  <th className="px-4 py-3">Plan</th>
-                  <th className="px-4 py-3">Statut</th>
                   <th className="px-4 py-3">Inscrit le</th>
-                  <th className="px-4 py-3 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {mockUsers.map((user) => (
-                  <tr key={user.id} className="hover:bg-secondary/30">
-                    <td className="px-4 py-3 font-medium">{user.djName}</td>
-                    <td className="px-4 py-3 text-muted-foreground">{user.email}</td>
-                    <td className="px-4 py-3"><Badge variant="outline" className="text-xs">{user.plan}</Badge></td>
-                    <td className="px-4 py-3">
-                      <Badge variant={user.status === "active" ? "default" : "secondary"} className="text-xs">
-                        {user.status === "active" ? "Actif" : "Expiré"}
-                      </Badge>
-                    </td>
-                    <td className="px-4 py-3 text-muted-foreground">{new Date(user.joined).toLocaleDateString("fr-FR")}</td>
-                    <td className="px-4 py-3 text-right">
-                      <div className="flex justify-end gap-1">
-                        <Button variant="ghost" size="icon" className="h-7 w-7" title="Changer rôle"><Shield className="h-3 w-3" /></Button>
-                        <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" title="Désactiver"><UserX className="h-3 w-3" /></Button>
-                      </div>
-                    </td>
+                {profiles.length === 0 ? (
+                  <tr><td colSpan={3} className="px-4 py-8 text-center text-muted-foreground">Aucun utilisateur.</td></tr>
+                ) : profiles.map((p: any) => (
+                  <tr key={p.id} className="hover:bg-secondary/30">
+                    <td className="px-4 py-3 font-medium">{p.dj_name || "-"}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{p.email}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{new Date(p.created_at).toLocaleDateString("fr-FR")}</td>
                   </tr>
                 ))}
               </tbody>

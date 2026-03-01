@@ -3,11 +3,19 @@ import { Play, Heart, Download, ArrowLeft, Clock, Music, Tag } from "lucide-reac
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import Layout from "@/components/Layout";
-import { mockTracks } from "@/data/mockTracks";
+import { useTrack } from "@/hooks/useTracks";
+import { usePlayer } from "@/contexts/PlayerContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
 
 export default function TrackDetail() {
   const { id } = useParams();
-  const track = mockTracks.find((t) => t.id === id);
+  const { data: track, isLoading } = useTrack(id);
+  const { play } = usePlayer();
+  const { user, hasActiveSubscription } = useAuth();
+
+  if (isLoading) return <Layout><div className="container py-20 text-center text-muted-foreground">Chargement...</div></Layout>;
 
   if (!track) {
     return (
@@ -20,58 +28,54 @@ export default function TrackDetail() {
     );
   }
 
+  const handlePlay = () => {
+    play({ id: track.id, title: track.title, artist: track.artist, coverUrl: track.cover_url, previewUrl: track.preview_url });
+  };
+
+  const handleDownload = async () => {
+    if (!user) { toast({ title: "Connectez-vous pour télécharger", variant: "destructive" }); return; }
+    if (!hasActiveSubscription) { toast({ title: "Abonnement requis", variant: "destructive" }); return; }
+    if (!track.audio_url) { toast({ title: "Fichier non disponible" }); return; }
+    await supabase.from("downloads").insert({ user_id: user.id, track_id: track.id });
+    window.open(track.audio_url, "_blank");
+  };
+
   return (
     <Layout>
       <div className="container py-8">
         <Link to="/tracks" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-6">
           <ArrowLeft className="h-4 w-4" /> Retour
         </Link>
-
         <div className="flex flex-col md:flex-row gap-8">
-          {/* Cover */}
-          <img
-            src={track.coverUrl}
-            alt={track.title}
-            className="w-full md:w-72 h-72 object-cover rounded-xl border border-border"
-          />
-
-          {/* Info */}
+          <img src={track.cover_url || "/placeholder.svg"} alt={track.title} className="w-full md:w-72 h-72 object-cover rounded-xl border border-border" />
           <div className="flex-1">
-            <Badge variant="outline" className="mb-2">{track.version}</Badge>
+            <Badge variant="outline" className="mb-2">{track.version || "Original"}</Badge>
             <h1 className="font-display text-3xl font-bold mb-1">{track.title}</h1>
             <p className="text-lg text-muted-foreground mb-6">{track.artist}</p>
-
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
               <InfoItem icon={<Music className="h-4 w-4" />} label="Genre" value={track.genre} />
-              <InfoItem icon={<Clock className="h-4 w-4" />} label="Durée" value={track.duration} />
-              <InfoItem label="BPM" value={String(track.bpm)} />
-              <InfoItem label="Tonalité" value={track.musicalKey} />
-              <InfoItem label="Label" value={track.label} />
-              <InfoItem label="Sortie" value={new Date(track.releaseDate).toLocaleDateString("fr-FR")} />
-              <InfoItem label="Téléchargements" value={track.downloads.toLocaleString("fr-FR")} />
+              <InfoItem icon={<Clock className="h-4 w-4" />} label="Durée" value={track.duration || "-"} />
+              <InfoItem label="BPM" value={String(track.bpm ?? "-")} />
+              <InfoItem label="Tonalité" value={track.musical_key || "-"} />
+              <InfoItem label="Label" value={track.label || "-"} />
+              <InfoItem label="Sortie" value={track.release_date ? new Date(track.release_date).toLocaleDateString("fr-FR") : "-"} />
+              <InfoItem label="Téléchargements" value={(track.downloads ?? 0).toLocaleString("fr-FR")} />
             </div>
-
-            {/* Tags */}
-            <div className="flex flex-wrap gap-2 mb-8">
-              {track.tags.map((tag) => (
-                <Badge key={tag} variant="secondary" className="text-xs">
-                  <Tag className="h-3 w-3 mr-1" />
-                  {tag}
-                </Badge>
-              ))}
-            </div>
-
-            {/* Actions */}
+            {track.tags && track.tags.length > 0 && (
+              <div className="flex flex-wrap gap-2 mb-8">
+                {track.tags.map((tag) => (
+                  <Badge key={tag} variant="secondary" className="text-xs"><Tag className="h-3 w-3 mr-1" />{tag}</Badge>
+                ))}
+              </div>
+            )}
             <div className="flex gap-3">
-              <Button variant="hero" size="lg" className="gap-2">
+              <Button variant="hero" size="lg" className="gap-2" onClick={handlePlay} disabled={!track.preview_url}>
                 <Play className="h-4 w-4" /> Écouter l'extrait
               </Button>
-              <Button variant="default" size="lg" className="gap-2">
+              <Button variant="default" size="lg" className="gap-2" onClick={handleDownload}>
                 <Download className="h-4 w-4" /> Télécharger
               </Button>
-              <Button variant="outline" size="lg">
-                <Heart className="h-4 w-4" />
-              </Button>
+              <Button variant="outline" size="lg"><Heart className="h-4 w-4" /></Button>
             </div>
             <p className="text-xs text-muted-foreground mt-3">
               Connectez-vous avec un abonnement actif pour télécharger.

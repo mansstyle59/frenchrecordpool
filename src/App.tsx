@@ -3,6 +3,9 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { PlayerProvider } from "@/contexts/PlayerContext";
+import MiniPlayer from "@/components/MiniPlayer";
 import Index from "./pages/Index";
 import Tracks from "./pages/Tracks";
 import TrackDetail from "./pages/TrackDetail";
@@ -23,29 +26,34 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/tracks" element={<Tracks />} />
-          <Route path="/tracks/:id" element={<TrackDetail />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/admin" element={<Admin />} />
-          <Route path="/admin/tracks" element={<AdminTracks />} />
-          <Route path="/admin/users" element={<AdminUsers />} />
-          <Route path="/admin/subscriptions" element={<AdminSubscriptions />} />
-          <Route path="/artists" element={<Artists />} />
-          <Route path="/genres" element={<Genres />} />
-          <Route path="/top" element={<TopTracks />} />
-          <Route path="/new" element={<NewReleases />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
+    <AuthProvider>
+      <PlayerProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/tracks" element={<Tracks />} />
+              <Route path="/tracks/:id" element={<TrackDetail />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/signup" element={<Signup />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/admin" element={<Admin />} />
+              <Route path="/admin/tracks" element={<AdminTracks />} />
+              <Route path="/admin/users" element={<AdminUsers />} />
+              <Route path="/admin/subscriptions" element={<AdminSubscriptions />} />
+              <Route path="/artists" element={<Artists />} />
+              <Route path="/genres" element={<Genres />} />
+              <Route path="/top" element={<TopTracks />} />
+              <Route path="/new" element={<NewReleases />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+            <MiniPlayer />
+          </BrowserRouter>
+        </TooltipProvider>
+      </PlayerProvider>
+    </AuthProvider>
   </QueryClientProvider>
 );
 
