@@ -1,10 +1,44 @@
-import { Link } from "react-router-dom";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { Disc3, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
 
 export default function Signup() {
+  const [djName, setDjName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (password !== confirm) {
+      toast({ title: "Les mots de passe ne correspondent pas", variant: "destructive" });
+      return;
+    }
+    setLoading(true);
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: window.location.origin,
+        data: { dj_name: djName },
+      },
+    });
+    setLoading(false);
+    if (error) {
+      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Inscription réussie !", description: "Vérifiez votre email pour confirmer votre compte." });
+      navigate("/login");
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <div className="w-full max-w-sm space-y-6">
@@ -17,25 +51,25 @@ export default function Signup() {
           <p className="text-sm text-muted-foreground mt-1">Rejoignez la communauté DJ</p>
         </div>
 
-        <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
+        <form className="space-y-4" onSubmit={handleSubmit}>
           <div className="space-y-2">
             <Label htmlFor="djName">Nom DJ</Label>
-            <Input id="djName" placeholder="DJ Awesome" className="bg-secondary border-border" />
+            <Input id="djName" placeholder="DJ Awesome" className="bg-secondary border-border" value={djName} onChange={(e) => setDjName(e.target.value)} required />
           </div>
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" placeholder="dj@example.com" className="bg-secondary border-border" />
+            <Input id="email" type="email" placeholder="dj@example.com" className="bg-secondary border-border" value={email} onChange={(e) => setEmail(e.target.value)} required />
           </div>
           <div className="space-y-2">
             <Label htmlFor="password">Mot de passe</Label>
-            <Input id="password" type="password" className="bg-secondary border-border" />
+            <Input id="password" type="password" className="bg-secondary border-border" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} />
           </div>
           <div className="space-y-2">
             <Label htmlFor="confirm">Confirmer le mot de passe</Label>
-            <Input id="confirm" type="password" className="bg-secondary border-border" />
+            <Input id="confirm" type="password" className="bg-secondary border-border" value={confirm} onChange={(e) => setConfirm(e.target.value)} required />
           </div>
-          <Button variant="hero" className="w-full" type="submit">
-            <UserPlus className="h-4 w-4 mr-2" /> S'inscrire
+          <Button variant="hero" className="w-full" type="submit" disabled={loading}>
+            <UserPlus className="h-4 w-4 mr-2" /> {loading ? "Inscription..." : "S'inscrire"}
           </Button>
         </form>
 
