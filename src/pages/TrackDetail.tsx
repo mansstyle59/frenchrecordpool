@@ -6,8 +6,7 @@ import Layout from "@/components/Layout";
 import { useTrack } from "@/hooks/useTracks";
 import { usePlayer } from "@/contexts/PlayerContext";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/hooks/use-toast";
+import { downloadTrack } from "@/lib/downloadTrack";
 
 export default function TrackDetail() {
   const { id } = useParams();
@@ -32,13 +31,7 @@ export default function TrackDetail() {
     play({ id: track.id, title: track.title, artist: track.artist, coverUrl: track.cover_url, previewUrl: track.preview_url });
   };
 
-  const handleDownload = async () => {
-    if (!user) { toast({ title: "Connectez-vous pour télécharger", variant: "destructive" }); return; }
-    if (!hasActiveSubscription) { toast({ title: "Abonnement requis", variant: "destructive" }); return; }
-    if (!track.audio_url) { toast({ title: "Fichier non disponible" }); return; }
-    await supabase.from("downloads").insert({ user_id: user.id, track_id: track.id });
-    window.open(track.audio_url, "_blank");
-  };
+  const handleDownload = () => downloadTrack(track.id, user, hasActiveSubscription);
 
   return (
     <Layout>

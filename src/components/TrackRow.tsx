@@ -4,8 +4,7 @@ import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { usePlayer } from "@/contexts/PlayerContext";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/hooks/use-toast";
+import { downloadTrack } from "@/lib/downloadTrack";
 import type { DbTrack } from "@/hooks/useTracks";
 
 interface TrackRowProps {
@@ -32,24 +31,7 @@ export default function TrackRow({ track, index }: TrackRowProps) {
     }
   };
 
-  const handleDownload = async () => {
-    if (!user) {
-      toast({ title: "Connectez-vous pour télécharger", variant: "destructive" });
-      return;
-    }
-    if (!hasActiveSubscription) {
-      toast({ title: "Abonnement requis", description: "Un abonnement actif est nécessaire pour télécharger.", variant: "destructive" });
-      return;
-    }
-    if (!track.audio_url) {
-      toast({ title: "Fichier non disponible" });
-      return;
-    }
-    // Record download
-    await supabase.from("downloads").insert({ user_id: user.id, track_id: track.id });
-    // Download file
-    window.open(track.audio_url, "_blank");
-  };
+  const handleDownload = () => downloadTrack(track.id, user, hasActiveSubscription);
 
   return (
     <div className="group flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-secondary/50 transition-colors">
