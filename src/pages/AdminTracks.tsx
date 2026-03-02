@@ -1,18 +1,17 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Plus, Pencil, Trash2, ArrowLeft, Disc3, Upload } from "lucide-react";
+import { Plus, Pencil, Trash2, ArrowLeft, Disc3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTracks } from "@/hooks/useTracks";
+import type { DbTrack } from "@/hooks/useTracks";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
-import { GENRES, VERSIONS } from "@/data/mockTracks";
+import TrackForm from "@/components/TrackForm";
+import type { TrackFormData } from "@/components/TrackForm";
 import { useEffect } from "react";
 
 export default function AdminTracks() {
@@ -22,30 +21,11 @@ export default function AdminTracks() {
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [saving, setSaving] = useState(false);
-
-  // Form state
-  const [title, setTitle] = useState("");
-  const [artist, setArtist] = useState("");
-  const [genre, setGenre] = useState("House");
-  const [bpm, setBpm] = useState("");
-  const [musicalKey, setMusicalKey] = useState("");
-  const [version, setVersion] = useState("Original");
-  const [label, setLabel] = useState("");
-  const [duration, setDuration] = useState("");
-  const [tags, setTags] = useState("");
-  const [audioFile, setAudioFile] = useState<File | null>(null);
-  const [previewFile, setPreviewFile] = useState<File | null>(null);
-  const [coverFile, setCoverFile] = useState<File | null>(null);
+  const [editingTrack, setEditingTrack] = useState<DbTrack | null>(null);
 
   useEffect(() => {
     if (!loading && (!user || !isAdmin)) navigate("/login");
   }, [user, loading, isAdmin, navigate]);
-
-  const resetForm = () => {
-    setTitle(""); setArtist(""); setGenre("House"); setBpm(""); setMusicalKey("");
-    setVersion("Original"); setLabel(""); setDuration(""); setTags("");
-    setAudioFile(null); setPreviewFile(null); setCoverFile(null);
-  };
 
   const uploadFile = async (file: File, bucket: string, path: string) => {
     const { error } = await supabase.storage.from(bucket).upload(path, file, { upsert: true });
@@ -54,41 +34,62 @@ export default function AdminTracks() {
     return data.publicUrl;
   };
 
-  const handleAdd = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!title || !artist) return;
+  const handleSubmit = async (data: TrackFormData) => {
+    if (!data.title || !data.artist) return;
     setSaving(true);
     try {
-      const trackId = crypto.randomUUID();
-      let coverUrl = null;
-      let audioUrl = null;
-      let previewUrl = null;
+      const trackId = editingTrack?.id ?? crypto.randomUUID();
+      let coverUrl = editingTrack?.cover_url ?? null;
+      let audioUrl = editingTrack?.audio_url ?? null;
+      let previewUrl = editingTrack?.preview_url ?? null;
 
-      if (coverFile) coverUrl = await uploadFile(coverFile, "track-covers", `${trackId}/cover.${coverFile.name.split(".").pop()}`);
-      if (audioFile) audioUrl = await uploadFile(audioFile, "track-audio", `${trackId}/audio.${audioFile.name.split(".").pop()}`);
-      if (previewFile) previewUrl = await uploadFile(previewFile, "track-previews", `${trackId}/preview.${previewFile.name.split(".").pop()}`);
+      if (data.coverFile) coverUrl = await uploadFile(data.coverFile, "track-covers", `${trackId}/cover.${data.coverFile.name.split(".").pop()}`);
+      if (data.audioFile) audioUrl = await uploadFile(data.audioFile, "track-audio", `${trackId}/audio.${data.audioFile.name.split(".").pop()}`);
+      if (data.previewFile) previewUrl = await uploadFile(data.previewFile, "track-previews", `${trackId}/preview.${data.previewFile.name.split(".").pop()}`);
 
-      const { error } = await supabase.from("tracks").insert({
-        title, artist, genre,
-        bpm: bpm ? parseInt(bpm) : null,
-        musical_key: musicalKey || null,
-        version, label: label || null,
-        duration: duration || null,
-        tags: tags ? tags.split(",").map((t) => t.trim()) : [],
-        cover_url: coverUrl, audio_url: audioUrl, preview_url: previewUrl,
-        created_by: user!.id,
-      });
+      const payload = {
+        title: data.title,
+        artist: data.artist,
+        genre: data.genre,
+        bpm: data.bpm ? parseInt(data.bpm) : null,
+        musical_key: data.musicalKey || null,
+        version: data.version,
+        label: data.label || null,
+        duration: data.duration || null,
+        tags: data.tags ? data.tags.split(",").map((t) => t.trim()) : [],
+        cover_url: coverUrl,
+        audio_url: audioUrl,
+        preview_url: previewUrl,
+      };
 
-      if (error) throw error;
-      toast({ title: "Track ajoutée !" });
+      if (editingTrack) {
+        const { error } = await supabase.from("tracks").update(payload).eq("id", editingTrack.id);
+        if (error) throw error;
+        toast({ title: "Track modifiée !" });
+      } else {
+        const { error } = await supabase.from("tracks").insert({ ...payload, created_by: user!.id });
+        if (error) throw error;
+        toast({ title: "Track ajoutée !" });
+      }
+
       queryClient.invalidateQueries({ queryKey: ["tracks"] });
       setDialogOpen(false);
-      resetForm();
+      setEditingTrack(null);
     } catch (err: any) {
       toast({ title: "Erreur", description: err.message, variant: "destructive" });
     } finally {
       setSaving(false);
     }
+  };
+
+  const openEdit = (track: DbTrack) => {
+    setEditingTrack(track);
+    setDialogOpen(true);
+  };
+
+  const openAdd = () => {
+    setEditingTrack(null);
+    setDialogOpen(true);
   };
 
   const handleDelete = async (id: string) => {
@@ -120,81 +121,20 @@ export default function AdminTracks() {
       <div className="container py-8">
         <div className="flex items-center justify-between mb-6">
           <h1 className="font-display text-2xl font-bold">Gestion des Tracks</h1>
-          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) setEditingTrack(null); }}>
             <DialogTrigger asChild>
-              <Button variant="hero" className="gap-1"><Plus className="h-4 w-4" /> Ajouter</Button>
+              <Button variant="hero" className="gap-1" onClick={openAdd}><Plus className="h-4 w-4" /> Ajouter</Button>
             </DialogTrigger>
             <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle>Ajouter une track</DialogTitle>
+                <DialogTitle>{editingTrack ? "Modifier la track" : "Ajouter une track"}</DialogTitle>
               </DialogHeader>
-              <form onSubmit={handleAdd} className="space-y-3">
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1">
-                    <Label>Titre *</Label>
-                    <Input value={title} onChange={(e) => setTitle(e.target.value)} required className="bg-secondary border-border" />
-                  </div>
-                  <div className="space-y-1">
-                    <Label>Artiste *</Label>
-                    <Input value={artist} onChange={(e) => setArtist(e.target.value)} required className="bg-secondary border-border" />
-                  </div>
-                </div>
-                <div className="grid grid-cols-3 gap-3">
-                  <div className="space-y-1">
-                    <Label>Genre</Label>
-                    <Select value={genre} onValueChange={setGenre}>
-                      <SelectTrigger className="bg-secondary border-border"><SelectValue /></SelectTrigger>
-                      <SelectContent>{GENRES.map((g) => <SelectItem key={g} value={g}>{g}</SelectItem>)}</SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-1">
-                    <Label>BPM</Label>
-                    <Input type="number" value={bpm} onChange={(e) => setBpm(e.target.value)} className="bg-secondary border-border" />
-                  </div>
-                  <div className="space-y-1">
-                    <Label>Tonalité</Label>
-                    <Input value={musicalKey} onChange={(e) => setMusicalKey(e.target.value)} placeholder="Am" className="bg-secondary border-border" />
-                  </div>
-                </div>
-                <div className="grid grid-cols-3 gap-3">
-                  <div className="space-y-1">
-                    <Label>Version</Label>
-                    <Select value={version} onValueChange={setVersion}>
-                      <SelectTrigger className="bg-secondary border-border"><SelectValue /></SelectTrigger>
-                      <SelectContent>{VERSIONS.map((v) => <SelectItem key={v} value={v}>{v}</SelectItem>)}</SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-1">
-                    <Label>Label</Label>
-                    <Input value={label} onChange={(e) => setLabel(e.target.value)} className="bg-secondary border-border" />
-                  </div>
-                  <div className="space-y-1">
-                    <Label>Durée</Label>
-                    <Input value={duration} onChange={(e) => setDuration(e.target.value)} placeholder="4:30" className="bg-secondary border-border" />
-                  </div>
-                </div>
-                <div className="space-y-1">
-                  <Label>Tags (séparés par des virgules)</Label>
-                  <Input value={tags} onChange={(e) => setTags(e.target.value)} placeholder="house, melodic, summer" className="bg-secondary border-border" />
-                </div>
-                <div className="grid grid-cols-1 gap-3">
-                  <div className="space-y-1">
-                    <Label className="flex items-center gap-1"><Upload className="h-3 w-3" /> Fichier audio (MP3/WAV)</Label>
-                    <Input type="file" accept="audio/*" onChange={(e) => setAudioFile(e.target.files?.[0] ?? null)} className="bg-secondary border-border" />
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="flex items-center gap-1"><Upload className="h-3 w-3" /> Extrait/Preview (MP3)</Label>
-                    <Input type="file" accept="audio/*" onChange={(e) => setPreviewFile(e.target.files?.[0] ?? null)} className="bg-secondary border-border" />
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="flex items-center gap-1"><Upload className="h-3 w-3" /> Cover (image)</Label>
-                    <Input type="file" accept="image/*" onChange={(e) => setCoverFile(e.target.files?.[0] ?? null)} className="bg-secondary border-border" />
-                  </div>
-                </div>
-                <Button variant="hero" type="submit" disabled={saving} className="w-full">
-                  {saving ? "Enregistrement..." : "Ajouter la track"}
-                </Button>
-              </form>
+              <TrackForm
+                key={editingTrack?.id ?? "new"}
+                initialData={editingTrack}
+                saving={saving}
+                onSubmit={handleSubmit}
+              />
             </DialogContent>
           </Dialog>
         </div>
@@ -232,7 +172,9 @@ export default function AdminTracks() {
                     <td className="px-4 py-3 text-muted-foreground">{track.release_date ? new Date(track.release_date).toLocaleDateString("fr-FR") : "-"}</td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex justify-end gap-1">
-                        <Button variant="ghost" size="icon" className="h-7 w-7"><Pencil className="h-3 w-3" /></Button>
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(track)}>
+                          <Pencil className="h-3 w-3" />
+                        </Button>
                         <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => handleDelete(track.id)}>
                           <Trash2 className="h-3 w-3" />
                         </Button>
