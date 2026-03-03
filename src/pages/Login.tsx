@@ -26,7 +26,13 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+    <div className="min-h-screen flex items-center justify-center bg-background p-4 relative overflow-hidden">
+      {/* Tricolor decorative bars */}
+      <div className="absolute top-0 left-0 right-0 h-1 flex">
+        <div className="flex-1 bg-primary" />
+        <div className="flex-1 bg-background" />
+        <div className="flex-1 bg-accent" />
+      </div>
       <div className="w-full max-w-sm space-y-6">
         <div className="text-center">
           <Link to="/" className="inline-flex items-center gap-2 mb-6">
@@ -37,23 +43,25 @@ export default function Login() {
           <p className="text-sm text-muted-foreground mt-1">Accédez à votre compte DJ</p>
         </div>
 
-        <form className="space-y-4" onSubmit={handleSubmit}>
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" placeholder="dj@example.com" className="bg-secondary border-border" value={email} onChange={(e) => setEmail(e.target.value)} required />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="password">Mot de passe</Label>
-            <Input id="password" type="password" className="bg-secondary border-border" value={password} onChange={(e) => setPassword(e.target.value)} required />
-          </div>
-          <Button variant="hero" className="w-full" type="submit" disabled={loading}>
-            <LogIn className="h-4 w-4 mr-2" /> {loading ? "Connexion..." : "Se connecter"}
-          </Button>
-        </form>
+        <div className="bg-card border border-border rounded-xl p-6 glow-primary space-y-4">
+          <form className="space-y-4" onSubmit={handleSubmit}>
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input id="email" type="email" placeholder="dj@example.com" className="bg-secondary border-border" value={email} onChange={(e) => setEmail(e.target.value)} required />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">Mot de passe</Label>
+              <Input id="password" type="password" className="bg-secondary border-border" value={password} onChange={(e) => setPassword(e.target.value)} required />
+            </div>
+            <Button variant="hero" className="w-full" type="submit" disabled={loading}>
+              <LogIn className="h-4 w-4 mr-2" /> {loading ? "Connexion..." : "Se connecter"}
+            </Button>
+          </form>
+        </div>
 
         <p className="text-center text-sm text-muted-foreground">
           Pas encore de compte ?{" "}
-          <Link to="/signup" className="text-primary hover:underline">S'inscrire</Link>
+          <Link to="/signup" className="text-primary hover:underline font-medium">S'inscrire</Link>
         </p>
       </div>
     </div>

@@ -40,7 +40,12 @@ export default function Signup() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+    <div className="min-h-screen flex items-center justify-center bg-background p-4 relative overflow-hidden">
+      <div className="absolute top-0 left-0 right-0 h-1 flex">
+        <div className="flex-1 bg-primary" />
+        <div className="flex-1 bg-background" />
+        <div className="flex-1 bg-accent" />
+      </div>
       <div className="w-full max-w-sm space-y-6">
         <div className="text-center">
           <Link to="/" className="inline-flex items-center gap-2 mb-6">
@@ -51,31 +56,33 @@ export default function Signup() {
           <p className="text-sm text-muted-foreground mt-1">Rejoignez la communauté DJ</p>
         </div>
 
-        <form className="space-y-4" onSubmit={handleSubmit}>
-          <div className="space-y-2">
-            <Label htmlFor="djName">Nom DJ</Label>
-            <Input id="djName" placeholder="DJ Awesome" className="bg-secondary border-border" value={djName} onChange={(e) => setDjName(e.target.value)} required />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" placeholder="dj@example.com" className="bg-secondary border-border" value={email} onChange={(e) => setEmail(e.target.value)} required />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="password">Mot de passe</Label>
-            <Input id="password" type="password" className="bg-secondary border-border" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="confirm">Confirmer le mot de passe</Label>
-            <Input id="confirm" type="password" className="bg-secondary border-border" value={confirm} onChange={(e) => setConfirm(e.target.value)} required />
-          </div>
-          <Button variant="hero" className="w-full" type="submit" disabled={loading}>
-            <UserPlus className="h-4 w-4 mr-2" /> {loading ? "Inscription..." : "S'inscrire"}
-          </Button>
-        </form>
+        <div className="bg-card border border-border rounded-xl p-6 glow-primary space-y-4">
+          <form className="space-y-4" onSubmit={handleSubmit}>
+            <div className="space-y-2">
+              <Label htmlFor="djName">Nom DJ</Label>
+              <Input id="djName" placeholder="DJ Awesome" className="bg-secondary border-border" value={djName} onChange={(e) => setDjName(e.target.value)} required />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input id="email" type="email" placeholder="dj@example.com" className="bg-secondary border-border" value={email} onChange={(e) => setEmail(e.target.value)} required />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">Mot de passe</Label>
+              <Input id="password" type="password" className="bg-secondary border-border" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="confirm">Confirmer le mot de passe</Label>
+              <Input id="confirm" type="password" className="bg-secondary border-border" value={confirm} onChange={(e) => setConfirm(e.target.value)} required />
+            </div>
+            <Button variant="hero" className="w-full" type="submit" disabled={loading}>
+              <UserPlus className="h-4 w-4 mr-2" /> {loading ? "Inscription..." : "S'inscrire"}
+            </Button>
+          </form>
+        </div>
 
         <p className="text-center text-sm text-muted-foreground">
           Déjà inscrit ?{" "}
-          <Link to="/login" className="text-primary hover:underline">Se connecter</Link>
+          <Link to="/login" className="text-primary hover:underline font-medium">Se connecter</Link>
         </p>
       </div>
     </div>
