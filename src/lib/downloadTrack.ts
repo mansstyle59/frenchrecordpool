@@ -22,15 +22,20 @@ export async function downloadTrack(trackId: string, user: { id: string } | null
       return;
     }
 
-    // Trigger browser download
-    const link = document.createElement("a");
-    link.href = data.download_url;
-    link.download = data.filename || "track.mp3";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
-    toast({ title: "Téléchargement lancé !" });
+    if (data.type === "link") {
+      // External link → open in new tab
+      window.open(data.download_url, "_blank", "noopener,noreferrer");
+      toast({ title: "Lien ouvert dans un nouvel onglet" });
+    } else {
+      // Storage file → direct download
+      const link = document.createElement("a");
+      link.href = data.download_url;
+      link.download = data.filename || "track.mp3";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      toast({ title: "Téléchargement lancé !" });
+    }
   } catch (err: any) {
     toast({ title: "Erreur de téléchargement", description: err.message, variant: "destructive" });
   }
