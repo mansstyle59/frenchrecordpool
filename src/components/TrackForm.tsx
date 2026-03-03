@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { Upload } from "lucide-react";
+import { Upload, Link as LinkIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { GENRES, VERSIONS } from "@/data/mockTracks";
+import { VERSIONS } from "@/data/mockTracks";
 import type { DbTrack } from "@/hooks/useTracks";
 
 interface TrackFormProps {
@@ -24,14 +24,19 @@ export interface TrackFormData {
   duration: string;
   tags: string;
   audioFile: File | null;
+  audioUrl: string;
   previewFile: File | null;
+  previewUrl: string;
   coverFile: File | null;
+  coverUrl: string;
 }
+
+type SourceMode = "file" | "url";
 
 export default function TrackForm({ initialData, saving, onSubmit }: TrackFormProps) {
   const [title, setTitle] = useState(initialData?.title ?? "");
   const [artist, setArtist] = useState(initialData?.artist ?? "");
-  const [genre, setGenre] = useState(initialData?.genre ?? "House");
+  const [genre, setGenre] = useState(initialData?.genre ?? "");
   const [bpm, setBpm] = useState(initialData?.bpm?.toString() ?? "");
   const [musicalKey, setMusicalKey] = useState(initialData?.musical_key ?? "");
   const [version, setVersion] = useState(initialData?.version ?? "Original");
@@ -39,14 +44,31 @@ export default function TrackForm({ initialData, saving, onSubmit }: TrackFormPr
   const [duration, setDuration] = useState(initialData?.duration ?? "");
   const [tags, setTags] = useState(initialData?.tags?.join(", ") ?? "");
   const [audioFile, setAudioFile] = useState<File | null>(null);
+  const [audioUrl, setAudioUrl] = useState("");
   const [previewFile, setPreviewFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState("");
   const [coverFile, setCoverFile] = useState<File | null>(null);
+  const [coverUrl, setCoverUrl] = useState("");
+  const [audioMode, setAudioMode] = useState<SourceMode>("file");
+  const [previewMode, setPreviewMode] = useState<SourceMode>("file");
+  const [coverMode, setCoverMode] = useState<SourceMode>("file");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title || !artist) return;
-    onSubmit({ title, artist, genre, bpm, musicalKey, version, label, duration, tags, audioFile, previewFile, coverFile });
+    onSubmit({ title, artist, genre, bpm, musicalKey, version, label, duration, tags, audioFile, audioUrl, previewFile, previewUrl, coverFile, coverUrl });
   };
+
+  const ModeToggle = ({ mode, setMode }: { mode: SourceMode; setMode: (m: SourceMode) => void }) => (
+    <div className="flex gap-1 ml-auto">
+      <button type="button" onClick={() => setMode("file")} className={`text-xs px-2 py-0.5 rounded ${mode === "file" ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground"}`}>
+        <Upload className="h-3 w-3 inline mr-1" />Fichier
+      </button>
+      <button type="button" onClick={() => setMode("url")} className={`text-xs px-2 py-0.5 rounded ${mode === "url" ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground"}`}>
+        <LinkIcon className="h-3 w-3 inline mr-1" />Lien
+      </button>
+    </div>
+  );
 
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
@@ -63,10 +85,7 @@ export default function TrackForm({ initialData, saving, onSubmit }: TrackFormPr
       <div className="grid grid-cols-3 gap-3">
         <div className="space-y-1">
           <Label>Genre</Label>
-          <Select value={genre} onValueChange={setGenre}>
-            <SelectTrigger className="bg-secondary border-border"><SelectValue /></SelectTrigger>
-            <SelectContent>{GENRES.map((g) => <SelectItem key={g} value={g}>{g}</SelectItem>)}</SelectContent>
-          </Select>
+          <Input value={genre} onChange={(e) => setGenre(e.target.value)} placeholder="Ex: House, Hip-Hop..." className="bg-secondary border-border" />
         </div>
         <div className="space-y-1">
           <Label>BPM</Label>
@@ -99,17 +118,44 @@ export default function TrackForm({ initialData, saving, onSubmit }: TrackFormPr
         <Input value={tags} onChange={(e) => setTags(e.target.value)} placeholder="house, melodic, summer" className="bg-secondary border-border" />
       </div>
       <div className="grid grid-cols-1 gap-3">
+        {/* Audio */}
         <div className="space-y-1">
-          <Label className="flex items-center gap-1"><Upload className="h-3 w-3" /> Fichier audio (MP3/WAV) {initialData?.audio_url && <span className="text-xs text-muted-foreground ml-1">(actuel conservé si vide)</span>}</Label>
-          <Input type="file" accept="audio/*" onChange={(e) => setAudioFile(e.target.files?.[0] ?? null)} className="bg-secondary border-border" />
+          <Label className="flex items-center gap-1">
+            Fichier audio (MP3/WAV)
+            {initialData?.audio_url && <span className="text-xs text-muted-foreground ml-1">(actuel conservé si vide)</span>}
+            <ModeToggle mode={audioMode} setMode={setAudioMode} />
+          </Label>
+          {audioMode === "file" ? (
+            <Input type="file" accept="audio/*" onChange={(e) => setAudioFile(e.target.files?.[0] ?? null)} className="bg-secondary border-border" />
+          ) : (
+            <Input type="url" value={audioUrl} onChange={(e) => setAudioUrl(e.target.value)} placeholder="https://example.com/track.mp3" className="bg-secondary border-border" />
+          )}
         </div>
+        {/* Preview */}
         <div className="space-y-1">
-          <Label className="flex items-center gap-1"><Upload className="h-3 w-3" /> Extrait/Preview (MP3) {initialData?.preview_url && <span className="text-xs text-muted-foreground ml-1">(actuel conservé si vide)</span>}</Label>
-          <Input type="file" accept="audio/*" onChange={(e) => setPreviewFile(e.target.files?.[0] ?? null)} className="bg-secondary border-border" />
+          <Label className="flex items-center gap-1">
+            Extrait/Preview (MP3)
+            {initialData?.preview_url && <span className="text-xs text-muted-foreground ml-1">(actuel conservé si vide)</span>}
+            <ModeToggle mode={previewMode} setMode={setPreviewMode} />
+          </Label>
+          {previewMode === "file" ? (
+            <Input type="file" accept="audio/*" onChange={(e) => setPreviewFile(e.target.files?.[0] ?? null)} className="bg-secondary border-border" />
+          ) : (
+            <Input type="url" value={previewUrl} onChange={(e) => setPreviewUrl(e.target.value)} placeholder="https://example.com/preview.mp3" className="bg-secondary border-border" />
+          )}
         </div>
+        {/* Cover */}
         <div className="space-y-1">
-          <Label className="flex items-center gap-1"><Upload className="h-3 w-3" /> Cover (image) {initialData?.cover_url && <span className="text-xs text-muted-foreground ml-1">(actuelle conservée si vide)</span>}</Label>
-          <Input type="file" accept="image/*" onChange={(e) => setCoverFile(e.target.files?.[0] ?? null)} className="bg-secondary border-border" />
+          <Label className="flex items-center gap-1">
+            Cover (image)
+            {initialData?.cover_url && <span className="text-xs text-muted-foreground ml-1">(actuelle conservée si vide)</span>}
+            <ModeToggle mode={coverMode} setMode={setCoverMode} />
+          </Label>
+          {coverMode === "file" ? (
+            <Input type="file" accept="image/*" onChange={(e) => setCoverFile(e.target.files?.[0] ?? null)} className="bg-secondary border-border" />
+          ) : (
+            <Input type="url" value={coverUrl} onChange={(e) => setCoverUrl(e.target.value)} placeholder="https://example.com/cover.jpg" className="bg-secondary border-border" />
+          )}
         </div>
       </div>
       <Button variant="hero" type="submit" disabled={saving} className="w-full">
