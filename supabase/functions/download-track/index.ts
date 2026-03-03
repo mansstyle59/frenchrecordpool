@@ -23,7 +23,6 @@ Deno.serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-    // Validate user with their token
     const userClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_PUBLISHABLE_KEY")!, {
       global: { headers: { Authorization: authHeader } },
     });
@@ -35,10 +34,8 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Use service role for privileged operations
     const adminClient = createClient(supabaseUrl, serviceKey);
 
-    // Check active subscription
     const { data: hasSub } = await adminClient.rpc("has_active_subscription", { _user_id: user.id });
     if (!hasSub) {
       return new Response(JSON.stringify({ error: "Abonnement actif requis" }), {
@@ -47,7 +44,6 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Get track_id from body
     const { track_id } = await req.json();
     if (!track_id) {
       return new Response(JSON.stringify({ error: "track_id manquant" }), {
@@ -56,7 +52,6 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Get track
     const { data: track, error: trackError } = await adminClient
       .from("tracks")
       .select("id, title, artist, audio_url")
@@ -77,42 +72,53 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Extract storage path from URL
-    const urlObj = new URL(track.audio_url);
-    const pathMatch = urlObj.pathname.match(/\/object\/public\/track-audio\/(.+)/);
-    if (!pathMatch) {
-      return new Response(JSON.stringify({ error: "Chemin fichier invalide" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-    const storagePath = decodeURIComponent(pathMatch[1]);
-
-    // Generate signed URL (valid 5 minutes)
-    const { data: signedData, error: signedError } = await adminClient.storage
-      .from("track-audio")
-      .createSignedUrl(storagePath, 300);
-
-    if (signedError || !signedData?.signedUrl) {
-      return new Response(JSON.stringify({ error: "Impossible de générer le lien" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // Record download (this triggers the counter increment via DB trigger)
+    // Record download
     await adminClient.from("downloads").insert({ user_id: user.id, track_id: track.id });
 
-    return new Response(
-      JSON.stringify({
-        download_url: signedData.signedUrl,
-        filename: `${track.artist} - ${track.title}.mp3`,
-      }),
-      {
-        status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+    // Check if it's a storage URL or an external link
+    const isStorageUrl = track.audio_url.includes("/object/public/track-audio/");
+
+    if (isStorageUrl) {
+      // Storage file → generate signed URL for direct download
+      const urlObj = new URL(track.audio_url);
+      const pathMatch = urlObj.pathname.match(/\/object\/public\/track-audio\/(.+)/);
+      if (!pathMatch) {
+        return new Response(JSON.stringify({ error: "Chemin fichier invalide" }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
       }
-    );
+      const storagePath = decodeURIComponent(pathMatch[1]);
+
+      const { data: signedData, error: signedError } = await adminClient.storage
+        .from("track-audio")
+        .createSignedUrl(storagePath, 300, { download: `${track.artist} - ${track.title}` });
+
+      if (signedError || !signedData?.signedUrl) {
+        return new Response(JSON.stringify({ error: "Impossible de générer le lien" }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      return new Response(
+        JSON.stringify({
+          type: "file",
+          download_url: signedData.signedUrl,
+          filename: `${track.artist} - ${track.title}.mp3`,
+        }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    } else {
+      // External link → return URL to open in new tab
+      return new Response(
+        JSON.stringify({
+          type: "link",
+          download_url: track.audio_url,
+        }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
   } catch (err) {
     return new Response(JSON.stringify({ error: err.message }), {
       status: 500,
