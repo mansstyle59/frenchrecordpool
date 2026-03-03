@@ -24,7 +24,7 @@ export default function Admin() {
   const stats = [
     { label: "Tracks", value: tracks.length, icon: Music, color: "text-primary" },
     { label: "Téléchargements", value: tracks.reduce((s, t) => s + (t.downloads ?? 0), 0), icon: Download, color: "text-accent" },
-    { label: "Clients", value: "-", icon: Users, color: "text-green-400" },
+    { label: "Clients", value: "-", icon: Users, color: "text-primary" },
   ];
 
   return (
