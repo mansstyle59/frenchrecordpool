@@ -44,8 +44,11 @@ export default function AdminTracks() {
       let previewUrl = editingTrack?.preview_url ?? null;
 
       if (data.coverFile) coverUrl = await uploadFile(data.coverFile, "track-covers", `${trackId}/cover.${data.coverFile.name.split(".").pop()}`);
+      else if (data.coverUrl) coverUrl = data.coverUrl;
       if (data.audioFile) audioUrl = await uploadFile(data.audioFile, "track-audio", `${trackId}/audio.${data.audioFile.name.split(".").pop()}`);
+      else if (data.audioUrl) audioUrl = data.audioUrl;
       if (data.previewFile) previewUrl = await uploadFile(data.previewFile, "track-previews", `${trackId}/preview.${data.previewFile.name.split(".").pop()}`);
+      else if (data.previewUrl) previewUrl = data.previewUrl;
 
       const payload = {
         title: data.title,
