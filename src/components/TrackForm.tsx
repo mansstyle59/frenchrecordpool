@@ -126,7 +126,7 @@ export default function TrackForm({ initialData, saving, onSubmit }: TrackFormPr
             <ModeToggle mode={audioMode} setMode={setAudioMode} />
           </Label>
           {audioMode === "file" ? (
-            <Input type="file" accept="audio/*" onChange={(e) => setAudioFile(e.target.files?.[0] ?? null)} className="bg-secondary border-border" />
+            <Input type="file" accept="audio/*,.mp3,.wav,.flac,.aac,.ogg,.m4a,.aiff,.wma" onChange={(e) => setAudioFile(e.target.files?.[0] ?? null)} className="bg-secondary border-border" />
           ) : (
             <Input type="url" value={audioUrl} onChange={(e) => setAudioUrl(e.target.value)} placeholder="https://example.com/track.mp3" className="bg-secondary border-border" />
           )}
@@ -139,7 +139,7 @@ export default function TrackForm({ initialData, saving, onSubmit }: TrackFormPr
             <ModeToggle mode={previewMode} setMode={setPreviewMode} />
           </Label>
           {previewMode === "file" ? (
-            <Input type="file" accept="audio/*" onChange={(e) => setPreviewFile(e.target.files?.[0] ?? null)} className="bg-secondary border-border" />
+            <Input type="file" accept="audio/*,.mp3,.wav,.flac,.aac,.ogg,.m4a,.aiff,.wma" onChange={(e) => setPreviewFile(e.target.files?.[0] ?? null)} className="bg-secondary border-border" />
           ) : (
             <Input type="url" value={previewUrl} onChange={(e) => setPreviewUrl(e.target.value)} placeholder="https://example.com/preview.mp3" className="bg-secondary border-border" />
           )}
