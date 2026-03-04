@@ -1,5 +1,5 @@
 import { useParams, Link } from "react-router-dom";
-import { Play, Heart, Download, ArrowLeft, Clock, Music, Tag } from "lucide-react";
+import { Play, Heart, Download, ExternalLink, ArrowLeft, Clock, Music, Tag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import Layout from "@/components/Layout";
@@ -32,6 +32,8 @@ export default function TrackDetail() {
   };
 
   const handleDownload = () => downloadTrack(track.id, user, hasActiveSubscription);
+  const isExternalLink = track.audio_url && !track.audio_url.includes("/object/public/track-audio/");
+  const DownloadIcon = isExternalLink ? ExternalLink : Download;
 
   return (
     <Layout>
@@ -66,7 +68,7 @@ export default function TrackDetail() {
                 <Play className="h-4 w-4" /> Écouter l'extrait
               </Button>
               <Button variant="default" size="lg" className="gap-2" onClick={handleDownload}>
-                <Download className="h-4 w-4" /> Télécharger
+                <DownloadIcon className="h-4 w-4" /> {isExternalLink ? "Ouvrir le lien" : "Télécharger"}
               </Button>
               <Button variant="outline" size="lg"><Heart className="h-4 w-4" /></Button>
             </div>
