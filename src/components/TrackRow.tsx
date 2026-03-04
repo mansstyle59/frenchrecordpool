@@ -1,4 +1,4 @@
-import { Play, Heart, Download } from "lucide-react";
+import { Play, Heart, Download, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
@@ -32,6 +32,8 @@ export default function TrackRow({ track, index }: TrackRowProps) {
   };
 
   const handleDownload = () => downloadTrack(track.id, user, hasActiveSubscription);
+  const isExternalLink = track.audio_url && !track.audio_url.includes("/object/public/track-audio/");
+  const DownloadIcon = isExternalLink ? ExternalLink : Download;
 
   return (
     <div className="group flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-secondary/50 transition-colors">
@@ -96,7 +98,7 @@ export default function TrackRow({ track, index }: TrackRowProps) {
           className="h-8 w-8 text-muted-foreground hover:text-primary"
           onClick={handleDownload}
         >
-          <Download className="h-4 w-4" />
+          <DownloadIcon className="h-4 w-4" />
         </Button>
       </div>
     </div>
