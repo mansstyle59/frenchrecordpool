@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 import { User, CreditCard, Download, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,14 +22,15 @@ export default function Dashboard() {
 
   return (
     <Layout>
-      <div className="container py-8">
-        <div className="flex items-center justify-between mb-6">
+      <motion.div className="container py-8" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: "easeOut" }}>
+        <motion.div className="flex items-center justify-between mb-6" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.15, duration: 0.4 }}>
           <h1 className="font-display text-3xl font-bold">Mon Compte</h1>
           <Button variant="ghost" size="sm" onClick={() => signOut().then(() => navigate("/"))}>
             <LogOut className="h-4 w-4 mr-1" /> Déconnexion
           </Button>
-        </div>
+        </motion.div>
 
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3, duration: 0.5 }}>
         <Tabs defaultValue="profile" className="space-y-6">
           <TabsList className="bg-secondary">
             <TabsTrigger value="profile" className="gap-1"><User className="h-4 w-4" /> Profil</TabsTrigger>
@@ -75,7 +77,8 @@ export default function Dashboard() {
             </div>
           </TabsContent>
         </Tabs>
-      </div>
+        </motion.div>
+      </motion.div>
     </Layout>
   );
 }

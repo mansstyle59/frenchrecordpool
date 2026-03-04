@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 import { Disc3, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,17 +34,17 @@ export default function Login() {
         <div className="flex-1 bg-background" />
         <div className="flex-1 bg-accent" />
       </div>
-      <div className="w-full max-w-sm space-y-6">
-        <div className="text-center">
+      <motion.div className="w-full max-w-sm space-y-6" initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: "easeOut" }}>
+        <motion.div className="text-center" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.15, duration: 0.4 }}>
           <Link to="/" className="inline-flex items-center gap-2 mb-6">
             <Disc3 className="h-8 w-8 text-primary" />
             <span className="font-display font-bold text-xl gradient-text">French Record Pool</span>
           </Link>
           <h1 className="font-display text-2xl font-bold">Connexion</h1>
           <p className="text-sm text-muted-foreground mt-1">Accédez à votre compte DJ</p>
-        </div>
+        </motion.div>
 
-        <div className="bg-card border border-border rounded-xl p-6 glow-primary space-y-4">
+        <motion.div className="bg-card border border-border rounded-xl p-6 glow-primary space-y-4" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3, duration: 0.5 }}>
           <form className="space-y-4" onSubmit={handleSubmit}>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
@@ -57,13 +58,13 @@ export default function Login() {
               <LogIn className="h-4 w-4 mr-2" /> {loading ? "Connexion..." : "Se connecter"}
             </Button>
           </form>
-        </div>
+        </motion.div>
 
-        <p className="text-center text-sm text-muted-foreground">
+        <motion.p className="text-center text-sm text-muted-foreground" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5, duration: 0.4 }}>
           Pas encore de compte ?{" "}
           <Link to="/signup" className="text-primary hover:underline font-medium">S'inscrire</Link>
-        </p>
-      </div>
+        </motion.p>
+      </motion.div>
     </div>
   );
 }
