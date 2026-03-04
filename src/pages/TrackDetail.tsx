@@ -1,6 +1,7 @@
 import { useParams, Link } from "react-router-dom";
 import { Play, Heart, Download, ExternalLink, ArrowLeft, Clock, Music, Tag } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
 import Layout from "@/components/Layout";
 import { useTrack } from "@/hooks/useTracks";
@@ -67,9 +68,16 @@ export default function TrackDetail() {
               <Button variant="hero" size="lg" className="gap-2" onClick={handlePlay} disabled={!track.preview_url}>
                 <Play className="h-4 w-4" /> Écouter l'extrait
               </Button>
-              <Button variant="default" size="lg" className="gap-2" onClick={handleDownload}>
-                <DownloadIcon className="h-4 w-4" /> {isExternalLink ? "Ouvrir le lien" : "Télécharger"}
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="default" size="lg" className="gap-2" onClick={handleDownload}>
+                    <DownloadIcon className="h-4 w-4" /> {isExternalLink ? "Ouvrir le lien" : "Télécharger"}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {isExternalLink ? "Ouvre le lien dans un nouvel onglet" : "Télécharge le fichier MP3/WAV directement"}
+                </TooltipContent>
+              </Tooltip>
               <Button variant="outline" size="lg"><Heart className="h-4 w-4" /></Button>
             </div>
             <p className="text-xs text-muted-foreground mt-3">
