@@ -1,4 +1,5 @@
 import { Play, Heart, Download, ExternalLink } from "lucide-react";
+import { toast } from "sonner";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
@@ -6,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { usePlayer } from "@/contexts/PlayerContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { downloadTrack } from "@/lib/downloadTrack";
+import { useFavorites } from "@/hooks/useFavorites";
 import type { DbTrack } from "@/hooks/useTracks";
 
 interface TrackRowProps {
@@ -16,6 +18,7 @@ interface TrackRowProps {
 export default function TrackRow({ track, index }: TrackRowProps) {
   const { play, currentTrack, isPlaying, toggle } = usePlayer();
   const { user, hasActiveSubscription } = useAuth();
+  const { isFavorite, toggleFavorite } = useFavorites();
   const isCurrentTrack = currentTrack?.id === track.id;
 
   const handlePlay = () => {
@@ -90,8 +93,16 @@ export default function TrackRow({ track, index }: TrackRowProps) {
       </span>
 
       <div className="flex items-center gap-1 shrink-0">
-        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-accent">
-          <Heart className="h-4 w-4" />
+        <Button
+          variant="ghost"
+          size="icon"
+          className={`h-8 w-8 ${isFavorite(track.id) ? "text-red-500 hover:text-red-400" : "text-muted-foreground hover:text-accent"}`}
+          onClick={() => {
+            if (!user) { toast.error("Connectez-vous pour ajouter aux favoris"); return; }
+            toggleFavorite(track.id);
+          }}
+        >
+          <Heart className={`h-4 w-4 ${isFavorite(track.id) ? "fill-current" : ""}`} />
         </Button>
         <Tooltip>
           <TooltipTrigger asChild>
