@@ -8,12 +8,15 @@ import { useTrack } from "@/hooks/useTracks";
 import { usePlayer } from "@/contexts/PlayerContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { downloadTrack } from "@/lib/downloadTrack";
+import { useFavorites } from "@/hooks/useFavorites";
+import { toast } from "sonner";
 
 export default function TrackDetail() {
   const { id } = useParams();
   const { data: track, isLoading } = useTrack(id);
   const { play } = usePlayer();
   const { user, hasActiveSubscription } = useAuth();
+  const { isFavorite, toggleFavorite } = useFavorites();
 
   if (isLoading) return <Layout><div className="container py-20 text-center text-muted-foreground">Chargement...</div></Layout>;
 
@@ -78,7 +81,17 @@ export default function TrackDetail() {
                   {isExternalLink ? "Ouvre le lien dans un nouvel onglet" : "Télécharge le fichier MP3/WAV directement"}
                 </TooltipContent>
               </Tooltip>
-              <Button variant="outline" size="lg"><Heart className="h-4 w-4" /></Button>
+              <Button
+                variant="outline"
+                size="lg"
+                className={isFavorite(track.id) ? "text-red-500 border-red-500/30 hover:text-red-400" : ""}
+                onClick={() => {
+                  if (!user) { toast.error("Connectez-vous pour ajouter aux favoris"); return; }
+                  toggleFavorite(track.id);
+                }}
+              >
+                <Heart className={`h-4 w-4 ${isFavorite(track.id) ? "fill-current" : ""}`} />
+              </Button>
             </div>
             <p className="text-xs text-muted-foreground mt-3">
               Connectez-vous avec un abonnement actif pour télécharger.
