@@ -83,7 +83,7 @@ Deno.serve(async (req) => {
 
     if (isStorageUrl) {
       // Storage file → generate signed URL for direct download
-      const urlObj = new URL(track.audio_url);
+      const urlObj = new URL(resolvedUrl);
       const pathMatch = urlObj.pathname.match(/\/object\/public\/track-audio\/(.+)/);
       if (!pathMatch) {
         return new Response(JSON.stringify({ error: "Chemin fichier invalide" }), {
