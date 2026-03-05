@@ -50,6 +50,7 @@ export default function TrackForm({ initialData, saving, onSubmit }: TrackFormPr
   const [previewUrl, setPreviewUrl] = useState("");
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverUrl, setCoverUrl] = useState("");
+  const [downloadUrl, setDownloadUrl] = useState((initialData as any)?.download_url ?? "");
   const [audioMode, setAudioMode] = useState<SourceMode>("file");
   const [previewMode, setPreviewMode] = useState<SourceMode>("file");
   const [coverMode, setCoverMode] = useState<SourceMode>("file");
