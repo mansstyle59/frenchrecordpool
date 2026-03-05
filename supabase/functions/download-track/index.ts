@@ -79,7 +79,7 @@ Deno.serve(async (req) => {
     await adminClient.from("downloads").insert({ user_id: user.id, track_id: track.id });
 
     // Check if it's a storage URL or an external link
-    const isStorageUrl = track.audio_url.includes("/object/public/track-audio/");
+    const isStorageUrl = resolvedUrl.includes("/object/public/track-audio/");
 
     if (isStorageUrl) {
       // Storage file → generate signed URL for direct download
