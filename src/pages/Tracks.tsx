@@ -4,8 +4,8 @@ import Layout from "@/components/Layout";
 import TrackRow from "@/components/TrackRow";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useTracks } from "@/hooks/useTracks";
-import { GENRES } from "@/data/mockTracks";
+
+
 
 type SortOption = "newest" | "popular" | "az" | "bpm";
 
