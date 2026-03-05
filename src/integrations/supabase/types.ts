@@ -140,6 +140,7 @@ export type Database = {
           cover_url: string | null
           created_at: string
           created_by: string | null
+          download_url: string | null
           downloads: number | null
           duration: string | null
           genre: string
@@ -160,6 +161,7 @@ export type Database = {
           cover_url?: string | null
           created_at?: string
           created_by?: string | null
+          download_url?: string | null
           downloads?: number | null
           duration?: string | null
           genre: string
@@ -180,6 +182,7 @@ export type Database = {
           cover_url?: string | null
           created_at?: string
           created_by?: string | null
+          download_url?: string | null
           downloads?: number | null
           duration?: string | null
           genre?: string
