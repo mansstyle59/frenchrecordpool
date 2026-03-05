@@ -54,7 +54,7 @@ Deno.serve(async (req) => {
 
     const { data: track, error: trackError } = await adminClient
       .from("tracks")
-      .select("id, title, artist, audio_url")
+      .select("id, title, artist, audio_url, download_url")
       .eq("id", track_id)
       .single();
 
@@ -65,7 +65,10 @@ Deno.serve(async (req) => {
       });
     }
 
-    if (!track.audio_url) {
+    // Priority: download_url > audio_url
+    const resolvedUrl = track.download_url || track.audio_url;
+
+    if (!resolvedUrl) {
       return new Response(JSON.stringify({ error: "Fichier audio non disponible" }), {
         status: 404,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
