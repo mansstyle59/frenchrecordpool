@@ -86,7 +86,7 @@ export default function Index() {
           <h2 className="font-display text-2xl font-bold">Genres Populaires</h2>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
-          {GENRES.map((genre) => (
+          {Array.from(new Set(tracks.map((t) => t.genre).filter(Boolean))).sort().map((genre) => (
             <GenreCard key={genre} genre={genre} trackCount={tracks.filter((t) => t.genre === genre).length} />
           ))}
         </div>
