@@ -5,8 +5,6 @@ import TrackRow from "@/components/TrackRow";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useTracks } from "@/hooks/useTracks";
-import { GENRES } from "@/data/mockTracks";
-
 type SortOption = "newest" | "popular" | "az" | "bpm";
 
 export default function Tracks() {
@@ -44,7 +42,7 @@ export default function Tracks() {
             <SelectTrigger className="w-full sm:w-44 bg-secondary border-border"><SelectValue placeholder="Genre" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Tous les genres</SelectItem>
-              {GENRES.map((g) => <SelectItem key={g} value={g}>{g}</SelectItem>)}
+              {Array.from(new Set(tracks.map((t) => t.genre).filter(Boolean))).sort().map((g: string) => <SelectItem key={g} value={g}>{g}</SelectItem>)}
             </SelectContent>
           </Select>
           <Select value={sort} onValueChange={(v) => setSort(v as SortOption)}>
