@@ -54,7 +54,7 @@ Deno.serve(async (req) => {
 
     const { data: track, error: trackError } = await adminClient
       .from("tracks")
-      .select("id, title, artist, audio_url")
+      .select("id, title, artist, audio_url, download_url")
       .eq("id", track_id)
       .single();
 
@@ -65,7 +65,10 @@ Deno.serve(async (req) => {
       });
     }
 
-    if (!track.audio_url) {
+    // Priority: download_url > audio_url
+    const resolvedUrl = track.download_url || track.audio_url;
+
+    if (!resolvedUrl) {
       return new Response(JSON.stringify({ error: "Fichier audio non disponible" }), {
         status: 404,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -76,11 +79,11 @@ Deno.serve(async (req) => {
     await adminClient.from("downloads").insert({ user_id: user.id, track_id: track.id });
 
     // Check if it's a storage URL or an external link
-    const isStorageUrl = track.audio_url.includes("/object/public/track-audio/");
+    const isStorageUrl = resolvedUrl.includes("/object/public/track-audio/");
 
     if (isStorageUrl) {
       // Storage file → generate signed URL for direct download
-      const urlObj = new URL(track.audio_url);
+      const urlObj = new URL(resolvedUrl);
       const pathMatch = urlObj.pathname.match(/\/object\/public\/track-audio\/(.+)/);
       if (!pathMatch) {
         return new Response(JSON.stringify({ error: "Chemin fichier invalide" }), {
@@ -114,7 +117,7 @@ Deno.serve(async (req) => {
       return new Response(
         JSON.stringify({
           type: "link",
-          download_url: track.audio_url,
+          download_url: resolvedUrl,
         }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );

@@ -36,7 +36,8 @@ export default function TrackDetail() {
   };
 
   const handleDownload = () => downloadTrack(track.id, user, hasActiveSubscription);
-  const isExternalLink = track.audio_url && !track.audio_url.includes("/object/public/track-audio/");
+  const resolvedUrl = (track as any).download_url || track.audio_url;
+  const isExternalLink = resolvedUrl && !resolvedUrl.includes("/object/public/track-audio/");
   const DownloadIcon = isExternalLink ? ExternalLink : Download;
 
   return (
