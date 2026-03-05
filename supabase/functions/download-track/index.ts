@@ -120,7 +120,8 @@ Deno.serve(async (req) => {
       );
     }
   } catch (err) {
-    return new Response(JSON.stringify({ error: err.message }), {
+    console.error("download-track error:", err);
+    return new Response(JSON.stringify({ error: "Une erreur interne s'est produite" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
