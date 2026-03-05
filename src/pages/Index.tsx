@@ -6,7 +6,7 @@ import Layout from "@/components/Layout";
 import TrackRow from "@/components/TrackRow";
 import GenreCard from "@/components/GenreCard";
 import { useTracks } from "@/hooks/useTracks";
-import { GENRES } from "@/data/mockTracks";
+
 import heroBg from "@/assets/hero-bg.jpg";
 
 export default function Index() {
