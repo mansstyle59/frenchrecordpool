@@ -29,6 +29,7 @@ export interface TrackFormData {
   previewUrl: string;
   coverFile: File | null;
   coverUrl: string;
+  downloadUrl: string;
 }
 
 type SourceMode = "file" | "url";
