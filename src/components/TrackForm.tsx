@@ -160,6 +160,13 @@ export default function TrackForm({ initialData, saving, onSubmit }: TrackFormPr
           )}
         </div>
       </div>
+      <div className="space-y-1">
+        <Label className="flex items-center gap-1">
+          Lien de téléchargement
+          {(initialData as any)?.download_url && <span className="text-xs text-muted-foreground ml-1">(actuel conservé si vide)</span>}
+        </Label>
+        <Input type="url" value={downloadUrl} onChange={(e) => setDownloadUrl(e.target.value)} placeholder="https://example.com/download-link" className="bg-secondary border-border" />
+      </div>
       <Button variant="hero" type="submit" disabled={saving} className="w-full">
         {saving ? "Enregistrement..." : initialData ? "Modifier la track" : "Ajouter la track"}
       </Button>
