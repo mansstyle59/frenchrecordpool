@@ -47,7 +47,6 @@ export default function Tracks() {
               {Array.from(new Set(tracks.map((t) => t.genre).filter(Boolean))).sort().map((g) => <SelectItem key={g} value={g}>{g}</SelectItem>)}
             </SelectContent>
           </Select>
-          </Select>
           <Select value={sort} onValueChange={(v) => setSort(v as SortOption)}>
             <SelectTrigger className="w-full sm:w-40 bg-secondary border-border"><SelectValue /></SelectTrigger>
             <SelectContent>
