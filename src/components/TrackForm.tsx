@@ -58,7 +58,7 @@ export default function TrackForm({ initialData, saving, onSubmit }: TrackFormPr
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title || !artist) return;
-    onSubmit({ title, artist, genre, bpm, musicalKey, version, label, duration, tags, audioFile, audioUrl, previewFile, previewUrl, coverFile, coverUrl });
+    onSubmit({ title, artist, genre, bpm, musicalKey, version, label, duration, tags, audioFile, audioUrl, previewFile, previewUrl, coverFile, coverUrl, downloadUrl });
   };
 
   const ModeToggle = ({ mode, setMode }: { mode: SourceMode; setMode: (m: SourceMode) => void }) => (
