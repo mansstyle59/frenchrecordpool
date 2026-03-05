@@ -1,0 +1,1 @@
+ALTER TABLE public.tracks ADD COLUMN download_url text DEFAULT NULL;

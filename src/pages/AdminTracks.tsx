@@ -63,6 +63,7 @@ export default function AdminTracks() {
         cover_url: coverUrl,
         audio_url: audioUrl,
         preview_url: previewUrl,
+        download_url: data.downloadUrl || (editingTrack as any)?.download_url || null,
       };
 
       if (editingTrack) {

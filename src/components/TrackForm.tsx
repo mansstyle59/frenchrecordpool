@@ -29,6 +29,7 @@ export interface TrackFormData {
   previewUrl: string;
   coverFile: File | null;
   coverUrl: string;
+  downloadUrl: string;
 }
 
 type SourceMode = "file" | "url";
@@ -49,6 +50,7 @@ export default function TrackForm({ initialData, saving, onSubmit }: TrackFormPr
   const [previewUrl, setPreviewUrl] = useState("");
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverUrl, setCoverUrl] = useState("");
+  const [downloadUrl, setDownloadUrl] = useState((initialData as any)?.download_url ?? "");
   const [audioMode, setAudioMode] = useState<SourceMode>("file");
   const [previewMode, setPreviewMode] = useState<SourceMode>("file");
   const [coverMode, setCoverMode] = useState<SourceMode>("file");
@@ -56,7 +58,7 @@ export default function TrackForm({ initialData, saving, onSubmit }: TrackFormPr
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title || !artist) return;
-    onSubmit({ title, artist, genre, bpm, musicalKey, version, label, duration, tags, audioFile, audioUrl, previewFile, previewUrl, coverFile, coverUrl });
+    onSubmit({ title, artist, genre, bpm, musicalKey, version, label, duration, tags, audioFile, audioUrl, previewFile, previewUrl, coverFile, coverUrl, downloadUrl });
   };
 
   const ModeToggle = ({ mode, setMode }: { mode: SourceMode; setMode: (m: SourceMode) => void }) => (
@@ -157,6 +159,13 @@ export default function TrackForm({ initialData, saving, onSubmit }: TrackFormPr
             <Input type="url" value={coverUrl} onChange={(e) => setCoverUrl(e.target.value)} placeholder="https://example.com/cover.jpg" className="bg-secondary border-border" />
           )}
         </div>
+      </div>
+      <div className="space-y-1">
+        <Label className="flex items-center gap-1">
+          Lien de téléchargement
+          {(initialData as any)?.download_url && <span className="text-xs text-muted-foreground ml-1">(actuel conservé si vide)</span>}
+        </Label>
+        <Input type="url" value={downloadUrl} onChange={(e) => setDownloadUrl(e.target.value)} placeholder="https://example.com/download-link" className="bg-secondary border-border" />
       </div>
       <Button variant="hero" type="submit" disabled={saving} className="w-full">
         {saving ? "Enregistrement..." : initialData ? "Modifier la track" : "Ajouter la track"}
