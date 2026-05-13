@@ -127,23 +127,29 @@ export default function AdminTracks() {
       <div className="container py-8">
         <div className="flex items-center justify-between mb-6">
           <h1 className="font-display text-2xl font-bold">Gestion des Tracks</h1>
-          <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) setEditingTrack(null); }}>
-            <DialogTrigger asChild>
-              <Button variant="hero" className="gap-1" onClick={openAdd}><Plus className="h-4 w-4" /> Ajouter</Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>{editingTrack ? "Modifier la track" : "Ajouter une track"}</DialogTitle>
-              </DialogHeader>
-              <TrackForm
-                key={editingTrack?.id ?? "new"}
-                initialData={editingTrack}
-                saving={saving}
-                onSubmit={handleSubmit}
-              />
-            </DialogContent>
-          </Dialog>
+          <div className="flex gap-2">
+            <Button variant="outline" className="gap-1" onClick={() => setBulkOpen(true)}>
+              <UploadCloud className="h-4 w-4" /> Upload par lot
+            </Button>
+            <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) setEditingTrack(null); }}>
+              <DialogTrigger asChild>
+                <Button variant="hero" className="gap-1" onClick={openAdd}><Plus className="h-4 w-4" /> Ajouter</Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>{editingTrack ? "Modifier la track" : "Ajouter une track"}</DialogTitle>
+                </DialogHeader>
+                <TrackForm
+                  key={editingTrack?.id ?? "new"}
+                  initialData={editingTrack}
+                  saving={saving}
+                  onSubmit={handleSubmit}
+                />
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
+        {user && <BulkUploadDialog open={bulkOpen} onOpenChange={setBulkOpen} userId={user.id} />
 
         <div className="rounded-xl border border-border overflow-hidden">
           <div className="overflow-x-auto">
