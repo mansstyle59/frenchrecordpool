@@ -12,6 +12,8 @@ import Tracks from "./pages/Tracks";
 import TrackDetail from "./pages/TrackDetail";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 import Dashboard from "./pages/Dashboard";
 import Admin from "./pages/Admin";
 import AdminTracks from "./pages/AdminTracks";
