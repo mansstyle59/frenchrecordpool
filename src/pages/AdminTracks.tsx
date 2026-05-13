@@ -21,6 +21,7 @@ export default function AdminTracks() {
   const { data: tracks = [], isLoading } = useTracks();
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [bulkOpen, setBulkOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [editingTrack, setEditingTrack] = useState<DbTrack | null>(null);
 
