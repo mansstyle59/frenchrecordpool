@@ -10,11 +10,12 @@ interface AuthContextType {
   hasActiveSubscription: boolean;
   profile: { dj_name: string | null; email: string | null; avatar_url: string | null } | null;
   signOut: () => Promise<void>;
+  refreshProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
   user: null, session: null, loading: true, isAdmin: false,
-  hasActiveSubscription: false, profile: null, signOut: async () => {},
+  hasActiveSubscription: false, profile: null, signOut: async () => {}, refreshProfile: async () => {},
 });
 
 export const useAuth = () => useContext(AuthContext);
