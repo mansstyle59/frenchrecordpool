@@ -57,6 +57,11 @@ export default function Login() {
             <Button variant="hero" className="w-full" type="submit" disabled={loading}>
               <LogIn className="h-4 w-4 mr-2" /> {loading ? "Connexion..." : "Se connecter"}
             </Button>
+            <div className="text-right">
+              <Link to="/forgot-password" className="text-xs text-muted-foreground hover:text-primary hover:underline">
+                Mot de passe oublié ?
+              </Link>
+            </div>
           </form>
         </motion.div>
 
