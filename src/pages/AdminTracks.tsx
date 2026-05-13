@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Plus, Pencil, Trash2, ArrowLeft, Disc3 } from "lucide-react";
+import { Plus, Pencil, Trash2, ArrowLeft, Disc3, UploadCloud } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -12,6 +12,7 @@ import { toast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import TrackForm from "@/components/TrackForm";
 import type { TrackFormData } from "@/components/TrackForm";
+import BulkUploadDialog from "@/components/BulkUploadDialog";
 import { useEffect } from "react";
 
 export default function AdminTracks() {
@@ -20,6 +21,7 @@ export default function AdminTracks() {
   const { data: tracks = [], isLoading } = useTracks();
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [bulkOpen, setBulkOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [editingTrack, setEditingTrack] = useState<DbTrack | null>(null);
 
@@ -125,23 +127,29 @@ export default function AdminTracks() {
       <div className="container py-8">
         <div className="flex items-center justify-between mb-6">
           <h1 className="font-display text-2xl font-bold">Gestion des Tracks</h1>
-          <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) setEditingTrack(null); }}>
-            <DialogTrigger asChild>
-              <Button variant="hero" className="gap-1" onClick={openAdd}><Plus className="h-4 w-4" /> Ajouter</Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>{editingTrack ? "Modifier la track" : "Ajouter une track"}</DialogTitle>
-              </DialogHeader>
-              <TrackForm
-                key={editingTrack?.id ?? "new"}
-                initialData={editingTrack}
-                saving={saving}
-                onSubmit={handleSubmit}
-              />
-            </DialogContent>
-          </Dialog>
+          <div className="flex gap-2">
+            <Button variant="outline" className="gap-1" onClick={() => setBulkOpen(true)}>
+              <UploadCloud className="h-4 w-4" /> Upload par lot
+            </Button>
+            <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) setEditingTrack(null); }}>
+              <DialogTrigger asChild>
+                <Button variant="hero" className="gap-1" onClick={openAdd}><Plus className="h-4 w-4" /> Ajouter</Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>{editingTrack ? "Modifier la track" : "Ajouter une track"}</DialogTitle>
+                </DialogHeader>
+                <TrackForm
+                  key={editingTrack?.id ?? "new"}
+                  initialData={editingTrack}
+                  saving={saving}
+                  onSubmit={handleSubmit}
+                />
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
+        {user && <BulkUploadDialog open={bulkOpen} onOpenChange={setBulkOpen} userId={user.id} />}
 
         <div className="rounded-xl border border-border overflow-hidden">
           <div className="overflow-x-auto">

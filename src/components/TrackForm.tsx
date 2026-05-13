@@ -1,11 +1,16 @@
-import { useState } from "react";
-import { Upload, Link as LinkIcon } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Upload, Link as LinkIcon, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-const VERSIONS = ["Original", "Intro Edit", "Clean", "Dirty", "Extended", "Short Edit", "Acapella", "Instrumental"];
+import FileDropzone from "@/components/FileDropzone";
+import { extractAudioMetadata } from "@/lib/audioMetadata";
+import { trackSchema, validateAudioFile, validateImageFile } from "@/lib/trackSchema";
+import { toast } from "@/hooks/use-toast";
 import type { DbTrack } from "@/hooks/useTracks";
+
+const VERSIONS = ["Original", "Intro Edit", "Clean", "Dirty", "Extended", "Short Edit", "Acapella", "Instrumental"];
 
 interface TrackFormProps {
   initialData?: DbTrack | null;
@@ -54,10 +59,56 @@ export default function TrackForm({ initialData, saving, onSubmit }: TrackFormPr
   const [audioMode, setAudioMode] = useState<SourceMode>("file");
   const [previewMode, setPreviewMode] = useState<SourceMode>("file");
   const [coverMode, setCoverMode] = useState<SourceMode>("file");
+  const [extracting, setExtracting] = useState(false);
+  const [coverPreview, setCoverPreview] = useState<string | null>(initialData?.cover_url ?? null);
+
+  // Auto-fill metadata when audio file selected
+  useEffect(() => {
+    if (!audioFile) return;
+    let cancelled = false;
+    setExtracting(true);
+    extractAudioMetadata(audioFile)
+      .then((meta) => {
+        if (cancelled) return;
+        setTitle((v) => v || meta.title || "");
+        setArtist((v) => v || meta.artist || "");
+        setGenre((v) => v || meta.genre || "");
+        setDuration((v) => v || meta.duration || "");
+        if (meta.bpm) setBpm((v) => v || String(meta.bpm));
+        if (meta.key) setMusicalKey((v) => v || meta.key!);
+        if (meta.title || meta.artist || meta.bpm) {
+          toast({ title: "Métadonnées détectées", description: "Champs pré-remplis depuis le fichier." });
+        }
+      })
+      .finally(() => !cancelled && setExtracting(false));
+    return () => {
+      cancelled = true;
+    };
+  }, [audioFile]);
+
+  // Cover preview
+  useEffect(() => {
+    if (!coverFile) return;
+    const url = URL.createObjectURL(coverFile);
+    setCoverPreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [coverFile]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title || !artist) return;
+    const result = trackSchema.safeParse({
+      title, artist, genre, bpm, musicalKey, version, label, duration, tags,
+      audioUrl, previewUrl, coverUrl, downloadUrl,
+    });
+    if (!result.success) {
+      const firstError = result.error.issues[0];
+      toast({ title: "Validation", description: firstError.message, variant: "destructive" });
+      return;
+    }
+    if (!initialData && !audioFile && !audioUrl) {
+      toast({ title: "Audio requis", description: "Ajoute un fichier ou une URL audio.", variant: "destructive" });
+      return;
+    }
     onSubmit({ title, artist, genre, bpm, musicalKey, version, label, duration, tags, audioFile, audioUrl, previewFile, previewUrl, coverFile, coverUrl, downloadUrl });
   };
 
@@ -74,6 +125,11 @@ export default function TrackForm({ initialData, saving, onSubmit }: TrackFormPr
 
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
+      {extracting && (
+        <div className="text-xs text-primary flex items-center gap-1.5 bg-primary/5 border border-primary/20 rounded px-2 py-1.5">
+          <Sparkles className="h-3 w-3 animate-pulse" /> Extraction des métadonnées audio...
+        </div>
+      )}
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1">
           <Label>Titre *</Label>
@@ -87,11 +143,11 @@ export default function TrackForm({ initialData, saving, onSubmit }: TrackFormPr
       <div className="grid grid-cols-3 gap-3">
         <div className="space-y-1">
           <Label>Genre</Label>
-          <Input value={genre} onChange={(e) => setGenre(e.target.value)} placeholder="Ex: House, Hip-Hop..." className="bg-secondary border-border" />
+          <Input value={genre} onChange={(e) => setGenre(e.target.value)} placeholder="House, Hip-Hop..." className="bg-secondary border-border" />
         </div>
         <div className="space-y-1">
           <Label>BPM</Label>
-          <Input type="number" value={bpm} onChange={(e) => setBpm(e.target.value)} className="bg-secondary border-border" />
+          <Input type="number" min={40} max={220} value={bpm} onChange={(e) => setBpm(e.target.value)} className="bg-secondary border-border" />
         </div>
         <div className="space-y-1">
           <Label>Tonalité</Label>
@@ -119,47 +175,68 @@ export default function TrackForm({ initialData, saving, onSubmit }: TrackFormPr
         <Label>Tags (séparés par des virgules)</Label>
         <Input value={tags} onChange={(e) => setTags(e.target.value)} placeholder="house, melodic, summer" className="bg-secondary border-border" />
       </div>
-      <div className="grid grid-cols-1 gap-3">
-        {/* Audio */}
-        <div className="space-y-1">
-          <Label className="flex items-center gap-1">
-            Fichier audio (MP3/WAV)
-            {initialData?.audio_url && <span className="text-xs text-muted-foreground ml-1">(actuel conservé si vide)</span>}
-            <ModeToggle mode={audioMode} setMode={setAudioMode} />
-          </Label>
-          {audioMode === "file" ? (
-            <Input type="file" accept="audio/*,.mp3,.wav,.flac,.aac,.ogg,.m4a,.aiff,.wma" onChange={(e) => setAudioFile(e.target.files?.[0] ?? null)} className="bg-secondary border-border" />
-          ) : (
-            <Input type="url" value={audioUrl} onChange={(e) => setAudioUrl(e.target.value)} placeholder="https://example.com/track.mp3" className="bg-secondary border-border" />
-          )}
-        </div>
-        {/* Preview */}
-        <div className="space-y-1">
-          <Label className="flex items-center gap-1">
-            Extrait/Preview (MP3)
-            {initialData?.preview_url && <span className="text-xs text-muted-foreground ml-1">(actuel conservé si vide)</span>}
-            <ModeToggle mode={previewMode} setMode={setPreviewMode} />
-          </Label>
-          {previewMode === "file" ? (
-            <Input type="file" accept="audio/*,.mp3,.wav,.flac,.aac,.ogg,.m4a,.aiff,.wma" onChange={(e) => setPreviewFile(e.target.files?.[0] ?? null)} className="bg-secondary border-border" />
-          ) : (
-            <Input type="url" value={previewUrl} onChange={(e) => setPreviewUrl(e.target.value)} placeholder="https://example.com/preview.mp3" className="bg-secondary border-border" />
-          )}
-        </div>
-        {/* Cover */}
-        <div className="space-y-1">
-          <Label className="flex items-center gap-1">
-            Cover (image)
-            {initialData?.cover_url && <span className="text-xs text-muted-foreground ml-1">(actuelle conservée si vide)</span>}
-            <ModeToggle mode={coverMode} setMode={setCoverMode} />
-          </Label>
-          {coverMode === "file" ? (
-            <Input type="file" accept="image/*" onChange={(e) => setCoverFile(e.target.files?.[0] ?? null)} className="bg-secondary border-border" />
-          ) : (
-            <Input type="url" value={coverUrl} onChange={(e) => setCoverUrl(e.target.value)} placeholder="https://example.com/cover.jpg" className="bg-secondary border-border" />
-          )}
-        </div>
+
+      {/* Audio */}
+      <div className="space-y-1">
+        <Label className="flex items-center gap-1">
+          Fichier audio (MP3/WAV)
+          {initialData?.audio_url && <span className="text-xs text-muted-foreground ml-1">(actuel conservé si vide)</span>}
+          <ModeToggle mode={audioMode} setMode={setAudioMode} />
+        </Label>
+        {audioMode === "file" ? (
+          <FileDropzone
+            accept="audio/*,.mp3,.wav,.flac,.aac,.ogg,.m4a,.aiff,.wma"
+            file={audioFile}
+            onFile={setAudioFile}
+            validate={validateAudioFile}
+            helper="MP3, WAV, FLAC... · max 100 MB · métadonnées auto-détectées"
+          />
+        ) : (
+          <Input type="url" value={audioUrl} onChange={(e) => setAudioUrl(e.target.value)} placeholder="https://example.com/track.mp3" className="bg-secondary border-border" />
+        )}
       </div>
+
+      {/* Preview */}
+      <div className="space-y-1">
+        <Label className="flex items-center gap-1">
+          Extrait/Preview (MP3)
+          {initialData?.preview_url && <span className="text-xs text-muted-foreground ml-1">(actuel conservé si vide)</span>}
+          <ModeToggle mode={previewMode} setMode={setPreviewMode} />
+        </Label>
+        {previewMode === "file" ? (
+          <FileDropzone
+            accept="audio/*,.mp3,.wav,.flac,.aac,.ogg,.m4a"
+            file={previewFile}
+            onFile={setPreviewFile}
+            validate={validateAudioFile}
+            helper="Extrait court · max 100 MB"
+          />
+        ) : (
+          <Input type="url" value={previewUrl} onChange={(e) => setPreviewUrl(e.target.value)} placeholder="https://example.com/preview.mp3" className="bg-secondary border-border" />
+        )}
+      </div>
+
+      {/* Cover */}
+      <div className="space-y-1">
+        <Label className="flex items-center gap-1">
+          Cover (image)
+          {initialData?.cover_url && <span className="text-xs text-muted-foreground ml-1">(actuelle conservée si vide)</span>}
+          <ModeToggle mode={coverMode} setMode={setCoverMode} />
+        </Label>
+        {coverMode === "file" ? (
+          <FileDropzone
+            accept="image/*"
+            file={coverFile}
+            onFile={setCoverFile}
+            validate={validateImageFile}
+            preview={coverFile ? coverPreview ?? undefined : undefined}
+            helper="JPG, PNG, WebP · max 10 MB"
+          />
+        ) : (
+          <Input type="url" value={coverUrl} onChange={(e) => setCoverUrl(e.target.value)} placeholder="https://example.com/cover.jpg" className="bg-secondary border-border" />
+        )}
+      </div>
+
       <div className="space-y-1">
         <Label className="flex items-center gap-1">
           Lien de téléchargement
@@ -167,6 +244,7 @@ export default function TrackForm({ initialData, saving, onSubmit }: TrackFormPr
         </Label>
         <Input type="url" value={downloadUrl} onChange={(e) => setDownloadUrl(e.target.value)} placeholder="https://example.com/download-link" className="bg-secondary border-border" />
       </div>
+
       <Button variant="hero" type="submit" disabled={saving} className="w-full">
         {saving ? "Enregistrement..." : initialData ? "Modifier la track" : "Ajouter la track"}
       </Button>
