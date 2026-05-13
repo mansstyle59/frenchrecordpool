@@ -10,11 +10,12 @@ interface AuthContextType {
   hasActiveSubscription: boolean;
   profile: { dj_name: string | null; email: string | null; avatar_url: string | null } | null;
   signOut: () => Promise<void>;
+  refreshProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
   user: null, session: null, loading: true, isAdmin: false,
-  hasActiveSubscription: false, profile: null, signOut: async () => {},
+  hasActiveSubscription: false, profile: null, signOut: async () => {}, refreshProfile: async () => {},
 });
 
 export const useAuth = () => useContext(AuthContext);
@@ -80,8 +81,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await supabase.auth.signOut();
   };
 
+  const refreshProfile = async () => {
+    if (user) await fetchUserData(user.id);
+  };
+
   return (
-    <AuthContext.Provider value={{ user, session, loading, isAdmin, hasActiveSubscription, profile, signOut }}>
+    <AuthContext.Provider value={{ user, session, loading, isAdmin, hasActiveSubscription, profile, signOut, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   );
