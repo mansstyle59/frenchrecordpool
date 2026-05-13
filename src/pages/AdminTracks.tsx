@@ -149,7 +149,7 @@ export default function AdminTracks() {
             </Dialog>
           </div>
         </div>
-        {user && <BulkUploadDialog open={bulkOpen} onOpenChange={setBulkOpen} userId={user.id} />
+        {user && <BulkUploadDialog open={bulkOpen} onOpenChange={setBulkOpen} userId={user.id} />}
 
         <div className="rounded-xl border border-border overflow-hidden">
           <div className="overflow-x-auto">
