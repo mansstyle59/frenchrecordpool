@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Plus, Pencil, Trash2, ArrowLeft, Disc3 } from "lucide-react";
+import { Plus, Pencil, Trash2, ArrowLeft, Disc3, UploadCloud } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -12,6 +12,7 @@ import { toast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import TrackForm from "@/components/TrackForm";
 import type { TrackFormData } from "@/components/TrackForm";
+import BulkUploadDialog from "@/components/BulkUploadDialog";
 import { useEffect } from "react";
 
 export default function AdminTracks() {
