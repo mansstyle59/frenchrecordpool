@@ -316,19 +316,55 @@ export default function AdminBranding() {
         </div>
 
         {/* PREVIEW */}
-        <div className="bg-card border border-border rounded-xl overflow-hidden flex flex-col min-h-[600px]">
-          <div className="flex items-center justify-between px-4 py-2 border-b border-border bg-secondary/30">
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <Eye className="h-3 w-3" /> Aperçu en direct
+        <div className="space-y-4">
+          <div className="bg-card border border-border rounded-xl overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-2 border-b border-border bg-secondary/30">
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Eye className="h-3 w-3" /> Aperçu en direct
+              </div>
+              <span className="text-xs text-muted-foreground">L'app entière change pendant l'édition</span>
             </div>
-            <span className="text-xs text-muted-foreground">Les changements s'appliquent à toutes les pages</span>
+            <div className="p-8 space-y-6">
+              <div className="flex items-center gap-3">
+                {draft.logo_url && <img src={draft.logo_url} alt="" className="h-10 w-10 rounded-lg object-contain" />}
+                <div>
+                  <h1 className="font-display text-3xl font-bold gradient-text">{draft.site_name}</h1>
+                  <p className="text-sm text-muted-foreground">{draft.tagline}</p>
+                </div>
+              </div>
+              <div className="rounded-xl p-8 text-center" style={{ background: "var(--gradient-primary)" }}>
+                <h2 className="font-display text-4xl font-bold text-primary-foreground mb-2">{draft.hero_title}</h2>
+                <p className="text-primary-foreground/90">{draft.hero_subtitle}</p>
+              </div>
+              <div className="grid grid-cols-3 gap-3">
+                <div className="bg-secondary border border-border rounded-lg p-4">
+                  <p className="text-xs text-muted-foreground">Tracks</p>
+                  <p className="font-display text-2xl font-bold">1 247</p>
+                </div>
+                <div className="bg-secondary border border-border rounded-lg p-4">
+                  <p className="text-xs text-muted-foreground">Artistes</p>
+                  <p className="font-display text-2xl font-bold text-primary">328</p>
+                </div>
+                <div className="bg-secondary border border-border rounded-lg p-4">
+                  <p className="text-xs text-muted-foreground">DJs</p>
+                  <p className="font-display text-2xl font-bold text-accent">5 612</p>
+                </div>
+              </div>
+              <div className="flex gap-2 flex-wrap">
+                <Button variant="hero">Action principale</Button>
+                <Button variant="outline">Secondaire</Button>
+                <Button variant="ghost">Discret</Button>
+                <Button variant="destructive">Supprimer</Button>
+              </div>
+              <div className="bg-card border border-border rounded-lg p-4">
+                <h3 className="font-display font-bold mb-1">Carte exemple</h3>
+                <p className="text-sm text-muted-foreground">{draft.footer_text}</p>
+              </div>
+            </div>
           </div>
-          <iframe
-            src="/"
-            title="Aperçu"
-            className="flex-1 w-full bg-background"
-            style={{ minHeight: 600 }}
-          />
+          <Link to="/" target="_blank" className="block text-center text-xs text-primary hover:underline">
+            Ouvrir le site complet dans un nouvel onglet ↗
+          </Link>
         </div>
       </div>
     </div>
