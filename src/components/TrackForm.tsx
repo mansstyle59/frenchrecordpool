@@ -225,12 +225,12 @@ export default function TrackForm({ initialData, saving, onSubmit }: TrackFormPr
         </Label>
         {coverMode === "file" ? (
           <FileDropzone
-            accept="image/*"
+            accept="*/*"
             file={coverFile}
             onFile={setCoverFile}
             validate={validateImageFile}
             preview={coverFile ? coverPreview ?? undefined : undefined}
-            helper="JPG, PNG, WebP · max 10 MB"
+            helper="Tout type d'image accepté · aucune limite"
           />
         ) : (
           <Input type="url" value={coverUrl} onChange={(e) => setCoverUrl(e.target.value)} placeholder="https://example.com/cover.jpg" className="bg-secondary border-border" />
