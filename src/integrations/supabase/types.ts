@@ -102,6 +102,96 @@ export type Database = {
         }
         Relationships: []
       }
+      site_branding: {
+        Row: {
+          dark_accent: string
+          dark_background: string
+          dark_border: string
+          dark_card: string
+          dark_foreground: string
+          dark_muted: string
+          dark_primary: string
+          favicon_url: string | null
+          font_body: string
+          font_display: string
+          footer_text: string | null
+          hero_subtitle: string | null
+          hero_title: string | null
+          id: string
+          light_accent: string
+          light_background: string
+          light_border: string
+          light_card: string
+          light_foreground: string
+          light_muted: string
+          light_primary: string
+          logo_url: string | null
+          radius: string
+          site_name: string
+          tagline: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          dark_accent?: string
+          dark_background?: string
+          dark_border?: string
+          dark_card?: string
+          dark_foreground?: string
+          dark_muted?: string
+          dark_primary?: string
+          favicon_url?: string | null
+          font_body?: string
+          font_display?: string
+          footer_text?: string | null
+          hero_subtitle?: string | null
+          hero_title?: string | null
+          id?: string
+          light_accent?: string
+          light_background?: string
+          light_border?: string
+          light_card?: string
+          light_foreground?: string
+          light_muted?: string
+          light_primary?: string
+          logo_url?: string | null
+          radius?: string
+          site_name?: string
+          tagline?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          dark_accent?: string
+          dark_background?: string
+          dark_border?: string
+          dark_card?: string
+          dark_foreground?: string
+          dark_muted?: string
+          dark_primary?: string
+          favicon_url?: string | null
+          font_body?: string
+          font_display?: string
+          footer_text?: string | null
+          hero_subtitle?: string | null
+          hero_title?: string | null
+          id?: string
+          light_accent?: string
+          light_background?: string
+          light_border?: string
+          light_card?: string
+          light_foreground?: string
+          light_muted?: string
+          light_primary?: string
+          logo_url?: string | null
+          radius?: string
+          site_name?: string
+          tagline?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       subscriptions: {
         Row: {
           created_at: string
