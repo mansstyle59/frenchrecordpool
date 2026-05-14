@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Disc3, Users, Download, Music, Settings } from "lucide-react";
+import { Disc3, Users, Download, Music, Settings, Palette } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTracks } from "@/hooks/useTracks";
 
@@ -8,6 +8,7 @@ const adminLinks = [
   { to: "/admin/tracks", label: "Gérer les tracks", icon: Music },
   { to: "/admin/users", label: "Gérer les utilisateurs", icon: Users },
   { to: "/admin/subscriptions", label: "Abonnements", icon: Settings },
+  { to: "/admin/branding", label: "Branding Studio", icon: Palette },
 ];
 
 export default function Admin() {

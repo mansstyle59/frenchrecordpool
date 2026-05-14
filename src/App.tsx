@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { PlayerProvider } from "@/contexts/PlayerContext";
+import { BrandingProvider } from "@/contexts/BrandingContext";
 import MiniPlayer from "@/components/MiniPlayer";
 import Index from "./pages/Index";
 import Tracks from "./pages/Tracks";
@@ -19,6 +20,7 @@ import Admin from "./pages/Admin";
 import AdminTracks from "./pages/AdminTracks";
 import AdminUsers from "./pages/AdminUsers";
 import AdminSubscriptions from "./pages/AdminSubscriptions";
+import AdminBranding from "./pages/AdminBranding";
 import Artists from "./pages/Artists";
 import Genres from "./pages/Genres";
 import TopTracks from "./pages/TopTracks";
@@ -31,6 +33,7 @@ const App = () => (
   <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
+        <BrandingProvider>
         <PlayerProvider>
           <TooltipProvider>
           <Toaster />
@@ -49,6 +52,7 @@ const App = () => (
               <Route path="/admin/tracks" element={<AdminTracks />} />
               <Route path="/admin/users" element={<AdminUsers />} />
               <Route path="/admin/subscriptions" element={<AdminSubscriptions />} />
+              <Route path="/admin/branding" element={<AdminBranding />} />
               <Route path="/artists" element={<Artists />} />
               <Route path="/genres" element={<Genres />} />
               <Route path="/top" element={<TopTracks />} />
@@ -59,6 +63,7 @@ const App = () => (
           </BrowserRouter>
           </TooltipProvider>
         </PlayerProvider>
+        </BrandingProvider>
       </AuthProvider>
     </QueryClientProvider>
   </ThemeProvider>
