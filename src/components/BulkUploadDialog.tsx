@@ -178,7 +178,6 @@ export default function BulkUploadDialog({ open, onOpenChange, userId }: BulkUpl
           <input
             ref={inputRef}
             type="file"
-            accept="audio/*,.mp3,.wav,.flac,.aac,.ogg,.m4a"
             multiple
             className="hidden"
             onChange={(e) => e.target.files && addFiles(e.target.files)}
