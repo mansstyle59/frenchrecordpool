@@ -185,11 +185,11 @@ export default function TrackForm({ initialData, saving, onSubmit }: TrackFormPr
         </Label>
         {audioMode === "file" ? (
           <FileDropzone
-            accept="audio/*,.mp3,.wav,.flac,.aac,.ogg,.m4a,.aiff,.wma"
+            accept="*/*"
             file={audioFile}
             onFile={setAudioFile}
             validate={validateAudioFile}
-            helper="MP3, WAV, FLAC... · max 100 MB · métadonnées auto-détectées"
+            helper="Tout format accepté · aucune limite de taille · métadonnées auto-détectées"
           />
         ) : (
           <Input type="url" value={audioUrl} onChange={(e) => setAudioUrl(e.target.value)} placeholder="https://example.com/track.mp3" className="bg-secondary border-border" />
@@ -199,17 +199,17 @@ export default function TrackForm({ initialData, saving, onSubmit }: TrackFormPr
       {/* Preview */}
       <div className="space-y-1">
         <Label className="flex items-center gap-1">
-          Extrait/Preview (MP3)
+          Extrait/Preview
           {initialData?.preview_url && <span className="text-xs text-muted-foreground ml-1">(actuel conservé si vide)</span>}
           <ModeToggle mode={previewMode} setMode={setPreviewMode} />
         </Label>
         {previewMode === "file" ? (
           <FileDropzone
-            accept="audio/*,.mp3,.wav,.flac,.aac,.ogg,.m4a"
+            accept="*/*"
             file={previewFile}
             onFile={setPreviewFile}
             validate={validateAudioFile}
-            helper="Extrait court · max 100 MB"
+            helper="Tout format accepté · aucune limite"
           />
         ) : (
           <Input type="url" value={previewUrl} onChange={(e) => setPreviewUrl(e.target.value)} placeholder="https://example.com/preview.mp3" className="bg-secondary border-border" />
