@@ -1,5 +1,6 @@
 // Lit la durée et les tags ID3 d'un fichier audio côté client.
 import jsmediatags from "jsmediatags/dist/jsmediatags.min.js";
+import { analyze } from "web-audio-beat-detector";
 
 export interface AudioMetadata {
   duration?: string; // formatted "m:ss"
@@ -45,15 +46,18 @@ export function readId3Tags(file: File): Promise<Partial<AudioMetadata>> {
       jsmediatags.read(file, {
         onSuccess: (result: any) => {
           const tags = result.tags || {};
-          const bpmRaw = tags.TBPM?.data || tags.bpm;
-          const keyRaw = tags.TKEY?.data || tags.key;
+          // jsmediatags exposes both human keys (title, artist, genre) AND frame keys (TBPM, TKEY, TIT2...)
+          const bpmRaw =
+            tags.TBPM?.data ?? tags.bpm ?? tags.TBP?.data ?? tags.tempo;
+          const keyRaw = tags.TKEY?.data ?? tags.key ?? tags.initialKey;
+          const bpmNum = bpmRaw ? parseInt(String(bpmRaw).replace(/[^\d.]/g, ""), 10) : NaN;
           resolve({
-            title: tags.title || undefined,
-            artist: tags.artist || undefined,
-            album: tags.album || undefined,
-            genre: tags.genre || undefined,
+            title: tags.title || tags.TIT2?.data || undefined,
+            artist: tags.artist || tags.TPE1?.data || undefined,
+            album: tags.album || tags.TALB?.data || undefined,
+            genre: tags.genre || tags.TCON?.data || undefined,
             comment: tags.comment?.text || undefined,
-            bpm: bpmRaw ? parseInt(String(bpmRaw), 10) || undefined : undefined,
+            bpm: Number.isFinite(bpmNum) && bpmNum > 0 ? bpmNum : undefined,
             key: keyRaw ? String(keyRaw).trim() : undefined,
           });
         },
@@ -65,7 +69,51 @@ export function readId3Tags(file: File): Promise<Partial<AudioMetadata>> {
   });
 }
 
+// Devine BPM et tonalité depuis le nom de fichier (ex: "Track - 128 BPM - Am.mp3")
+function parseFromFilename(name: string): { bpm?: number; key?: string } {
+  const cleaned = name.replace(/\.[^.]+$/, "");
+  const out: { bpm?: number; key?: string } = {};
+  const bpmMatch = cleaned.match(/(\d{2,3})\s*(?:bpm|BPM)/);
+  if (bpmMatch) {
+    const v = parseInt(bpmMatch[1], 10);
+    if (v >= 40 && v <= 260) out.bpm = v;
+  }
+  const keyMatch = cleaned.match(/\b([A-G](?:#|b)?(?:m|maj|min)?)\b(?!\w)/);
+  if (keyMatch && /[A-G]/.test(keyMatch[1])) out.key = keyMatch[1];
+  return out;
+}
+
+// Analyse réelle du BPM via Web Audio API (fallback si tag absent)
+async function analyzeBpm(file: File): Promise<number | undefined> {
+  try {
+    const Ctx: typeof AudioContext =
+      (window as any).AudioContext || (window as any).webkitAudioContext;
+    if (!Ctx) return undefined;
+    const ctx = new Ctx();
+    const arrayBuf = await file.arrayBuffer();
+    const audioBuf = await ctx.decodeAudioData(arrayBuf.slice(0));
+    const tempo = await analyze(audioBuf);
+    ctx.close?.();
+    if (!Number.isFinite(tempo)) return undefined;
+    return Math.round(tempo);
+  } catch {
+    return undefined;
+  }
+}
+
 export async function extractAudioMetadata(file: File): Promise<AudioMetadata> {
   const [dur, tags] = await Promise.all([readAudioDuration(file), readId3Tags(file)]);
-  return { ...tags, ...(dur ?? {}) };
+  const filename = parseFromFilename(file.name);
+  const merged: AudioMetadata = {
+    ...tags,
+    ...(dur ?? {}),
+    bpm: tags.bpm ?? filename.bpm,
+    key: tags.key ?? filename.key,
+  };
+  // Si toujours pas de BPM, on lance l'analyse audio (peut prendre quelques secondes)
+  if (!merged.bpm) {
+    const detected = await analyzeBpm(file);
+    if (detected) merged.bpm = detected;
+  }
+  return merged;
 }
