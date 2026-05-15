@@ -58,6 +58,7 @@ const App = () => (
               <Route path="/genres" element={<Genres />} />
               <Route path="/top" element={<TopTracks />} />
               <Route path="/new" element={<NewReleases />} />
+              <Route path="/stems" element={<Stems />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
             <MiniPlayer />
