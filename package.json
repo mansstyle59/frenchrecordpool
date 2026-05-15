@@ -10,7 +10,10 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "build:pages": "VITE_BASE_PATH=/frenchrecordpool/ vite build",
+    "deploy:pages": "gh-pages -d dist",
+    "upload:site": "npm run build:pages && npm run deploy:pages"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
