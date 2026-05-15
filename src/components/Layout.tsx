@@ -74,8 +74,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               <>
                 {isAdmin && (
                   <Link to="/admin">
-                    <Button variant="ghost" size="sm" className="hidden sm:inline-flex gap-1">
-                      <Shield className="h-4 w-4" /> Admin
+                    <Button variant="ghost" size="sm" className="gap-1">
+                      <Shield className="h-4 w-4" /> <span className="hidden sm:inline">Admin</span>
                     </Button>
                   </Link>
                 )}
@@ -124,13 +124,22 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 {link.label}
               </Link>
             ))}
-            <div className="flex gap-2 pt-2">
+            <div className="flex flex-col gap-2 pt-2">
               {user ? (
                 <>
-                  <Link to="/dashboard" className="flex-1">
-                    <Button variant="outline" className="w-full" size="sm">Mon compte</Button>
-                  </Link>
-                  <Button variant="ghost" size="sm" onClick={handleSignOut}>Déconnexion</Button>
+                  {isAdmin && (
+                    <Link to="/admin" onClick={() => setMobileOpen(false)}>
+                      <Button variant="hero" className="w-full gap-2" size="sm">
+                        <Shield className="h-4 w-4" /> Admin
+                      </Button>
+                    </Link>
+                  )}
+                  <div className="flex gap-2">
+                    <Link to="/dashboard" className="flex-1" onClick={() => setMobileOpen(false)}>
+                      <Button variant="outline" className="w-full" size="sm">Mon compte</Button>
+                    </Link>
+                    <Button variant="ghost" size="sm" onClick={handleSignOut}>Déconnexion</Button>
+                  </div>
                 </>
               ) : (
                 <>
