@@ -2,11 +2,12 @@
 
 Application web React/Vite pour gérer un pool de morceaux (tracks), artistes, genres et sorties, avec authentification et backend Supabase.
 
-## URL GitHub Pages (important)
+## URL GitHub Pages
 
 L’URL de production dépend de **votre username GitHub** :
 
-- URL finale : `https://<votre-username>.github.io/frenchrecordpool/`
+- Format générique : `https://<github-username>.github.io/<repo-name>/`
+- Pour ce repo : `https://<votre-username>.github.io/frenchrecordpool/`
 - Exemple : `https://octocat.github.io/frenchrecordpool/` *(exemple uniquement)*
 
 > Si l’URL avec `octocat` ne fonctionne pas pour vous, c’est normal : remplacez `octocat` par votre username GitHub.
@@ -59,7 +60,7 @@ Puis, dans **Settings → Pages** :
 - Le nom du repo doit être exactement `frenchrecordpool`.
 - Pages doit cibler la branche `gh-pages`.
 - Attendre 1 à 5 minutes après publication.
-- Le build doit avoir été fait avec le base path `/frenchrecordpool/`.
+- Le build doit avoir été fait avec le chemin de base `/frenchrecordpool/`.
 
 ## Stack technique
 
