@@ -13,6 +13,7 @@ const navLinks = [
   { to: "/top", label: "Top" },
   { to: "/genres", label: "Genres" },
   { to: "/artists", label: "Artistes" },
+  { to: "/stems", label: "Stems" },
 ];
 
 export default function Layout({ children }: { children: React.ReactNode }) {
