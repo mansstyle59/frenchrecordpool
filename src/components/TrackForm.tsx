@@ -113,7 +113,7 @@ export default function TrackForm({ initialData, saving, onSubmit }: TrackFormPr
       toast({ title: "Audio requis", description: "Ajoute un fichier ou une URL audio.", variant: "destructive" });
       return;
     }
-    onSubmit({ title, artist, genre, bpm, musicalKey, version, label, duration, tags, audioFile, audioUrl, previewFile, previewUrl, coverFile, coverUrl, downloadUrl });
+    onSubmit({ title, artist, genre, bpm, musicalKey, version, label, duration, tags, audioFile, audioUrl, previewFile, previewUrl, coverFile, coverUrl, downloadUrl, acapellaUrl, instrumentalUrl });
   };
 
   const ModeToggle = ({ mode, setMode }: { mode: SourceMode; setMode: (m: SourceMode) => void }) => (
