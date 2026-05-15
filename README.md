@@ -1,73 +1,68 @@
-# Welcome to your Lovable project
+# French Record Pool
 
-## Project info
+Application web React/Vite pour gérer un pool de morceaux (tracks), artistes, genres et sorties, avec authentification et backend Supabase.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+## URL GitHub Pages
 
-## How can I edit this code?
+Une fois déployé avec GitHub Pages, l’URL de l’application suit ce format :
 
-There are several ways of editing your application.
+- `https://<github-username>.github.io/<repo-name>/`
 
-**Use Lovable**
+Exemple pour ce repo si votre compte est `octocat` :
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+- `https://octocat.github.io/frenchrecordpool/`
 
-Changes made via Lovable will be committed automatically to this repo.
+## Démarrage local
 
-**Use your preferred IDE**
+Prérequis :
+- Node.js 20+
+- npm
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+```bash
+npm install
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+L’application sera disponible sur `http://localhost:8080`.
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## Build de production
 
-**Use GitHub Codespaces**
+```bash
+npm run build
+npm run preview
+```
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## Déploiement sur GitHub Pages
 
-## What technologies are used for this project?
+### 1) Configurer le chemin de base
 
-This project is built with:
+Le projet lit `VITE_BASE_PATH` dans `vite.config.ts`.
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+- Pour GitHub Pages projet : `VITE_BASE_PATH=/<repo-name>/`
+- Pour domaine racine/custom domain : `VITE_BASE_PATH=/`
 
-## How can I deploy this project?
+Créez un fichier `.env.production` :
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+```bash
+VITE_BASE_PATH=/frenchrecordpool/
+```
 
-## Can I connect a custom domain to my Lovable project?
+### 2) Publier le dossier `dist/`
 
-Yes, you can!
+Option simple avec `gh-pages` :
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+```bash
+npm install --save-dev gh-pages
+npm run build
+npx gh-pages -d dist
+```
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+Puis activez **Settings → Pages** sur la branche `gh-pages`.
+
+## Stack technique
+
+- React 18 + TypeScript
+- Vite 5
+- Tailwind CSS + shadcn/ui
+- Supabase
+- Vitest + Testing Library
