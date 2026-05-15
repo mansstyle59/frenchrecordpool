@@ -25,6 +25,7 @@ import Artists from "./pages/Artists";
 import Genres from "./pages/Genres";
 import TopTracks from "./pages/TopTracks";
 import NewReleases from "./pages/NewReleases";
+import Stems from "./pages/Stems";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
