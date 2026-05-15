@@ -74,8 +74,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               <>
                 {isAdmin && (
                   <Link to="/admin">
-                    <Button variant="ghost" size="sm" className="hidden sm:inline-flex gap-1">
-                      <Shield className="h-4 w-4" /> Admin
+                    <Button variant="ghost" size="sm" className="gap-1">
+                      <Shield className="h-4 w-4" /> <span className="hidden sm:inline">Admin</span>
                     </Button>
                   </Link>
                 )}

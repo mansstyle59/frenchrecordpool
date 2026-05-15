@@ -1,81 +1,48 @@
-## Vue d'ensemble
+## Objectif
+1. Rendre le bouton **Admin** visible sur mobile (tu es en 393px, le bouton actuel est masqué `hidden sm:inline-flex`).
+2. Confirmer l'accès admin de `dewulf.denis@gmail.com` (déjà vérifié → rôle `admin` ✅, toutes les pages `/admin/*` lui sont déjà accessibles).
+3. Publier la palette **French Pool (bleu/rouge)** + polices **Space Grotesk / DM Sans** dans `site_branding` pour que le site adopte ces tokens partout (Realtime push instantané).
 
-Deux gros chantiers en parallèle. Pour rester gérable, je propose de découper en **2 lots successifs** plutôt qu'un mega-commit. Tu valides le lot 1, on enchaîne le lot 2.
+## Connexion / accès
+Je ne peux pas me connecter à ta place. Une fois ces changements appliqués :
+- Va sur `/login`, connecte-toi avec `dewulf.denis@gmail.com`.
+- Le bouton **Admin** (icône bouclier) apparaîtra dans la navbar (desktop ET mobile).
+- Pages accessibles : `/admin`, `/admin/tracks`, `/admin/users`, `/admin/subscriptions`, `/admin/branding`.
 
----
+## Changements code
 
-## LOT 1 — Améliorer l'ajout des tracks (admin)
+### `src/components/Layout.tsx`
+- Retirer `hidden sm:inline-flex` du bouton Admin desktop → toujours visible quand `isAdmin`.
+- Ajouter un lien **Admin** en haut du menu mobile (`mobileOpen`) avec l'icône `Shield`, visible uniquement si `isAdmin`.
 
-### 1.1 Drag & drop fichiers
-- Remplacer les `<input type="file">` actuels du `TrackForm` par une zone de drop (audio, preview, cover) avec aperçu et état (idle / dragging / uploading / done).
-- Composant réutilisable `FileDropzone` basé sur HTML5 drag events (zéro dépendance).
+## Changement base de données (migration)
 
-### 1.2 Auto-remplissage des métadonnées audio
-- À l'upload du fichier audio, lire en client :
-  - **durée** via `HTMLAudioElement` (toujours dispo).
-  - **BPM, key, titre, artiste, label** via tags ID3 avec `jsmediatags` (lib légère).
-- Pré-remplir les champs vides du formulaire (l'admin garde la main pour modifier).
+Mettre à jour la ligne `site_branding` (id = `global`) avec la palette French Pool et les polices choisies :
 
-### 1.3 Upload multiple / par lot
-- Nouveau bouton **"Upload par lot"** dans `AdminTracks` ouvrant un dialog spécifique :
-  - Drop de N fichiers audio.
-  - Pour chaque fichier : extraction auto des métadonnées + ligne éditable (titre, artiste, genre, BPM, key, version).
-  - Cover & preview optionnels (uploadables ensuite via édition).
-  - Bouton "Tout publier" → boucle d'upload séquentielle avec progression globale et par fichier.
+```sql
+UPDATE public.site_branding SET
+  light_primary    = '220 75% 45%',
+  light_accent     = '0 72% 51%',
+  light_background = '0 0% 98%',
+  light_foreground = '222 47% 11%',
+  light_card       = '0 0% 100%',
+  dark_primary     = '220 80% 58%',
+  dark_accent      = '0 72% 55%',
+  dark_background  = '222 47% 6%',
+  dark_foreground  = '210 20% 95%',
+  dark_card        = '222 28% 12%',
+  font_display     = 'Space Grotesk',
+  font_body        = 'DM Sans',
+  hero_title       = 'Le pool des DJs francophones',
+  hero_subtitle    = 'Téléchargements illimités, exclus & remixes — mis à jour chaque semaine.',
+  footer_text      = '© French Record Pool — La référence des DJs francophones',
+  updated_at       = now()
+WHERE id = 'global';
+```
 
-### 1.4 Validation & feedback
-- Schéma **Zod** pour `TrackFormData` (titre, artiste, genre obligatoires ; BPM 40-220 ; URL valides ; taille fichier max 100 MB pour audio, 10 MB pour cover).
-- Indicateur de progression upload (Supabase storage `onUploadProgress` simulé via XHR) sur chaque dropzone.
-- Toasts succès/erreur explicites + résumé de fin de lot ("3/5 publiés, 2 erreurs").
+> J'utilise une migration (rôle service) car la policy `Admins can update branding` exige `auth.uid()`, indisponible côté outil. Une fois publié, le `BrandingContext` réactif applique les variables CSS et charge les Google Fonts en live pour tous les visiteurs.
 
----
-
-## LOT 2 — Améliorer le site
-
-### 2.1 Recherche & filtres
-- **Recherche** : connecter la barre de recherche du header (actuellement décorative) à un état global → redirige sur `/tracks?q=...` avec filtre titre/artiste/label.
-- **Filtres avancés sur `/tracks`** :
-  - Slider BPM (range), select Key (gamme musicale), multi-select Genre, multi-select Version.
-  - Tri (récent, top téléchargements, BPM).
-  - URL synchronisée (params) pour partage.
-
-### 2.2 Pages "Mes Favoris" & "Mes Téléchargements"
-- `/favorites` (auth requis) : liste des tracks favorites de l'utilisateur (réutilise `useFavorites` + jointure tracks).
-- `/downloads` (auth requis) : historique des téléchargements (table `downloads` déjà présente).
-- Liens dans la nav user (dropdown "Mon compte") + dashboard.
-
-### 2.3 Performance
-- **Lazy-loading** des routes via `React.lazy` + `Suspense` dans `App.tsx` (réduit le bundle initial).
-- `loading="lazy"` sur toutes les `<img>` covers.
-- Préfetch des covers visibles uniquement (Intersection Observer simple).
-
-### 2.4 SEO
-- Composant `<SEO>` injectant `<title>`, `<meta description>`, `<link rel=canonical>`, OpenGraph + JSON-LD via `react-helmet-async` (déjà compatible).
-- Une H1 unique par page, alt text sur covers (`{title} - {artist}`).
-- `sitemap.xml` statique + `robots.txt` mis à jour.
-- JSON-LD `MusicRecording` sur `/tracks/:id`.
-
-### 2.5 Refonte visuelle (light)
-- Hero `Index` retravaillé : meilleure hiérarchie typographique, animation framer-motion plus marquée, gradient bleu→blanc→rouge plus subtil.
-- Cards tracks : hover plus expressif (élévation, glow primaire), badges BPM/Key plus lisibles.
-- Footer enrichi (liens, mentions, réseaux).
-
-> Pour la refonte visuelle, comme c'est qualitatif, je proposerai 2-3 directions de design (mockups HTML) sur le hero après le lot 1 pour que tu choisisses, plutôt que de l'imposer.
-
----
-
-## Ordre d'exécution proposé
-
-1. **Lot 1** maintenant (ajout tracks complet) → tu testes.
-2. **Lot 2.1 + 2.2** (recherche/filtres + pages perso) → fonctionnel.
-3. **Lot 2.3 + 2.4** (perf + SEO) → invisible mais critique.
-4. **Lot 2.5** avec choix de direction de design.
-
-## Détails techniques
-
-- **Nouvelles deps** : `jsmediatags` (~30 kB), `react-helmet-async` (~5 kB), `zod` (déjà présent probablement). Pas de lib drag&drop externe.
-- **Pas de migration DB nécessaire** — toutes les tables (tracks, favorites, downloads) existent déjà.
-- **Pas de nouvelle edge function** — uploads via SDK Supabase Storage côté client (admin déjà authentifié).
-- **Compatibilité RLS** : OK, l'admin a déjà policy INSERT sur `tracks` et accès aux 3 buckets.
-
-Confirme et je commence par le **Lot 1**.
+## Hors-scope (à demander si tu veux)
+- Upload d'un vrai logo PNG/SVG (tu n'as pas fourni d'URL).
+- Édition de textes Hero personnalisés (j'ai mis des valeurs par défaut cohérentes).
+- Tu pourras de toute façon ajuster finement dans `/admin/branding` après connexion.
