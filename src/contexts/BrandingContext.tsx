@@ -49,44 +49,46 @@ function loadGoogleFont(family: string) {
 }
 
 export function applyBrandingToDom(b: Branding) {
+  // Clean any legacy inline vars that would override the dark class (previous bug)
   const root = document.documentElement;
-  // Light vars on :root via inline style
-  const lightMap: Record<string, string> = {
-    "--background": b.light_background,
-    "--foreground": b.light_foreground,
-    "--primary": b.light_primary,
-    "--ring": b.light_primary,
-    "--accent": b.light_accent,
-    "--card": b.light_card,
-    "--popover": b.light_card,
-    "--muted": b.light_muted,
-    "--secondary": b.light_muted,
-    "--border": b.light_border,
-    "--input": b.light_border,
-    "--radius": b.radius,
-  };
-  Object.entries(lightMap).forEach(([k, v]) => root.style.setProperty(k, v));
+  ["--background","--foreground","--primary","--ring","--accent","--card","--popover","--muted","--secondary","--border","--input","--radius"].forEach((k) => root.style.removeProperty(k));
 
-  // Inject/update dark style block
-  let darkStyle = document.getElementById("branding-dark-vars") as HTMLStyleElement | null;
-  if (!darkStyle) {
-    darkStyle = document.createElement("style");
-    darkStyle.id = "branding-dark-vars";
-    document.head.appendChild(darkStyle);
+  // Inject a single style block with both :root (light) and .dark themes so the cascade works.
+  let themeStyle = document.getElementById("branding-theme-vars") as HTMLStyleElement | null;
+  if (!themeStyle) {
+    themeStyle = document.createElement("style");
+    themeStyle.id = "branding-theme-vars";
+    document.head.appendChild(themeStyle);
   }
-  darkStyle.textContent = `.dark{
-    --background:${b.dark_background};
-    --foreground:${b.dark_foreground};
-    --primary:${b.dark_primary};
-    --ring:${b.dark_primary};
-    --accent:${b.dark_accent};
-    --card:${b.dark_card};
-    --popover:${b.dark_card};
-    --muted:${b.dark_muted};
-    --secondary:${b.dark_muted};
-    --border:${b.dark_border};
-    --input:${b.dark_border};
-  }`;
+  themeStyle.textContent = `
+    :root{
+      --background:${b.light_background};
+      --foreground:${b.light_foreground};
+      --primary:${b.light_primary};
+      --ring:${b.light_primary};
+      --accent:${b.light_accent};
+      --card:${b.light_card};
+      --popover:${b.light_card};
+      --muted:${b.light_muted};
+      --secondary:${b.light_muted};
+      --border:${b.light_border};
+      --input:${b.light_border};
+      --radius:${b.radius};
+    }
+    .dark{
+      --background:${b.dark_background};
+      --foreground:${b.dark_foreground};
+      --primary:${b.dark_primary};
+      --ring:${b.dark_primary};
+      --accent:${b.dark_accent};
+      --card:${b.dark_card};
+      --popover:${b.dark_card};
+      --muted:${b.dark_muted};
+      --secondary:${b.dark_muted};
+      --border:${b.dark_border};
+      --input:${b.dark_border};
+    }
+  `;
 
   // Fonts
   loadGoogleFont(b.font_display);
