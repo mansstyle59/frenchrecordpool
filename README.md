@@ -11,8 +11,12 @@ Pour un lien plus propre et plus fiable, utilisez **une seule URL canonique** se
 
 ### Exemples
 
-- Compte GitHub `octocat` : `https://octocat.github.io/frenchrecordpool/`
+- Compte GitHub `octocat` : `https://octocat.github.io/frenchrecordpool/` **(exemple uniquement)**
 - Domaine custom : `https://records.example.com/`
+
+
+> ⚠️ `https://octocat.github.io/frenchrecordpool/` est une URL d’exemple.
+> Votre URL réelle est: `https://<votre-username>.github.io/frenchrecordpool/`.
 
 ## Démarrage local
 
@@ -66,6 +70,16 @@ Puis activez **Settings → Pages** sur la branche `gh-pages`.
 - Ajoutez votre domaine dans **Settings → Pages → Custom domain**.
 - Créez/ajustez les entrées DNS (CNAME / A / AAAA) chez votre registrar.
 - Si domaine custom activé, pensez à mettre `VITE_BASE_PATH=/`.
+
+### 4) Vérifier l’URL finale (éviter le 404)
+
+Si `https://<username>.github.io/frenchrecordpool/` ne fonctionne pas:
+
+- Vérifiez que le repository est **public**.
+- Vérifiez que **Settings → Pages** pointe bien vers la branche `gh-pages`.
+- Vérifiez que le nom du repository est exactement `frenchrecordpool` (respect du chemin URL).
+- Attendez 1 à 5 minutes après publication (propagation GitHub Pages).
+- Contrôlez que le build a été fait avec `VITE_BASE_PATH=/frenchrecordpool/`.
 
 ## Stack technique
 
