@@ -58,7 +58,7 @@ Ensuite, dans **Settings → Pages** :
 - Source : **Deploy from a branch**
 - Branch : **gh-pages** (root)
 
-### 3) Vérification rapide en cas de 404 (conflits de config)
+### 3) Vérification rapide en cas de 404
 
 - Le repo doit être **public**.
 - Le nom du repo doit être exactement `frenchrecordpool`.
@@ -73,3 +73,8 @@ Ensuite, dans **Settings → Pages** :
 - Tailwind CSS + shadcn/ui
 - Supabase
 - Vitest + Testing Library
+
+
+## Note de fusion
+
+Ce README est la version consolidée après résolution de conflits de branche.
