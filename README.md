@@ -1,22 +1,15 @@
 # French Record Pool
 
-Application web React/Vite pour gérer un pool de morceaux (tracks), artistes, genres et sorties, avec authentification et backend Supabase.
+Application web React + Vite pour gérer un catalogue de morceaux (tracks), artistes, genres et sorties, avec authentification et backend Supabase.
 
-## URL de production (GitHub Pages)
+## URL GitHub Pages (important)
 
-Pour un lien plus propre et plus fiable, utilisez **une seule URL canonique** selon votre mode d’hébergement :
+L’URL de production dépend de **votre username GitHub** :
 
-- **GitHub Pages (projet)** : `https://<github-username>.github.io/frenchrecordpool/`
-- **Domaine personnalisé** : `https://music.votredomaine.com/` (recommandé pour une URL plus professionnelle)
+- Format réel : `https://<votre-username>.github.io/frenchrecordpool/`
+- Exemple : `https://octocat.github.io/frenchrecordpool/` *(exemple seulement)*
 
-### Exemples
-
-- Compte GitHub `octocat` : `https://octocat.github.io/frenchrecordpool/` **(exemple uniquement)**
-- Domaine custom : `https://records.example.com/`
-
-
-> ⚠️ `https://octocat.github.io/frenchrecordpool/` est une URL d’exemple.
-> Votre URL réelle est: `https://<votre-username>.github.io/frenchrecordpool/`.
+> Si l’URL `octocat` ne marche pas chez vous, c’est normal : remplacez `octocat` par votre propre username.
 
 ## Démarrage local
 
@@ -29,33 +22,31 @@ npm install
 npm run dev
 ```
 
-L’application sera disponible sur `http://localhost:8080`.
+Application locale : `http://localhost:8080`
 
-## Build de production
+## Build production
 
 ```bash
 npm run build
 npm run preview
 ```
 
-## Déploiement sur GitHub Pages
+## Déploiement GitHub Pages
 
-### 1) Configurer le chemin de base
+### 1) Configurer le base path Vite
 
 Le projet lit `VITE_BASE_PATH` dans `vite.config.ts`.
 
-- Pour GitHub Pages projet : `VITE_BASE_PATH=/frenchrecordpool/`
-- Pour domaine racine/custom domain : `VITE_BASE_PATH=/`
+- GitHub Pages (repo projet) : `VITE_BASE_PATH=/frenchrecordpool/`
+- Domaine personnalisé (racine) : `VITE_BASE_PATH=/`
 
-Créez un fichier `.env.production` :
+Créez `.env.production` :
 
 ```bash
 VITE_BASE_PATH=/frenchrecordpool/
 ```
 
-### 2) Publier le dossier `dist/`
-
-Option simple avec `gh-pages` :
+### 2) Publier `dist/`
 
 ```bash
 npm install --save-dev gh-pages
@@ -63,25 +54,17 @@ npm run build
 npx gh-pages -d dist
 ```
 
-Puis activez **Settings → Pages** sur la branche `gh-pages`.
+Ensuite, dans **Settings → Pages**, sélectionnez la branche `gh-pages`.
 
-### 3) (Optionnel) Domaine personnalisé
+### 3) Vérification rapide en cas de 404
 
-- Ajoutez votre domaine dans **Settings → Pages → Custom domain**.
-- Créez/ajustez les entrées DNS (CNAME / A / AAAA) chez votre registrar.
-- Si domaine custom activé, pensez à mettre `VITE_BASE_PATH=/`.
+- Le repo doit être **public**.
+- Le nom du repo doit être exactement `frenchrecordpool`.
+- Pages doit cibler la branche `gh-pages`.
+- Attendre 1 à 5 minutes après le publish.
+- Le build doit avoir été fait avec `VITE_BASE_PATH=/frenchrecordpool/`.
 
-### 4) Vérifier l’URL finale (éviter le 404)
-
-Si `https://<username>.github.io/frenchrecordpool/` ne fonctionne pas:
-
-- Vérifiez que le repository est **public**.
-- Vérifiez que **Settings → Pages** pointe bien vers la branche `gh-pages`.
-- Vérifiez que le nom du repository est exactement `frenchrecordpool` (respect du chemin URL).
-- Attendez 1 à 5 minutes après publication (propagation GitHub Pages).
-- Contrôlez que le build a été fait avec `VITE_BASE_PATH=/frenchrecordpool/`.
-
-## Stack technique
+## Stack
 
 - React 18 + TypeScript
 - Vite 5
