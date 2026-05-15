@@ -35,6 +35,8 @@ export interface TrackFormData {
   coverFile: File | null;
   coverUrl: string;
   downloadUrl: string;
+  acapellaUrl: string;
+  instrumentalUrl: string;
 }
 
 type SourceMode = "file" | "url";
