@@ -224,6 +224,7 @@ export type Database = {
       }
       tracks: {
         Row: {
+          acapella_url: string | null
           artist: string
           audio_url: string | null
           bpm: number | null
@@ -235,6 +236,7 @@ export type Database = {
           duration: string | null
           genre: string
           id: string
+          instrumental_url: string | null
           label: string | null
           musical_key: string | null
           preview_url: string | null
@@ -245,6 +247,7 @@ export type Database = {
           version: string | null
         }
         Insert: {
+          acapella_url?: string | null
           artist: string
           audio_url?: string | null
           bpm?: number | null
@@ -256,6 +259,7 @@ export type Database = {
           duration?: string | null
           genre: string
           id?: string
+          instrumental_url?: string | null
           label?: string | null
           musical_key?: string | null
           preview_url?: string | null
@@ -266,6 +270,7 @@ export type Database = {
           version?: string | null
         }
         Update: {
+          acapella_url?: string | null
           artist?: string
           audio_url?: string | null
           bpm?: number | null
@@ -277,6 +282,7 @@ export type Database = {
           duration?: string | null
           genre?: string
           id?: string
+          instrumental_url?: string | null
           label?: string | null
           musical_key?: string | null
           preview_url?: string | null

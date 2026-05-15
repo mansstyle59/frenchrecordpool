@@ -66,6 +66,8 @@ export default function AdminTracks() {
         audio_url: audioUrl,
         preview_url: previewUrl,
         download_url: data.downloadUrl || (editingTrack as any)?.download_url || null,
+        acapella_url: data.acapellaUrl || (editingTrack as any)?.acapella_url || null,
+        instrumental_url: data.instrumentalUrl || (editingTrack as any)?.instrumental_url || null,
       };
 
       if (editingTrack) {

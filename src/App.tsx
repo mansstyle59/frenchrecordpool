@@ -25,6 +25,7 @@ import Artists from "./pages/Artists";
 import Genres from "./pages/Genres";
 import TopTracks from "./pages/TopTracks";
 import NewReleases from "./pages/NewReleases";
+import Stems from "./pages/Stems";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -57,6 +58,7 @@ const App = () => (
               <Route path="/genres" element={<Genres />} />
               <Route path="/top" element={<TopTracks />} />
               <Route path="/new" element={<NewReleases />} />
+              <Route path="/stems" element={<Stems />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
             <MiniPlayer />
