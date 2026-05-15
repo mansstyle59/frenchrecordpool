@@ -249,6 +249,17 @@ export default function TrackForm({ initialData, saving, onSubmit }: TrackFormPr
         <Input type="url" value={downloadUrl} onChange={(e) => setDownloadUrl(e.target.value)} placeholder="https://example.com/download-link" className="bg-secondary border-border" />
       </div>
 
+      <div className="grid grid-cols-2 gap-3 pt-2 border-t border-border">
+        <div className="space-y-1">
+          <Label className="text-xs">🎤 URL Acapella</Label>
+          <Input type="url" value={acapellaUrl} onChange={(e) => setAcapellaUrl(e.target.value)} placeholder="https://..." className="bg-secondary border-border" />
+        </div>
+        <div className="space-y-1">
+          <Label className="text-xs">🎹 URL Instrumentale</Label>
+          <Input type="url" value={instrumentalUrl} onChange={(e) => setInstrumentalUrl(e.target.value)} placeholder="https://..." className="bg-secondary border-border" />
+        </div>
+      </div>
+
       <Button variant="hero" type="submit" disabled={saving} className="w-full">
         {saving ? "Enregistrement..." : initialData ? "Modifier la track" : "Ajouter la track"}
       </Button>
