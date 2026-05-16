@@ -211,6 +211,7 @@ export default function BulkUploadDialog({ open, onOpenChange, userId }: BulkUpl
               <thead className="bg-secondary/50 sticky top-0 z-10">
                 <tr className="text-left text-muted-foreground">
                   <th className="px-2 py-2 w-6"></th>
+                  <th className="px-2 py-2 w-14">Cover</th>
                   <th className="px-2 py-2">Titre *</th>
                   <th className="px-2 py-2">Artiste *</th>
                   <th className="px-2 py-2">Genre</th>
