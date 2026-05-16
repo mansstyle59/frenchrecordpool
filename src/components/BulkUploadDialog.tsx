@@ -231,6 +231,27 @@ export default function BulkUploadDialog({ open, onOpenChange, userId }: BulkUpl
                       {r.status === "pending" && <Music className="h-3 w-3 text-muted-foreground mx-auto" />}
                     </td>
                     <td className="px-1 py-1">
+                      <label className="block h-9 w-9 rounded overflow-hidden bg-secondary border border-border cursor-pointer relative group">
+                        {r.coverPreview ? (
+                          <img src={r.coverPreview} alt="" className="h-full w-full object-cover" />
+                        ) : (
+                          <Upload className="h-3 w-3 text-muted-foreground absolute inset-0 m-auto" />
+                        )}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          disabled={uploading}
+                          onChange={(e) => {
+                            const f = e.target.files?.[0];
+                            if (!f) return;
+                            const preview = URL.createObjectURL(f);
+                            updateRow(r.id, { coverFile: f, coverPreview: preview });
+                          }}
+                        />
+                      </label>
+                    </td>
+                    <td className="px-1 py-1">
                       <Input value={r.title} onChange={(e) => updateRow(r.id, { title: e.target.value })} disabled={uploading} className="h-7 text-xs bg-secondary border-border" />
                     </td>
                     <td className="px-1 py-1">
