@@ -61,6 +61,8 @@ export default function BulkUploadDialog({ open, onOpenChange, userId }: BulkUpl
         musicalKey: "",
         version: "Original",
         duration: "",
+        coverFile: null,
+        coverPreview: null,
         status: "pending",
       });
     }
