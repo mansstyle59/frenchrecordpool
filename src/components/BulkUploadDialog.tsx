@@ -23,6 +23,8 @@ interface Row {
   musicalKey: string;
   version: string;
   duration: string;
+  coverFile: File | null;
+  coverPreview: string | null;
   status: "pending" | "uploading" | "done" | "error";
   error?: string;
 }
