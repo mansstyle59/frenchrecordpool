@@ -118,6 +118,17 @@ export default function BulkUploadDialog({ open, onOpenChange, userId }: BulkUpl
         if (upErr) throw upErr;
         const { data: pub } = supabase.storage.from("track-audio").getPublicUrl(`${trackId}/audio.${ext}`);
 
+        let coverUrl: string | null = null;
+        if (row.coverFile) {
+          const cExt = row.coverFile.name.split(".").pop() || "jpg";
+          const { error: cErr } = await supabase.storage
+            .from("track-covers")
+            .upload(`${trackId}/cover.${cExt}`, row.coverFile, { upsert: true });
+          if (cErr) throw cErr;
+          const { data: cPub } = supabase.storage.from("track-covers").getPublicUrl(`${trackId}/cover.${cExt}`);
+          coverUrl = cPub.publicUrl;
+        }
+
         const { error: dbErr } = await supabase.from("tracks").insert({
           id: trackId,
           title: row.title.trim(),
@@ -128,6 +139,7 @@ export default function BulkUploadDialog({ open, onOpenChange, userId }: BulkUpl
           version: row.version,
           duration: row.duration || null,
           audio_url: pub.publicUrl,
+          cover_url: coverUrl,
           tags: [],
           created_by: userId,
         });
