@@ -23,6 +23,8 @@ interface Row {
   musicalKey: string;
   version: string;
   duration: string;
+  coverFile: File | null;
+  coverPreview: string | null;
   status: "pending" | "uploading" | "done" | "error";
   error?: string;
 }
@@ -59,6 +61,8 @@ export default function BulkUploadDialog({ open, onOpenChange, userId }: BulkUpl
         musicalKey: "",
         version: "Original",
         duration: "",
+        coverFile: null,
+        coverPreview: null,
         status: "pending",
       });
     }
@@ -114,6 +118,17 @@ export default function BulkUploadDialog({ open, onOpenChange, userId }: BulkUpl
         if (upErr) throw upErr;
         const { data: pub } = supabase.storage.from("track-audio").getPublicUrl(`${trackId}/audio.${ext}`);
 
+        let coverUrl: string | null = null;
+        if (row.coverFile) {
+          const cExt = row.coverFile.name.split(".").pop() || "jpg";
+          const { error: cErr } = await supabase.storage
+            .from("track-covers")
+            .upload(`${trackId}/cover.${cExt}`, row.coverFile, { upsert: true });
+          if (cErr) throw cErr;
+          const { data: cPub } = supabase.storage.from("track-covers").getPublicUrl(`${trackId}/cover.${cExt}`);
+          coverUrl = cPub.publicUrl;
+        }
+
         const { error: dbErr } = await supabase.from("tracks").insert({
           id: trackId,
           title: row.title.trim(),
@@ -124,6 +139,7 @@ export default function BulkUploadDialog({ open, onOpenChange, userId }: BulkUpl
           version: row.version,
           duration: row.duration || null,
           audio_url: pub.publicUrl,
+          cover_url: coverUrl,
           tags: [],
           created_by: userId,
         });
@@ -195,6 +211,7 @@ export default function BulkUploadDialog({ open, onOpenChange, userId }: BulkUpl
               <thead className="bg-secondary/50 sticky top-0 z-10">
                 <tr className="text-left text-muted-foreground">
                   <th className="px-2 py-2 w-6"></th>
+                  <th className="px-2 py-2 w-14">Cover</th>
                   <th className="px-2 py-2">Titre *</th>
                   <th className="px-2 py-2">Artiste *</th>
                   <th className="px-2 py-2">Genre</th>
@@ -212,6 +229,27 @@ export default function BulkUploadDialog({ open, onOpenChange, userId }: BulkUpl
                       {r.status === "done" && <CheckCircle2 className="h-3 w-3 text-primary mx-auto" />}
                       {r.status === "error" && <AlertCircle className="h-3 w-3 text-destructive mx-auto" />}
                       {r.status === "pending" && <Music className="h-3 w-3 text-muted-foreground mx-auto" />}
+                    </td>
+                    <td className="px-1 py-1">
+                      <label className="block h-9 w-9 rounded overflow-hidden bg-secondary border border-border cursor-pointer relative group">
+                        {r.coverPreview ? (
+                          <img src={r.coverPreview} alt="" className="h-full w-full object-cover" />
+                        ) : (
+                          <Upload className="h-3 w-3 text-muted-foreground absolute inset-0 m-auto" />
+                        )}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          disabled={uploading}
+                          onChange={(e) => {
+                            const f = e.target.files?.[0];
+                            if (!f) return;
+                            const preview = URL.createObjectURL(f);
+                            updateRow(r.id, { coverFile: f, coverPreview: preview });
+                          }}
+                        />
+                      </label>
                     </td>
                     <td className="px-1 py-1">
                       <Input value={r.title} onChange={(e) => updateRow(r.id, { title: e.target.value })} disabled={uploading} className="h-7 text-xs bg-secondary border-border" />
