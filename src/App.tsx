@@ -21,6 +21,7 @@ import AdminTracks from "./pages/AdminTracks";
 import AdminUsers from "./pages/AdminUsers";
 import AdminSubscriptions from "./pages/AdminSubscriptions";
 import AdminBranding from "./pages/AdminBranding";
+import AdminAuditLog from "./pages/AdminAuditLog";
 import Artists from "./pages/Artists";
 import Genres from "./pages/Genres";
 import TopTracks from "./pages/TopTracks";
@@ -54,6 +55,7 @@ const App = () => (
               <Route path="/admin/users" element={<AdminUsers />} />
               <Route path="/admin/subscriptions" element={<AdminSubscriptions />} />
               <Route path="/admin/branding" element={<AdminBranding />} />
+              <Route path="/admin/audit" element={<AdminAuditLog />} />
               <Route path="/artists" element={<Artists />} />
               <Route path="/genres" element={<Genres />} />
               <Route path="/top" element={<TopTracks />} />
