@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   Disc3, Users, Download, Music, Settings, Palette, Heart,
-  TrendingUp, CreditCard, Upload, ArrowRight, Activity,
+  TrendingUp, CreditCard, Upload, ArrowRight, Activity, ScrollText,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTracks } from "@/hooks/useTracks";
@@ -15,6 +15,7 @@ const adminLinks = [
   { to: "/admin/users", label: "Gérer les utilisateurs", desc: "Comptes DJ et rôles", icon: Users },
   { to: "/admin/subscriptions", label: "Abonnements", desc: "Plans et statuts Stripe", icon: CreditCard },
   { to: "/admin/branding", label: "Branding Studio", desc: "Couleurs, logos, typographie", icon: Palette },
+  { to: "/admin/audit", label: "Journal d'audit", desc: "Historique des actions admin", icon: ScrollText },
 ];
 
 export default function Admin() {
