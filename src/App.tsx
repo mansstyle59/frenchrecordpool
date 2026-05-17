@@ -21,6 +21,7 @@ import AdminTracks from "./pages/AdminTracks";
 import AdminUsers from "./pages/AdminUsers";
 import AdminSubscriptions from "./pages/AdminSubscriptions";
 import AdminBranding from "./pages/AdminBranding";
+import AdminAuditLog from "./pages/AdminAuditLog";
 import Artists from "./pages/Artists";
 import Genres from "./pages/Genres";
 import TopTracks from "./pages/TopTracks";
