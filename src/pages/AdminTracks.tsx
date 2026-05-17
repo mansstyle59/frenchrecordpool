@@ -20,6 +20,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import TrackForm from "@/components/TrackForm";
 import type { TrackFormData } from "@/components/TrackForm";
 import BulkUploadDialog from "@/components/BulkUploadDialog";
+import { logAdminAction } from "@/lib/auditLog";
 
 type SortKey = "newest" | "oldest" | "az" | "za" | "bpm_asc" | "bpm_desc" | "downloads";
 const PAGE_SIZE = 25;
