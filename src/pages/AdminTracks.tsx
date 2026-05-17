@@ -139,10 +139,22 @@ export default function AdminTracks() {
       if (editingTrack) {
         const { error } = await supabase.from("tracks").update(payload).eq("id", editingTrack.id);
         if (error) throw error;
+        await logAdminAction({
+          actorId: user!.id, action: "track.update",
+          entityType: "track", entityId: editingTrack.id,
+          entityLabel: `${data.title} — ${data.artist}`,
+          details: { changes: payload },
+        });
         toast({ title: "Track modifiée !" });
       } else {
-        const { error } = await supabase.from("tracks").insert({ ...payload, created_by: user!.id });
+        const newId = trackId;
+        const { error } = await supabase.from("tracks").insert({ ...payload, id: newId, created_by: user!.id });
         if (error) throw error;
+        await logAdminAction({
+          actorId: user!.id, action: "track.create",
+          entityType: "track", entityId: newId,
+          entityLabel: `${data.title} — ${data.artist}`,
+        });
         toast({ title: "Track ajoutée !" });
       }
 
