@@ -172,10 +172,16 @@ export default function AdminTracks() {
   const openAdd = () => { setEditingTrack(null); setDialogOpen(true); };
 
   const handleDelete = async (id: string) => {
+    const track = tracks.find(t => t.id === id);
     if (!confirm("Supprimer cette track ?")) return;
     const { error } = await supabase.from("tracks").delete().eq("id", id);
     if (error) toast({ title: "Erreur", description: error.message, variant: "destructive" });
     else {
+      await logAdminAction({
+        actorId: user!.id, action: "track.delete",
+        entityType: "track", entityId: id,
+        entityLabel: track ? `${track.title} — ${track.artist}` : id,
+      });
       toast({ title: "Track supprimée" });
       queryClient.invalidateQueries({ queryKey: ["tracks"] });
     }
