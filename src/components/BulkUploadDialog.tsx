@@ -368,15 +368,29 @@ export default function BulkUploadDialog({ open, onOpenChange, userId }: BulkUpl
           </div>
         )}
 
+        {uploading && progress.total > 0 && (
+          <div className="flex items-center gap-2 pt-2">
+            <Progress value={(progress.done / progress.total) * 100} className="h-1.5 flex-1" />
+            <span className="text-[11px] text-muted-foreground tabular-nums whitespace-nowrap">
+              {progress.done}/{progress.total}{progress.errors ? ` · ${progress.errors} err.` : ""}
+            </span>
+          </div>
+        )}
+
         <div className="flex items-center justify-between pt-2 border-t border-border">
           <p className="text-xs text-muted-foreground">
-            {rows.length === 0 ? "Aucun fichier" : `${rows.length} fichier(s)`}
-            {uploading && progress.total > 0 && ` · ${progress.done}/${progress.total} traités${progress.errors ? ` · ${progress.errors} erreurs` : ""}`}
+            {rows.length === 0 ? "Aucun fichier" : `${rows.length} fichier(s) · upload parallèle x${CONCURRENCY}`}
           </p>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" onClick={() => onOpenChange(false)} disabled={uploading}>
               Fermer
             </Button>
+            {rows.some((r) => r.status === "error") && (
+              <Button variant="outline" size="sm" onClick={retryErrors} disabled={uploading}>
+                <RotateCcw className="h-3 w-3 mr-1" />
+                Réessayer erreurs
+              </Button>
+            )}
             <Button variant="hero" size="sm" onClick={handleUpload} disabled={uploading || rows.length === 0}>
               {uploading ? <><Loader2 className="h-3 w-3 mr-1 animate-spin" />Upload...</> : `Publier ${rows.filter((r) => r.status !== "done").length} track(s)`}
             </Button>
