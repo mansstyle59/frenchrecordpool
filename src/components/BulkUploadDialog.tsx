@@ -361,7 +361,7 @@ export default function BulkUploadDialog({ open, onOpenChange, userId }: BulkUpl
                       </td>
                     </tr>
                   )}
-                  </>
+                  </Fragment>
                 ))}
               </tbody>
             </table>
