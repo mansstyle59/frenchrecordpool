@@ -48,7 +48,19 @@ function downsample(input: Float32Array, fromRate: number, toRate: number): Floa
   return out;
 }
 
-export async function generateAudioPreview(file: File, seconds = PREVIEW_SECONDS): Promise<Blob | null> {
+export type PreviewStartMode = "intro" | "quarter" | "middle" | "drop";
+
+export interface PreviewOptions {
+  seconds?: number;
+  startMode?: PreviewStartMode;
+}
+
+export async function generateAudioPreview(file: File, opts: PreviewOptions | number = {}): Promise<Blob | null> {
+  // Rétrocompat: ancien appel generateAudioPreview(file, 30)
+  const options: PreviewOptions = typeof opts === "number" ? { seconds: opts } : opts;
+  const seconds = options.seconds ?? PREVIEW_SECONDS;
+  const startMode: PreviewStartMode = options.startMode ?? "quarter";
+
   try {
     const arrayBuf = await file.arrayBuffer();
     const Ctx: typeof AudioContext = (window.AudioContext || (window as any).webkitAudioContext);
@@ -57,8 +69,15 @@ export async function generateAudioPreview(file: File, seconds = PREVIEW_SECONDS
     const sampleRate = audioBuf.sampleRate;
     const totalSec = audioBuf.duration;
 
-    // Démarre à 25% du morceau (souvent après l'intro), sinon début
-    const startSec = totalSec > seconds * 1.5 ? totalSec * 0.25 : 0;
+    let startFrac = 0;
+    switch (startMode) {
+      case "intro": startFrac = 0; break;
+      case "quarter": startFrac = 0.25; break;
+      case "middle": startFrac = 0.45; break;
+      case "drop": startFrac = 0.6; break;
+    }
+    let startSec = totalSec * startFrac;
+    if (startSec + seconds > totalSec) startSec = Math.max(0, totalSec - seconds);
     const endSec = Math.min(startSec + seconds, totalSec);
     const startSample = Math.floor(startSec * sampleRate);
     const endSample = Math.floor(endSec * sampleRate);

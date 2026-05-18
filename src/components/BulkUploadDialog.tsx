@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Trash2, Upload, Loader2, CheckCircle2, AlertCircle, Music, RotateCcw } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { extractAudioMetadata } from "@/lib/audioMetadata";
-import { generateAudioPreview } from "@/lib/audioPreview";
+import { generateAudioPreview, type PreviewStartMode } from "@/lib/audioPreview";
 import { validateAudioFile } from "@/lib/trackSchema";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -46,6 +46,8 @@ export default function BulkUploadDialog({ open, onOpenChange, userId }: BulkUpl
   const [dragActive, setDragActive] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState({ done: 0, total: 0, errors: 0 });
+  const [previewSeconds, setPreviewSeconds] = useState<number>(30);
+  const [previewStart, setPreviewStart] = useState<PreviewStartMode>("quarter");
   const inputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
 
@@ -117,7 +119,7 @@ export default function BulkUploadDialog({ open, onOpenChange, userId }: BulkUpl
 
     // Génération auto du preview 30s
     let previewUrl: string | null = null;
-    const previewBlob = await generateAudioPreview(row.file, 30);
+    const previewBlob = await generateAudioPreview(row.file, { seconds: previewSeconds, startMode: previewStart });
     if (previewBlob) {
       const { error: pErr } = await supabase.storage
         .from("track-previews")
@@ -236,6 +238,37 @@ export default function BulkUploadDialog({ open, onOpenChange, userId }: BulkUpl
         <DialogHeader>
           <DialogTitle>Upload par lot</DialogTitle>
         </DialogHeader>
+
+        <div className="flex flex-wrap items-center gap-3 px-3 py-2 rounded-lg bg-secondary/40 border border-border">
+          <span className="text-xs font-medium text-muted-foreground">Preview auto :</span>
+          <div className="flex items-center gap-1.5">
+            <label className="text-[11px] text-muted-foreground">Durée</label>
+            <Select value={String(previewSeconds)} onValueChange={(v) => setPreviewSeconds(parseInt(v))} disabled={uploading}>
+              <SelectTrigger className="h-7 w-[88px] text-xs bg-background border-border"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="15">15 s</SelectItem>
+                <SelectItem value="20">20 s</SelectItem>
+                <SelectItem value="30">30 s</SelectItem>
+                <SelectItem value="45">45 s</SelectItem>
+                <SelectItem value="60">60 s</SelectItem>
+                <SelectItem value="90">90 s</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <label className="text-[11px] text-muted-foreground">Départ</label>
+            <Select value={previewStart} onValueChange={(v) => setPreviewStart(v as PreviewStartMode)} disabled={uploading}>
+              <SelectTrigger className="h-7 w-[150px] text-xs bg-background border-border"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="intro">Intro (0 %)</SelectItem>
+                <SelectItem value="quarter">25 % du morceau</SelectItem>
+                <SelectItem value="middle">Milieu (45 %)</SelectItem>
+                <SelectItem value="drop">Drop (60 %)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <span className="text-[11px] text-muted-foreground ml-auto">Appliqué à chaque fichier publié</span>
+        </div>
 
         <div
           onDragOver={(e) => {
