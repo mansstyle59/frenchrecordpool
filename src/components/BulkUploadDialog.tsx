@@ -30,6 +30,8 @@ interface Row {
   coverFile: File | null;
   coverPreview: string | null;
   status: "pending" | "uploading" | "done" | "error";
+  progress: number;
+  step?: string;
   error?: string;
 }
 
