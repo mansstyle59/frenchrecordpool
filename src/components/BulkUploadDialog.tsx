@@ -286,8 +286,8 @@ export default function BulkUploadDialog({ open, onOpenChange, userId }: BulkUpl
               </thead>
               <tbody className="divide-y divide-border">
                 {rows.map((r) => (
-                  <>
-                  <tr key={r.id} className={cn(r.status === "done" && "opacity-60", r.status === "error" && "bg-destructive/5")}>
+                  <Fragment key={r.id}>
+                  <tr className={cn(r.status === "done" && "opacity-60", r.status === "error" && "bg-destructive/5")}>
                     <td className="px-2 py-1.5 text-center">
                       {r.status === "uploading" && <Loader2 className="h-3 w-3 animate-spin text-primary mx-auto" />}
                       {r.status === "done" && <CheckCircle2 className="h-3 w-3 text-primary mx-auto" />}
