@@ -46,6 +46,8 @@ export default function BulkUploadDialog({ open, onOpenChange, userId }: BulkUpl
   const [dragActive, setDragActive] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState({ done: 0, total: 0, errors: 0 });
+  const [previewSeconds, setPreviewSeconds] = useState<number>(30);
+  const [previewStart, setPreviewStart] = useState<PreviewStartMode>("quarter");
   const inputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
 
