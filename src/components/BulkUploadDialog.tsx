@@ -119,7 +119,7 @@ export default function BulkUploadDialog({ open, onOpenChange, userId }: BulkUpl
 
     // Génération auto du preview 30s
     let previewUrl: string | null = null;
-    const previewBlob = await generateAudioPreview(row.file, 30);
+    const previewBlob = await generateAudioPreview(row.file, { seconds: previewSeconds, startMode: previewStart });
     if (previewBlob) {
       const { error: pErr } = await supabase.storage
         .from("track-previews")
