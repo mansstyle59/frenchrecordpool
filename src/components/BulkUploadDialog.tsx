@@ -239,6 +239,37 @@ export default function BulkUploadDialog({ open, onOpenChange, userId }: BulkUpl
           <DialogTitle>Upload par lot</DialogTitle>
         </DialogHeader>
 
+        <div className="flex flex-wrap items-center gap-3 px-3 py-2 rounded-lg bg-secondary/40 border border-border">
+          <span className="text-xs font-medium text-muted-foreground">Preview auto :</span>
+          <div className="flex items-center gap-1.5">
+            <label className="text-[11px] text-muted-foreground">Durée</label>
+            <Select value={String(previewSeconds)} onValueChange={(v) => setPreviewSeconds(parseInt(v))} disabled={uploading}>
+              <SelectTrigger className="h-7 w-[88px] text-xs bg-background border-border"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="15">15 s</SelectItem>
+                <SelectItem value="20">20 s</SelectItem>
+                <SelectItem value="30">30 s</SelectItem>
+                <SelectItem value="45">45 s</SelectItem>
+                <SelectItem value="60">60 s</SelectItem>
+                <SelectItem value="90">90 s</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <label className="text-[11px] text-muted-foreground">Départ</label>
+            <Select value={previewStart} onValueChange={(v) => setPreviewStart(v as PreviewStartMode)} disabled={uploading}>
+              <SelectTrigger className="h-7 w-[150px] text-xs bg-background border-border"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="intro">Intro (0 %)</SelectItem>
+                <SelectItem value="quarter">25 % du morceau</SelectItem>
+                <SelectItem value="middle">Milieu (45 %)</SelectItem>
+                <SelectItem value="drop">Drop (60 %)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <span className="text-[11px] text-muted-foreground ml-auto">Appliqué à chaque fichier publié</span>
+        </div>
+
         <div
           onDragOver={(e) => {
             e.preventDefault();
