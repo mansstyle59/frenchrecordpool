@@ -3,13 +3,17 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Trash2, Upload, Loader2, CheckCircle2, AlertCircle, Music } from "lucide-react";
+import { Trash2, Upload, Loader2, CheckCircle2, AlertCircle, Music, RotateCcw } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
 import { extractAudioMetadata } from "@/lib/audioMetadata";
+import { generateAudioPreview } from "@/lib/audioPreview";
 import { validateAudioFile } from "@/lib/trackSchema";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
+
+const CONCURRENCY = 3;
 
 const VERSIONS = ["Original", "Intro Edit", "Clean", "Dirty", "Extended", "Short Edit", "Acapella", "Instrumental"];
 
