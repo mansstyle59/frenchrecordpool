@@ -1,15 +1,19 @@
-import { useRef, useState } from "react";
+import { Fragment, useRef, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Trash2, Upload, Loader2, CheckCircle2, AlertCircle, Music } from "lucide-react";
+import { Trash2, Upload, Loader2, CheckCircle2, AlertCircle, Music, RotateCcw } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
 import { extractAudioMetadata } from "@/lib/audioMetadata";
+import { generateAudioPreview } from "@/lib/audioPreview";
 import { validateAudioFile } from "@/lib/trackSchema";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
+
+const CONCURRENCY = 3;
 
 const VERSIONS = ["Original", "Intro Edit", "Clean", "Dirty", "Extended", "Short Edit", "Acapella", "Instrumental"];
 
@@ -26,6 +30,8 @@ interface Row {
   coverFile: File | null;
   coverPreview: string | null;
   status: "pending" | "uploading" | "done" | "error";
+  progress: number;
+  step?: string;
   error?: string;
 }
 
@@ -64,6 +70,7 @@ export default function BulkUploadDialog({ open, onOpenChange, userId }: BulkUpl
         coverFile: null,
         coverPreview: null,
         status: "pending",
+        progress: 0,
       });
     }
     setRows((prev) => [...prev, ...accepted]);
@@ -96,6 +103,84 @@ export default function BulkUploadDialog({ open, onOpenChange, userId }: BulkUpl
 
   const removeRow = (id: string) => setRows((prev) => prev.filter((r) => r.id !== id));
 
+  const uploadRow = async (row: Row) => {
+    updateRow(row.id, { status: "uploading", error: undefined, progress: 5, step: "Audio…" });
+    const trackId = crypto.randomUUID();
+    const ext = row.file.name.split(".").pop() || "mp3";
+
+    const { error: upErr } = await supabase.storage
+      .from("track-audio")
+      .upload(`${trackId}/audio.${ext}`, row.file, { upsert: true });
+    if (upErr) throw upErr;
+    const { data: pub } = supabase.storage.from("track-audio").getPublicUrl(`${trackId}/audio.${ext}`);
+    updateRow(row.id, { progress: 45, step: "Preview…" });
+
+    // Génération auto du preview 30s
+    let previewUrl: string | null = null;
+    const previewBlob = await generateAudioPreview(row.file, 30);
+    if (previewBlob) {
+      const { error: pErr } = await supabase.storage
+        .from("track-previews")
+        .upload(`${trackId}/preview.wav`, previewBlob, { upsert: true, contentType: "audio/wav" });
+      if (!pErr) {
+        const { data: pPub } = supabase.storage.from("track-previews").getPublicUrl(`${trackId}/preview.wav`);
+        previewUrl = pPub.publicUrl;
+      }
+    }
+    updateRow(row.id, { progress: 70, step: "Cover…" });
+
+    let coverUrl: string | null = null;
+    if (row.coverFile) {
+      const cExt = row.coverFile.name.split(".").pop() || "jpg";
+      const { error: cErr } = await supabase.storage
+        .from("track-covers")
+        .upload(`${trackId}/cover.${cExt}`, row.coverFile, { upsert: true });
+      if (cErr) throw cErr;
+      const { data: cPub } = supabase.storage.from("track-covers").getPublicUrl(`${trackId}/cover.${cExt}`);
+      coverUrl = cPub.publicUrl;
+    }
+    updateRow(row.id, { progress: 90, step: "Enregistrement…" });
+
+    const { error: dbErr } = await supabase.from("tracks").insert({
+      id: trackId,
+      title: row.title.trim(),
+      artist: row.artist.trim(),
+      genre: row.genre.trim() || "Unknown",
+      bpm: row.bpm ? parseInt(row.bpm) : null,
+      musical_key: row.musicalKey || null,
+      version: row.version,
+      duration: row.duration || null,
+      audio_url: pub.publicUrl,
+      preview_url: previewUrl,
+      cover_url: coverUrl,
+      tags: [],
+      created_by: userId,
+    });
+    if (dbErr) throw dbErr;
+    updateRow(row.id, { status: "done", progress: 100, step: "Publié" });
+  };
+
+  const runQueue = async (queue: Row[]) => {
+    let done = 0, errors = 0;
+    setProgress({ done: 0, total: queue.length, errors: 0 });
+    const workers = Array.from({ length: Math.min(CONCURRENCY, queue.length) }).map(async () => {
+      while (queue.length) {
+        const row = queue.shift();
+        if (!row) break;
+        try {
+          await uploadRow(row);
+          done++;
+        } catch (err: any) {
+          updateRow(row.id, { status: "error", error: err.message || "Erreur", progress: 0, step: undefined });
+          errors++;
+        }
+        setProgress((p) => ({ done: done + errors, total: p.total, errors }));
+      }
+    });
+    await Promise.all(workers);
+    return { done, errors };
+  };
+
   const handleUpload = async () => {
     const valid = rows.filter((r) => r.title && r.artist && r.status !== "done");
     if (valid.length === 0) {
@@ -103,56 +188,7 @@ export default function BulkUploadDialog({ open, onOpenChange, userId }: BulkUpl
       return;
     }
     setUploading(true);
-    setProgress({ done: 0, total: valid.length, errors: 0 });
-    let done = 0;
-    let errors = 0;
-
-    for (const row of valid) {
-      updateRow(row.id, { status: "uploading", error: undefined });
-      try {
-        const trackId = crypto.randomUUID();
-        const ext = row.file.name.split(".").pop() || "mp3";
-        const { error: upErr } = await supabase.storage
-          .from("track-audio")
-          .upload(`${trackId}/audio.${ext}`, row.file, { upsert: true });
-        if (upErr) throw upErr;
-        const { data: pub } = supabase.storage.from("track-audio").getPublicUrl(`${trackId}/audio.${ext}`);
-
-        let coverUrl: string | null = null;
-        if (row.coverFile) {
-          const cExt = row.coverFile.name.split(".").pop() || "jpg";
-          const { error: cErr } = await supabase.storage
-            .from("track-covers")
-            .upload(`${trackId}/cover.${cExt}`, row.coverFile, { upsert: true });
-          if (cErr) throw cErr;
-          const { data: cPub } = supabase.storage.from("track-covers").getPublicUrl(`${trackId}/cover.${cExt}`);
-          coverUrl = cPub.publicUrl;
-        }
-
-        const { error: dbErr } = await supabase.from("tracks").insert({
-          id: trackId,
-          title: row.title.trim(),
-          artist: row.artist.trim(),
-          genre: row.genre.trim() || "Unknown",
-          bpm: row.bpm ? parseInt(row.bpm) : null,
-          musical_key: row.musicalKey || null,
-          version: row.version,
-          duration: row.duration || null,
-          audio_url: pub.publicUrl,
-          cover_url: coverUrl,
-          tags: [],
-          created_by: userId,
-        });
-        if (dbErr) throw dbErr;
-        updateRow(row.id, { status: "done" });
-        done++;
-      } catch (err: any) {
-        updateRow(row.id, { status: "error", error: err.message });
-        errors++;
-      }
-      setProgress({ done: done + errors, total: valid.length, errors });
-    }
-
+    const { done, errors } = await runQueue([...valid]);
     setUploading(false);
     queryClient.invalidateQueries({ queryKey: ["tracks"] });
     toast({
@@ -160,6 +196,33 @@ export default function BulkUploadDialog({ open, onOpenChange, userId }: BulkUpl
       description: `${done}/${valid.length} publié(s)${errors ? `, ${errors} erreur(s)` : ""}`,
       variant: errors ? "destructive" : "default",
     });
+  };
+
+  const retryErrors = async () => {
+    const failed = rows.filter((r) => r.status === "error");
+    if (failed.length === 0) return;
+    setUploading(true);
+    const { done, errors } = await runQueue([...failed]);
+    setUploading(false);
+    queryClient.invalidateQueries({ queryKey: ["tracks"] });
+    toast({
+      title: "Nouvelle tentative",
+      description: `${done} réussi(s)${errors ? `, ${errors} encore en erreur` : ""}`,
+      variant: errors ? "destructive" : "default",
+    });
+  };
+
+  const retryRow = async (row: Row) => {
+    if (uploading) return;
+    setUploading(true);
+    try {
+      await uploadRow(row);
+      queryClient.invalidateQueries({ queryKey: ["tracks"] });
+    } catch (err: any) {
+      updateRow(row.id, { status: "error", error: err.message || "Erreur", progress: 0 });
+    } finally {
+      setUploading(false);
+    }
   };
 
   const reset = () => {
@@ -223,7 +286,8 @@ export default function BulkUploadDialog({ open, onOpenChange, userId }: BulkUpl
               </thead>
               <tbody className="divide-y divide-border">
                 {rows.map((r) => (
-                  <tr key={r.id} className={cn(r.status === "done" && "opacity-60", r.status === "error" && "bg-destructive/5")}>
+                  <Fragment key={r.id}>
+                  <tr className={cn(r.status === "done" && "opacity-60", r.status === "error" && "bg-destructive/5")}>
                     <td className="px-2 py-1.5 text-center">
                       {r.status === "uploading" && <Loader2 className="h-3 w-3 animate-spin text-primary mx-auto" />}
                       {r.status === "done" && <CheckCircle2 className="h-3 w-3 text-primary mx-auto" />}
@@ -273,26 +337,60 @@ export default function BulkUploadDialog({ open, onOpenChange, userId }: BulkUpl
                       </Select>
                     </td>
                     <td className="px-1 py-1 text-center">
-                      <button type="button" onClick={() => removeRow(r.id)} disabled={uploading} className="text-muted-foreground hover:text-destructive disabled:opacity-30">
-                        <Trash2 className="h-3 w-3" />
-                      </button>
+                      <div className="flex items-center gap-1 justify-center">
+                        {r.status === "error" && (
+                          <button type="button" onClick={() => retryRow(r)} disabled={uploading} className="text-muted-foreground hover:text-primary disabled:opacity-30" title="Réessayer">
+                            <RotateCcw className="h-3 w-3" />
+                          </button>
+                        )}
+                        <button type="button" onClick={() => removeRow(r.id)} disabled={uploading} className="text-muted-foreground hover:text-destructive disabled:opacity-30">
+                          <Trash2 className="h-3 w-3" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
+                  {(r.status === "uploading" || r.status === "error" || (r.status === "done" && r.progress < 100)) && (
+                    <tr key={r.id + "-p"} className={cn(r.status === "error" && "bg-destructive/5")}>
+                      <td colSpan={9} className="px-3 pb-1.5">
+                        <div className="flex items-center gap-2">
+                          <Progress value={r.progress} className="h-1 flex-1" />
+                          <span className={cn("text-[10px] tabular-nums", r.status === "error" ? "text-destructive" : "text-muted-foreground")}>
+                            {r.status === "error" ? (r.error || "Erreur") : `${r.progress}% · ${r.step ?? ""}`}
+                          </span>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                  </Fragment>
                 ))}
               </tbody>
             </table>
           </div>
         )}
 
+        {uploading && progress.total > 0 && (
+          <div className="flex items-center gap-2 pt-2">
+            <Progress value={(progress.done / progress.total) * 100} className="h-1.5 flex-1" />
+            <span className="text-[11px] text-muted-foreground tabular-nums whitespace-nowrap">
+              {progress.done}/{progress.total}{progress.errors ? ` · ${progress.errors} err.` : ""}
+            </span>
+          </div>
+        )}
+
         <div className="flex items-center justify-between pt-2 border-t border-border">
           <p className="text-xs text-muted-foreground">
-            {rows.length === 0 ? "Aucun fichier" : `${rows.length} fichier(s)`}
-            {uploading && progress.total > 0 && ` · ${progress.done}/${progress.total} traités${progress.errors ? ` · ${progress.errors} erreurs` : ""}`}
+            {rows.length === 0 ? "Aucun fichier" : `${rows.length} fichier(s) · upload parallèle x${CONCURRENCY}`}
           </p>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" onClick={() => onOpenChange(false)} disabled={uploading}>
               Fermer
             </Button>
+            {rows.some((r) => r.status === "error") && (
+              <Button variant="outline" size="sm" onClick={retryErrors} disabled={uploading}>
+                <RotateCcw className="h-3 w-3 mr-1" />
+                Réessayer erreurs
+              </Button>
+            )}
             <Button variant="hero" size="sm" onClick={handleUpload} disabled={uploading || rows.length === 0}>
               {uploading ? <><Loader2 className="h-3 w-3 mr-1 animate-spin" />Upload...</> : `Publier ${rows.filter((r) => r.status !== "done").length} track(s)`}
             </Button>
