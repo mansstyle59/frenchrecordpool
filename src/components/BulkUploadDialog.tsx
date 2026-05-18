@@ -103,6 +103,84 @@ export default function BulkUploadDialog({ open, onOpenChange, userId }: BulkUpl
 
   const removeRow = (id: string) => setRows((prev) => prev.filter((r) => r.id !== id));
 
+  const uploadRow = async (row: Row) => {
+    updateRow(row.id, { status: "uploading", error: undefined, progress: 5, step: "Audio…" });
+    const trackId = crypto.randomUUID();
+    const ext = row.file.name.split(".").pop() || "mp3";
+
+    const { error: upErr } = await supabase.storage
+      .from("track-audio")
+      .upload(`${trackId}/audio.${ext}`, row.file, { upsert: true });
+    if (upErr) throw upErr;
+    const { data: pub } = supabase.storage.from("track-audio").getPublicUrl(`${trackId}/audio.${ext}`);
+    updateRow(row.id, { progress: 45, step: "Preview…" });
+
+    // Génération auto du preview 30s
+    let previewUrl: string | null = null;
+    const previewBlob = await generateAudioPreview(row.file, 30);
+    if (previewBlob) {
+      const { error: pErr } = await supabase.storage
+        .from("track-previews")
+        .upload(`${trackId}/preview.wav`, previewBlob, { upsert: true, contentType: "audio/wav" });
+      if (!pErr) {
+        const { data: pPub } = supabase.storage.from("track-previews").getPublicUrl(`${trackId}/preview.wav`);
+        previewUrl = pPub.publicUrl;
+      }
+    }
+    updateRow(row.id, { progress: 70, step: "Cover…" });
+
+    let coverUrl: string | null = null;
+    if (row.coverFile) {
+      const cExt = row.coverFile.name.split(".").pop() || "jpg";
+      const { error: cErr } = await supabase.storage
+        .from("track-covers")
+        .upload(`${trackId}/cover.${cExt}`, row.coverFile, { upsert: true });
+      if (cErr) throw cErr;
+      const { data: cPub } = supabase.storage.from("track-covers").getPublicUrl(`${trackId}/cover.${cExt}`);
+      coverUrl = cPub.publicUrl;
+    }
+    updateRow(row.id, { progress: 90, step: "Enregistrement…" });
+
+    const { error: dbErr } = await supabase.from("tracks").insert({
+      id: trackId,
+      title: row.title.trim(),
+      artist: row.artist.trim(),
+      genre: row.genre.trim() || "Unknown",
+      bpm: row.bpm ? parseInt(row.bpm) : null,
+      musical_key: row.musicalKey || null,
+      version: row.version,
+      duration: row.duration || null,
+      audio_url: pub.publicUrl,
+      preview_url: previewUrl,
+      cover_url: coverUrl,
+      tags: [],
+      created_by: userId,
+    });
+    if (dbErr) throw dbErr;
+    updateRow(row.id, { status: "done", progress: 100, step: "Publié" });
+  };
+
+  const runQueue = async (queue: Row[]) => {
+    let done = 0, errors = 0;
+    setProgress({ done: 0, total: queue.length, errors: 0 });
+    const workers = Array.from({ length: Math.min(CONCURRENCY, queue.length) }).map(async () => {
+      while (queue.length) {
+        const row = queue.shift();
+        if (!row) break;
+        try {
+          await uploadRow(row);
+          done++;
+        } catch (err: any) {
+          updateRow(row.id, { status: "error", error: err.message || "Erreur", progress: 0, step: undefined });
+          errors++;
+        }
+        setProgress((p) => ({ done: done + errors, total: p.total, errors }));
+      }
+    });
+    await Promise.all(workers);
+    return { done, errors };
+  };
+
   const handleUpload = async () => {
     const valid = rows.filter((r) => r.title && r.artist && r.status !== "done");
     if (valid.length === 0) {
@@ -110,56 +188,7 @@ export default function BulkUploadDialog({ open, onOpenChange, userId }: BulkUpl
       return;
     }
     setUploading(true);
-    setProgress({ done: 0, total: valid.length, errors: 0 });
-    let done = 0;
-    let errors = 0;
-
-    for (const row of valid) {
-      updateRow(row.id, { status: "uploading", error: undefined });
-      try {
-        const trackId = crypto.randomUUID();
-        const ext = row.file.name.split(".").pop() || "mp3";
-        const { error: upErr } = await supabase.storage
-          .from("track-audio")
-          .upload(`${trackId}/audio.${ext}`, row.file, { upsert: true });
-        if (upErr) throw upErr;
-        const { data: pub } = supabase.storage.from("track-audio").getPublicUrl(`${trackId}/audio.${ext}`);
-
-        let coverUrl: string | null = null;
-        if (row.coverFile) {
-          const cExt = row.coverFile.name.split(".").pop() || "jpg";
-          const { error: cErr } = await supabase.storage
-            .from("track-covers")
-            .upload(`${trackId}/cover.${cExt}`, row.coverFile, { upsert: true });
-          if (cErr) throw cErr;
-          const { data: cPub } = supabase.storage.from("track-covers").getPublicUrl(`${trackId}/cover.${cExt}`);
-          coverUrl = cPub.publicUrl;
-        }
-
-        const { error: dbErr } = await supabase.from("tracks").insert({
-          id: trackId,
-          title: row.title.trim(),
-          artist: row.artist.trim(),
-          genre: row.genre.trim() || "Unknown",
-          bpm: row.bpm ? parseInt(row.bpm) : null,
-          musical_key: row.musicalKey || null,
-          version: row.version,
-          duration: row.duration || null,
-          audio_url: pub.publicUrl,
-          cover_url: coverUrl,
-          tags: [],
-          created_by: userId,
-        });
-        if (dbErr) throw dbErr;
-        updateRow(row.id, { status: "done" });
-        done++;
-      } catch (err: any) {
-        updateRow(row.id, { status: "error", error: err.message });
-        errors++;
-      }
-      setProgress({ done: done + errors, total: valid.length, errors });
-    }
-
+    const { done, errors } = await runQueue([...valid]);
     setUploading(false);
     queryClient.invalidateQueries({ queryKey: ["tracks"] });
     toast({
@@ -167,6 +196,33 @@ export default function BulkUploadDialog({ open, onOpenChange, userId }: BulkUpl
       description: `${done}/${valid.length} publié(s)${errors ? `, ${errors} erreur(s)` : ""}`,
       variant: errors ? "destructive" : "default",
     });
+  };
+
+  const retryErrors = async () => {
+    const failed = rows.filter((r) => r.status === "error");
+    if (failed.length === 0) return;
+    setUploading(true);
+    const { done, errors } = await runQueue([...failed]);
+    setUploading(false);
+    queryClient.invalidateQueries({ queryKey: ["tracks"] });
+    toast({
+      title: "Nouvelle tentative",
+      description: `${done} réussi(s)${errors ? `, ${errors} encore en erreur` : ""}`,
+      variant: errors ? "destructive" : "default",
+    });
+  };
+
+  const retryRow = async (row: Row) => {
+    if (uploading) return;
+    setUploading(true);
+    try {
+      await uploadRow(row);
+      queryClient.invalidateQueries({ queryKey: ["tracks"] });
+    } catch (err: any) {
+      updateRow(row.id, { status: "error", error: err.message || "Erreur", progress: 0 });
+    } finally {
+      setUploading(false);
+    }
   };
 
   const reset = () => {
