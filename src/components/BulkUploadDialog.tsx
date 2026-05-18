@@ -286,6 +286,7 @@ export default function BulkUploadDialog({ open, onOpenChange, userId }: BulkUpl
               </thead>
               <tbody className="divide-y divide-border">
                 {rows.map((r) => (
+                  <>
                   <tr key={r.id} className={cn(r.status === "done" && "opacity-60", r.status === "error" && "bg-destructive/5")}>
                     <td className="px-2 py-1.5 text-center">
                       {r.status === "uploading" && <Loader2 className="h-3 w-3 animate-spin text-primary mx-auto" />}
@@ -336,11 +337,31 @@ export default function BulkUploadDialog({ open, onOpenChange, userId }: BulkUpl
                       </Select>
                     </td>
                     <td className="px-1 py-1 text-center">
-                      <button type="button" onClick={() => removeRow(r.id)} disabled={uploading} className="text-muted-foreground hover:text-destructive disabled:opacity-30">
-                        <Trash2 className="h-3 w-3" />
-                      </button>
+                      <div className="flex items-center gap-1 justify-center">
+                        {r.status === "error" && (
+                          <button type="button" onClick={() => retryRow(r)} disabled={uploading} className="text-muted-foreground hover:text-primary disabled:opacity-30" title="Réessayer">
+                            <RotateCcw className="h-3 w-3" />
+                          </button>
+                        )}
+                        <button type="button" onClick={() => removeRow(r.id)} disabled={uploading} className="text-muted-foreground hover:text-destructive disabled:opacity-30">
+                          <Trash2 className="h-3 w-3" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
+                  {(r.status === "uploading" || r.status === "error" || (r.status === "done" && r.progress < 100)) && (
+                    <tr key={r.id + "-p"} className={cn(r.status === "error" && "bg-destructive/5")}>
+                      <td colSpan={9} className="px-3 pb-1.5">
+                        <div className="flex items-center gap-2">
+                          <Progress value={r.progress} className="h-1 flex-1" />
+                          <span className={cn("text-[10px] tabular-nums", r.status === "error" ? "text-destructive" : "text-muted-foreground")}>
+                            {r.status === "error" ? (r.error || "Erreur") : `${r.progress}% · ${r.step ?? ""}`}
+                          </span>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                  </>
                 ))}
               </tbody>
             </table>
