@@ -70,6 +70,7 @@ export default function BulkUploadDialog({ open, onOpenChange, userId }: BulkUpl
         coverFile: null,
         coverPreview: null,
         status: "pending",
+        progress: 0,
       });
     }
     setRows((prev) => [...prev, ...accepted]);
