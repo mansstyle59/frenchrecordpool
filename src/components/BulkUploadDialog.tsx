@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Trash2, Upload, Loader2, CheckCircle2, AlertCircle, Music, RotateCcw } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { extractAudioMetadata } from "@/lib/audioMetadata";
-import { generateAudioPreview } from "@/lib/audioPreview";
+import { generateAudioPreview, type PreviewStartMode } from "@/lib/audioPreview";
 import { validateAudioFile } from "@/lib/trackSchema";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
