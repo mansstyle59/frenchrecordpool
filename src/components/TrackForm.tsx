@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import FileDropzone from "@/components/FileDropzone";
-import { extractAudioMetadata } from "@/lib/audioMetadata";
+import { extractAudioMetadataFast, needsBpmAnalysis, analyzeBpmAsync } from "@/lib/audioMetadata";
 import { trackSchema, validateAudioFile, validateImageFile } from "@/lib/trackSchema";
 import { toast } from "@/hooks/use-toast";
 import type { DbTrack } from "@/hooks/useTracks";
