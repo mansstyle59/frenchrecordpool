@@ -66,12 +66,14 @@ export default function TrackForm({ initialData, saving, onSubmit }: TrackFormPr
   const [extracting, setExtracting] = useState(false);
   const [coverPreview, setCoverPreview] = useState<string | null>(initialData?.cover_url ?? null);
 
+  const [analyzingBpm, setAnalyzingBpm] = useState(false);
+
   // Auto-fill metadata when audio file selected
   useEffect(() => {
     if (!audioFile) return;
     let cancelled = false;
     setExtracting(true);
-    extractAudioMetadata(audioFile)
+    extractAudioMetadataFast(audioFile)
       .then((meta) => {
         if (cancelled) return;
         setTitle((v) => v || meta.title || "");
@@ -83,12 +85,27 @@ export default function TrackForm({ initialData, saving, onSubmit }: TrackFormPr
         if (meta.title || meta.artist || meta.bpm) {
           toast({ title: "Métadonnées détectées", description: "Champs pré-remplis depuis le fichier." });
         }
+        setExtracting(false);
+        // Analyse BPM en tâche de fond si nécessaire
+        if (needsBpmAnalysis(meta)) {
+          setAnalyzingBpm(true);
+          analyzeBpmAsync(audioFile)
+            .then((detected) => {
+              if (cancelled) return;
+              if (detected) {
+                setBpm((v) => v || String(detected));
+                toast({ title: "BPM détecté", description: `Analyse audio : ${detected} BPM` });
+              }
+            })
+            .finally(() => !cancelled && setAnalyzingBpm(false));
+        }
       })
-      .finally(() => !cancelled && setExtracting(false));
+      .catch(() => !cancelled && setExtracting(false));
     return () => {
       cancelled = true;
     };
   }, [audioFile]);
+
 
   // Cover preview
   useEffect(() => {
