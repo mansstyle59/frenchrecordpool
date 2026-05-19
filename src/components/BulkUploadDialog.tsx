@@ -33,6 +33,14 @@ interface Row {
   progress: number;
   step?: string;
   error?: string;
+  // Reprise intelligente — état persistant des étapes déjà réussies
+  trackId?: string;
+  audioUrl?: string;
+  previewUrl?: string | null;
+  previewTried?: boolean;
+  coverUrl?: string | null;
+  coverTried?: boolean;
+  dbInserted?: boolean;
 }
 
 interface BulkUploadDialogProps {
