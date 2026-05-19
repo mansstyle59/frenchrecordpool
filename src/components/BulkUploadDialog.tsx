@@ -33,6 +33,7 @@ interface Row {
   progress: number;
   step?: string;
   error?: string;
+  analyzingBpm?: boolean;
   // Reprise intelligente — état persistant des étapes déjà réussies
   trackId?: string;
   audioUrl?: string;
