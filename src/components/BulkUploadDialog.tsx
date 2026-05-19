@@ -113,62 +113,98 @@ export default function BulkUploadDialog({ open, onOpenChange, userId }: BulkUpl
 
   const removeRow = (id: string) => setRows((prev) => prev.filter((r) => r.id !== id));
 
-  const uploadRow = async (row: Row) => {
-    updateRow(row.id, { status: "uploading", error: undefined, progress: 5, step: "Audio…" });
-    const trackId = crypto.randomUUID();
-    const ext = row.file.name.split(".").pop() || "mp3";
+  // Lit l'état courant d'une ligne (utile pour la reprise après updateRow async)
+  const getRow = (id: string): Row | undefined => {
+    let found: Row | undefined;
+    setRows((prev) => {
+      found = prev.find((r) => r.id === id);
+      return prev;
+    });
+    return found;
+  };
 
-    const { error: upErr } = await supabase.storage
-      .from("track-audio")
-      .upload(`${trackId}/audio.${ext}`, row.file, { upsert: true });
-    if (upErr) throw upErr;
-    const { data: pub } = supabase.storage.from("track-audio").getPublicUrl(`${trackId}/audio.${ext}`);
-    updateRow(row.id, { progress: 45, step: "Preview…" });
+  const uploadRow = async (initial: Row) => {
+    // Repart de l'état courant (qui peut contenir des étapes déjà validées)
+    const current = getRow(initial.id) ?? initial;
+    const trackId = current.trackId ?? crypto.randomUUID();
+    if (!current.trackId) updateRow(initial.id, { trackId });
+    updateRow(initial.id, { status: "uploading", error: undefined });
 
-    // Génération auto du preview 30s
-    let previewUrl: string | null = null;
-    const previewBlob = await generateAudioPreview(row.file, { seconds: previewSeconds, startMode: previewStart });
-    if (previewBlob) {
-      const { error: pErr } = await supabase.storage
-        .from("track-previews")
-        .upload(`${trackId}/preview.wav`, previewBlob, { upsert: true, contentType: "audio/wav" });
-      if (!pErr) {
-        const { data: pPub } = supabase.storage.from("track-previews").getPublicUrl(`${trackId}/preview.wav`);
-        previewUrl = pPub.publicUrl;
-      }
+    // 1) AUDIO — skip si déjà uploadé
+    let audioUrl = current.audioUrl;
+    if (!audioUrl) {
+      updateRow(initial.id, { progress: 5, step: "Audio…" });
+      const ext = current.file.name.split(".").pop() || "mp3";
+      const { error: upErr } = await supabase.storage
+        .from("track-audio")
+        .upload(`${trackId}/audio.${ext}`, current.file, { upsert: true });
+      if (upErr) throw upErr;
+      const { data: pub } = supabase.storage.from("track-audio").getPublicUrl(`${trackId}/audio.${ext}`);
+      audioUrl = pub.publicUrl;
+      updateRow(initial.id, { audioUrl, progress: 45 });
+    } else {
+      updateRow(initial.id, { progress: 45, step: "Audio ✓" });
     }
-    updateRow(row.id, { progress: 70, step: "Cover…" });
 
-    let coverUrl: string | null = null;
-    if (row.coverFile) {
-      const cExt = row.coverFile.name.split(".").pop() || "jpg";
+    // 2) PREVIEW — skip si déjà tentée (réussie ou non bloquante)
+    let previewUrl: string | null = current.previewUrl ?? null;
+    if (!current.previewTried) {
+      updateRow(initial.id, { progress: 55, step: "Preview…" });
+      const previewBlob = await generateAudioPreview(current.file, { seconds: previewSeconds, startMode: previewStart });
+      if (previewBlob) {
+        const { error: pErr } = await supabase.storage
+          .from("track-previews")
+          .upload(`${trackId}/preview.wav`, previewBlob, { upsert: true, contentType: "audio/wav" });
+        if (!pErr) {
+          const { data: pPub } = supabase.storage.from("track-previews").getPublicUrl(`${trackId}/preview.wav`);
+          previewUrl = pPub.publicUrl;
+        }
+      }
+      updateRow(initial.id, { previewUrl, previewTried: true, progress: 70 });
+    } else {
+      updateRow(initial.id, { progress: 70, step: "Preview ✓" });
+    }
+
+    // 3) COVER — skip si déjà tentée
+    let coverUrl: string | null = current.coverUrl ?? null;
+    if (current.coverFile && !current.coverTried) {
+      updateRow(initial.id, { progress: 80, step: "Cover…" });
+      const cExt = current.coverFile.name.split(".").pop() || "jpg";
       const { error: cErr } = await supabase.storage
         .from("track-covers")
-        .upload(`${trackId}/cover.${cExt}`, row.coverFile, { upsert: true });
+        .upload(`${trackId}/cover.${cExt}`, current.coverFile, { upsert: true });
       if (cErr) throw cErr;
       const { data: cPub } = supabase.storage.from("track-covers").getPublicUrl(`${trackId}/cover.${cExt}`);
       coverUrl = cPub.publicUrl;
+      updateRow(initial.id, { coverUrl, coverTried: true, progress: 90 });
+    } else {
+      updateRow(initial.id, { progress: 90, step: current.coverFile ? "Cover ✓" : "Cover —" });
     }
-    updateRow(row.id, { progress: 90, step: "Enregistrement…" });
 
-    const { error: dbErr } = await supabase.from("tracks").insert({
-      id: trackId,
-      title: row.title.trim(),
-      artist: row.artist.trim(),
-      genre: row.genre.trim() || "Unknown",
-      bpm: row.bpm ? parseInt(row.bpm) : null,
-      musical_key: row.musicalKey || null,
-      version: row.version,
-      duration: row.duration || null,
-      audio_url: pub.publicUrl,
-      preview_url: previewUrl,
-      cover_url: coverUrl,
-      tags: [],
-      created_by: userId,
-    });
-    if (dbErr) throw dbErr;
-    updateRow(row.id, { status: "done", progress: 100, step: "Publié" });
+    // 4) DB — skip si déjà inséré
+    if (!current.dbInserted) {
+      updateRow(initial.id, { step: "Enregistrement…" });
+      const { error: dbErr } = await supabase.from("tracks").insert({
+        id: trackId,
+        title: current.title.trim(),
+        artist: current.artist.trim(),
+        genre: current.genre.trim() || "Unknown",
+        bpm: current.bpm ? parseInt(current.bpm) : null,
+        musical_key: current.musicalKey || null,
+        version: current.version,
+        duration: current.duration || null,
+        audio_url: audioUrl!,
+        preview_url: previewUrl,
+        cover_url: coverUrl,
+        tags: [],
+        created_by: userId,
+      });
+      if (dbErr) throw dbErr;
+      updateRow(initial.id, { dbInserted: true });
+    }
+    updateRow(initial.id, { status: "done", progress: 100, step: "Publié" });
   };
+
 
   const runQueue = async (queue: Row[]) => {
     let done = 0, errors = 0;
