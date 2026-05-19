@@ -151,6 +151,15 @@ export default function TrackForm({ initialData, saving, onSubmit }: TrackFormPr
           <Sparkles className="h-3 w-3 animate-pulse" /> Extraction des métadonnées audio...
         </div>
       )}
+      {analyzingBpm && (
+        <div className="text-xs text-accent flex items-center gap-2 bg-accent/5 border border-accent/20 rounded px-2 py-1.5">
+          <Sparkles className="h-3 w-3 animate-pulse" />
+          <span>Analyse BPM en cours…</span>
+          <div className="flex-1 h-1 bg-accent/10 rounded overflow-hidden">
+            <div className="h-full bg-accent/60 animate-pulse" style={{ width: "60%" }} />
+          </div>
+        </div>
+      )}
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1">
           <Label>Titre *</Label>
