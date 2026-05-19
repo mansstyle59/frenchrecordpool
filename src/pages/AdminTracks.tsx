@@ -106,6 +106,17 @@ export default function AdminTracks() {
     if (!data.title || !data.artist) return;
     setSaving(true);
     try {
+      // Refresh session to ensure JWT is fresh — évite les erreurs RLS dues à un token expiré
+      const { data: sess } = await supabase.auth.getSession();
+      if (!sess.session) {
+        await supabase.auth.refreshSession();
+      }
+      const { data: sess2 } = await supabase.auth.getSession();
+      if (!sess2.session) {
+        toast({ title: "Session expirée", description: "Reconnecte-toi pour publier.", variant: "destructive" });
+        setSaving(false);
+        return;
+      }
       const trackId = editingTrack?.id ?? crypto.randomUUID();
       let coverUrl = editingTrack?.cover_url ?? null;
       let audioUrl = editingTrack?.audio_url ?? null;
@@ -162,7 +173,11 @@ export default function AdminTracks() {
       setDialogOpen(false);
       setEditingTrack(null);
     } catch (err: any) {
-      toast({ title: "Erreur", description: err.message, variant: "destructive" });
+      const msg = err?.message || "";
+      const friendly = /row-level security|violates row-level/i.test(msg)
+        ? "Permission refusée. Ta session a peut-être expiré — reconnecte-toi en tant qu'admin et réessaie."
+        : msg;
+      toast({ title: "Erreur", description: friendly, variant: "destructive" });
     } finally {
       setSaving(false);
     }
