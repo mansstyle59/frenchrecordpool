@@ -173,7 +173,11 @@ export default function AdminTracks() {
       setDialogOpen(false);
       setEditingTrack(null);
     } catch (err: any) {
-      toast({ title: "Erreur", description: err.message, variant: "destructive" });
+      const msg = err?.message || "";
+      const friendly = /row-level security|violates row-level/i.test(msg)
+        ? "Permission refusée. Ta session a peut-être expiré — reconnecte-toi en tant qu'admin et réessaie."
+        : msg;
+      toast({ title: "Erreur", description: friendly, variant: "destructive" });
     } finally {
       setSaving(false);
     }
