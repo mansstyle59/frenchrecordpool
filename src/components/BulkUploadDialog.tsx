@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Trash2, Upload, Loader2, CheckCircle2, AlertCircle, Music, RotateCcw } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
-import { extractAudioMetadata } from "@/lib/audioMetadata";
+import { extractAudioMetadataFast, needsBpmAnalysis, analyzeBpmAsync } from "@/lib/audioMetadata";
 import { generateAudioPreview, type PreviewStartMode } from "@/lib/audioPreview";
 import { validateAudioFile } from "@/lib/trackSchema";
 import { supabase } from "@/integrations/supabase/client";
@@ -33,6 +33,7 @@ interface Row {
   progress: number;
   step?: string;
   error?: string;
+  analyzingBpm?: boolean;
   // Reprise intelligente — état persistant des étapes déjà réussies
   trackId?: string;
   audioUrl?: string;
@@ -85,9 +86,9 @@ export default function BulkUploadDialog({ open, onOpenChange, userId }: BulkUpl
     }
     setRows((prev) => [...prev, ...accepted]);
 
-    // Extract metadata in background
+    // Extract metadata in background (fast), then async BPM analysis if needed
     for (const row of accepted) {
-      extractAudioMetadata(row.file).then((meta) => {
+      extractAudioMetadataFast(row.file).then((meta) => {
         setRows((prev) =>
           prev.map((r) =>
             r.id === row.id
@@ -99,13 +100,26 @@ export default function BulkUploadDialog({ open, onOpenChange, userId }: BulkUpl
                   duration: meta.duration || r.duration,
                   bpm: meta.bpm ? String(meta.bpm) : r.bpm,
                   musicalKey: meta.key || r.musicalKey,
+                  analyzingBpm: needsBpmAnalysis(meta),
                 }
               : r
           )
         );
+        if (needsBpmAnalysis(meta)) {
+          analyzeBpmAsync(row.file).then((detected) => {
+            setRows((prev) =>
+              prev.map((r) =>
+                r.id === row.id
+                  ? { ...r, bpm: r.bpm || (detected ? String(detected) : r.bpm), analyzingBpm: false }
+                  : r
+              )
+            );
+          });
+        }
       });
     }
   };
+
 
   const updateRow = (id: string, patch: Partial<Row>) => {
     setRows((prev) => prev.map((r) => (r.id === id ? { ...r, ...patch } : r)));
@@ -402,7 +416,12 @@ export default function BulkUploadDialog({ open, onOpenChange, userId }: BulkUpl
                       <Input value={r.genre} onChange={(e) => updateRow(r.id, { genre: e.target.value })} disabled={uploading} className="h-7 text-xs bg-secondary border-border" />
                     </td>
                     <td className="px-1 py-1">
-                      <Input type="number" value={r.bpm} onChange={(e) => updateRow(r.id, { bpm: e.target.value })} disabled={uploading} className="h-7 text-xs bg-secondary border-border" />
+                      <div className="relative">
+                        <Input type="number" value={r.bpm} onChange={(e) => updateRow(r.id, { bpm: e.target.value })} disabled={uploading} className={cn("h-7 text-xs bg-secondary border-border", r.analyzingBpm && "pr-6")} placeholder={r.analyzingBpm ? "…" : ""} />
+                        {r.analyzingBpm && (
+                          <Loader2 className="h-3 w-3 animate-spin absolute right-1.5 top-1/2 -translate-y-1/2 text-accent" />
+                        )}
+                      </div>
                     </td>
                     <td className="px-1 py-1">
                       <Input value={r.musicalKey} onChange={(e) => updateRow(r.id, { musicalKey: e.target.value })} disabled={uploading} className="h-7 text-xs bg-secondary border-border" />

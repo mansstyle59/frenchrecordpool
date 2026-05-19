@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import FileDropzone from "@/components/FileDropzone";
-import { extractAudioMetadata } from "@/lib/audioMetadata";
+import { extractAudioMetadataFast, needsBpmAnalysis, analyzeBpmAsync } from "@/lib/audioMetadata";
 import { trackSchema, validateAudioFile, validateImageFile } from "@/lib/trackSchema";
 import { toast } from "@/hooks/use-toast";
 import type { DbTrack } from "@/hooks/useTracks";
@@ -66,12 +66,14 @@ export default function TrackForm({ initialData, saving, onSubmit }: TrackFormPr
   const [extracting, setExtracting] = useState(false);
   const [coverPreview, setCoverPreview] = useState<string | null>(initialData?.cover_url ?? null);
 
+  const [analyzingBpm, setAnalyzingBpm] = useState(false);
+
   // Auto-fill metadata when audio file selected
   useEffect(() => {
     if (!audioFile) return;
     let cancelled = false;
     setExtracting(true);
-    extractAudioMetadata(audioFile)
+    extractAudioMetadataFast(audioFile)
       .then((meta) => {
         if (cancelled) return;
         setTitle((v) => v || meta.title || "");
@@ -83,12 +85,27 @@ export default function TrackForm({ initialData, saving, onSubmit }: TrackFormPr
         if (meta.title || meta.artist || meta.bpm) {
           toast({ title: "Métadonnées détectées", description: "Champs pré-remplis depuis le fichier." });
         }
+        setExtracting(false);
+        // Analyse BPM en tâche de fond si nécessaire
+        if (needsBpmAnalysis(meta)) {
+          setAnalyzingBpm(true);
+          analyzeBpmAsync(audioFile)
+            .then((detected) => {
+              if (cancelled) return;
+              if (detected) {
+                setBpm((v) => v || String(detected));
+                toast({ title: "BPM détecté", description: `Analyse audio : ${detected} BPM` });
+              }
+            })
+            .finally(() => !cancelled && setAnalyzingBpm(false));
+        }
       })
-      .finally(() => !cancelled && setExtracting(false));
+      .catch(() => !cancelled && setExtracting(false));
     return () => {
       cancelled = true;
     };
   }, [audioFile]);
+
 
   // Cover preview
   useEffect(() => {
@@ -132,6 +149,15 @@ export default function TrackForm({ initialData, saving, onSubmit }: TrackFormPr
       {extracting && (
         <div className="text-xs text-primary flex items-center gap-1.5 bg-primary/5 border border-primary/20 rounded px-2 py-1.5">
           <Sparkles className="h-3 w-3 animate-pulse" /> Extraction des métadonnées audio...
+        </div>
+      )}
+      {analyzingBpm && (
+        <div className="text-xs text-accent flex items-center gap-2 bg-accent/5 border border-accent/20 rounded px-2 py-1.5">
+          <Sparkles className="h-3 w-3 animate-pulse" />
+          <span>Analyse BPM en cours…</span>
+          <div className="flex-1 h-1 bg-accent/10 rounded overflow-hidden">
+            <div className="h-full bg-accent/60 animate-pulse" style={{ width: "60%" }} />
+          </div>
         </div>
       )}
       <div className="grid grid-cols-2 gap-3">
