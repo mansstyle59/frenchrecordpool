@@ -85,9 +85,9 @@ export default function BulkUploadDialog({ open, onOpenChange, userId }: BulkUpl
     }
     setRows((prev) => [...prev, ...accepted]);
 
-    // Extract metadata in background
+    // Extract metadata in background (fast), then async BPM analysis if needed
     for (const row of accepted) {
-      extractAudioMetadata(row.file).then((meta) => {
+      extractAudioMetadataFast(row.file).then((meta) => {
         setRows((prev) =>
           prev.map((r) =>
             r.id === row.id
@@ -99,13 +99,26 @@ export default function BulkUploadDialog({ open, onOpenChange, userId }: BulkUpl
                   duration: meta.duration || r.duration,
                   bpm: meta.bpm ? String(meta.bpm) : r.bpm,
                   musicalKey: meta.key || r.musicalKey,
+                  analyzingBpm: needsBpmAnalysis(meta),
                 }
               : r
           )
         );
+        if (needsBpmAnalysis(meta)) {
+          analyzeBpmAsync(row.file).then((detected) => {
+            setRows((prev) =>
+              prev.map((r) =>
+                r.id === row.id
+                  ? { ...r, bpm: r.bpm || (detected ? String(detected) : r.bpm), analyzingBpm: false }
+                  : r
+              )
+            );
+          });
+        }
       });
     }
   };
+
 
   const updateRow = (id: string, patch: Partial<Row>) => {
     setRows((prev) => prev.map((r) => (r.id === id ? { ...r, ...patch } : r)));
