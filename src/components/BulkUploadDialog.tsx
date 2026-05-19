@@ -416,7 +416,12 @@ export default function BulkUploadDialog({ open, onOpenChange, userId }: BulkUpl
                       <Input value={r.genre} onChange={(e) => updateRow(r.id, { genre: e.target.value })} disabled={uploading} className="h-7 text-xs bg-secondary border-border" />
                     </td>
                     <td className="px-1 py-1">
-                      <Input type="number" value={r.bpm} onChange={(e) => updateRow(r.id, { bpm: e.target.value })} disabled={uploading} className="h-7 text-xs bg-secondary border-border" />
+                      <div className="relative">
+                        <Input type="number" value={r.bpm} onChange={(e) => updateRow(r.id, { bpm: e.target.value })} disabled={uploading} className={cn("h-7 text-xs bg-secondary border-border", r.analyzingBpm && "pr-6")} placeholder={r.analyzingBpm ? "…" : ""} />
+                        {r.analyzingBpm && (
+                          <Loader2 className="h-3 w-3 animate-spin absolute right-1.5 top-1/2 -translate-y-1/2 text-accent" />
+                        )}
+                      </div>
                     </td>
                     <td className="px-1 py-1">
                       <Input value={r.musicalKey} onChange={(e) => updateRow(r.id, { musicalKey: e.target.value })} disabled={uploading} className="h-7 text-xs bg-secondary border-border" />
