@@ -101,19 +101,27 @@ async function analyzeBpm(file: File): Promise<number | undefined> {
   }
 }
 
+// Valide qu'un BPM est dans une plage musicale plausible
+function isPlausibleBpm(bpm: number | undefined): bpm is number {
+  return typeof bpm === "number" && Number.isFinite(bpm) && bpm >= 60 && bpm <= 200;
+}
+
 export async function extractAudioMetadata(file: File): Promise<AudioMetadata> {
   const [dur, tags] = await Promise.all([readAudioDuration(file), readId3Tags(file)]);
   const filename = parseFromFilename(file.name);
+  const tagBpm = isPlausibleBpm(tags.bpm) ? tags.bpm : undefined;
+  const fileBpm = isPlausibleBpm(filename.bpm) ? filename.bpm : undefined;
   const merged: AudioMetadata = {
     ...tags,
     ...(dur ?? {}),
-    bpm: tags.bpm ?? filename.bpm,
+    bpm: tagBpm ?? fileBpm,
     key: tags.key ?? filename.key,
   };
-  // Si toujours pas de BPM, on lance l'analyse audio (peut prendre quelques secondes)
-  if (!merged.bpm) {
+  // Analyse audio si BPM absent OU incohérent (tag présent mais hors plage musicale 60-200)
+  if (!isPlausibleBpm(merged.bpm)) {
     const detected = await analyzeBpm(file);
-    if (detected) merged.bpm = detected;
+    if (isPlausibleBpm(detected)) merged.bpm = detected;
+    else if (tags.bpm && !merged.bpm) merged.bpm = tags.bpm; // fallback: garde la valeur originale même incohérente
   }
   return merged;
 }
