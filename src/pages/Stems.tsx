@@ -9,6 +9,7 @@ import { useTracks } from "@/hooks/useTracks";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { resolveCover } from "@/lib/trackCover";
 
 type StemKind = "acapella" | "instrumental";
 
@@ -112,7 +113,7 @@ export default function Stems() {
                 <article key={t.id} className="bg-card border border-border rounded-xl overflow-hidden hover:border-primary/40 transition-all group">
                   <div className="aspect-square relative overflow-hidden bg-secondary">
                     <img
-                      src={t.cover_url || "/placeholder.svg"}
+                      src={resolveCover(t)}
                       alt={t.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />

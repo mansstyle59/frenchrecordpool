@@ -21,6 +21,7 @@ import TrackForm from "@/components/TrackForm";
 import type { TrackFormData } from "@/components/TrackForm";
 import BulkUploadDialog from "@/components/BulkUploadDialog";
 import { logAdminAction } from "@/lib/auditLog";
+import { resolveCover } from "@/lib/trackCover";
 
 type SortKey = "newest" | "oldest" | "az" | "za" | "bpm_asc" | "bpm_desc" | "downloads";
 const PAGE_SIZE = 25;
@@ -333,7 +334,7 @@ export default function AdminTracks() {
                 ) : paginated.map((track) => (
                   <tr key={track.id} className="hover:bg-secondary/30">
                     <td className="px-4 py-3">
-                      <img src={track.cover_url || "/placeholder.svg"} alt="" className="h-8 w-8 rounded object-cover" />
+                      <img src={resolveCover(track)} alt="" className="h-8 w-8 rounded object-cover" />
                     </td>
                     <td className="px-4 py-3 font-medium max-w-[200px] truncate">{track.title}</td>
                     <td className="px-4 py-3 text-muted-foreground max-w-[160px] truncate">{track.artist}</td>
