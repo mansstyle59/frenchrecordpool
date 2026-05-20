@@ -1,15 +1,19 @@
 import Layout from "@/components/Layout";
 import { useTracks } from "@/hooks/useTracks";
 import { Link } from "react-router-dom";
+import { generateTrackCover } from "@/lib/trackCover";
 
 export default function Artists() {
   const { data: tracks = [], isLoading } = useTracks();
 
-  const artists = [...new Set(tracks.map((t) => t.artist))].map((name) => ({
-    name,
-    trackCount: tracks.filter((t) => t.artist === name).length,
-    cover: tracks.find((t) => t.artist === name)?.cover_url || "/placeholder.svg",
-  }));
+  const artists = [...new Set(tracks.map((t) => t.artist))].map((name) => {
+    const t = tracks.find((x) => x.artist === name);
+    return {
+      name,
+      trackCount: tracks.filter((x) => x.artist === name).length,
+      cover: generateTrackCover(t?.title ?? name, name),
+    };
+  });
 
   return (
     <Layout>
