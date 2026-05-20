@@ -10,6 +10,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { downloadTrack } from "@/lib/downloadTrack";
 import { useFavorites } from "@/hooks/useFavorites";
 import { toast } from "sonner";
+import { resolveCover } from "@/lib/trackCover";
 
 export default function TrackDetail() {
   const { id } = useParams();
@@ -32,7 +33,7 @@ export default function TrackDetail() {
   }
 
   const handlePlay = () => {
-    play({ id: track.id, title: track.title, artist: track.artist, coverUrl: track.cover_url, previewUrl: track.preview_url });
+    play({ id: track.id, title: track.title, artist: track.artist, coverUrl: resolveCover(track), previewUrl: track.preview_url });
   };
 
   const handleDownload = () => downloadTrack(track.id, user, hasActiveSubscription);
@@ -47,7 +48,7 @@ export default function TrackDetail() {
           <ArrowLeft className="h-4 w-4" /> Retour
         </Link>
         <div className="flex flex-col md:flex-row gap-8">
-          <img src={track.cover_url || "/placeholder.svg"} alt={track.title} className="w-full md:w-72 h-72 object-cover rounded-xl border border-border" />
+          <img src={resolveCover(track)} alt={track.title} className="w-full md:w-72 h-72 object-cover rounded-xl border border-border" />
           <div className="flex-1">
             <Badge variant="outline" className="mb-2">{track.version || "Original"}</Badge>
             <h1 className="font-display text-3xl font-bold mb-1">{track.title}</h1>

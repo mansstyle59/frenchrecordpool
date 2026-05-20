@@ -67,7 +67,7 @@ export default function MiniPlayer() {
         <div className="container flex items-center gap-3 h-16">
           {/* Cover + Info */}
           <img
-            src={currentTrack.coverUrl || "/placeholder.svg"}
+            src={currentTrack.coverUrl || ""}
             alt=""
             className="h-10 w-10 rounded object-cover shrink-0"
           />

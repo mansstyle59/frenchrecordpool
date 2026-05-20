@@ -9,6 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { downloadTrack } from "@/lib/downloadTrack";
 import { useFavorites } from "@/hooks/useFavorites";
 import type { DbTrack } from "@/hooks/useTracks";
+import { resolveCover } from "@/lib/trackCover";
 
 interface TrackRowProps {
   track: DbTrack;
@@ -29,7 +30,7 @@ export default function TrackRow({ track, index }: TrackRowProps) {
         id: track.id,
         title: track.title,
         artist: track.artist,
-        coverUrl: track.cover_url,
+        coverUrl: resolveCover(track),
         previewUrl: track.preview_url,
       });
     }
@@ -57,7 +58,7 @@ export default function TrackRow({ track, index }: TrackRowProps) {
       </div>
 
       <img
-        src={track.cover_url || "/placeholder.svg"}
+        src={resolveCover(track)}
         alt={track.title}
         className="h-10 w-10 rounded object-cover shrink-0"
         loading="lazy"
