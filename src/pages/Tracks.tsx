@@ -1,17 +1,25 @@
 import { useState, useMemo } from "react";
-import { Search } from "lucide-react";
+import { Search, LayoutGrid, List, Play } from "lucide-react";
+import { Link } from "react-router-dom";
 import Layout from "@/components/Layout";
 import TrackRow from "@/components/TrackRow";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useTracks } from "@/hooks/useTracks";
+import { usePlayer } from "@/contexts/PlayerContext";
+import { resolveCover } from "@/lib/trackCover";
+
 type SortOption = "newest" | "popular" | "az" | "bpm";
+type ViewMode = "list" | "grid";
 
 export default function Tracks() {
   const { data: tracks = [], isLoading } = useTracks();
+  const { play } = usePlayer();
   const [search, setSearch] = useState("");
   const [genre, setGenre] = useState<string>("all");
   const [sort, setSort] = useState<SortOption>("newest");
+  const [view, setView] = useState<ViewMode>("list");
 
   const filtered = useMemo(() => {
     let result = [...tracks];
@@ -28,6 +36,15 @@ export default function Tracks() {
     }
     return result;
   }, [tracks, search, genre, sort]);
+
+  const playFrom = (idx: number) => {
+    const t = filtered[idx];
+    if (!t) return;
+    play(
+      { id: t.id, title: t.title, artist: t.artist, coverUrl: resolveCover(t), previewUrl: t.preview_url },
+      filtered.map((x) => ({ id: x.id, title: x.title, artist: x.artist, coverUrl: resolveCover(x), previewUrl: x.preview_url })),
+    );
+  };
 
   return (
     <Layout>
@@ -54,17 +71,58 @@ export default function Tracks() {
               <SelectItem value="bpm">BPM</SelectItem>
             </SelectContent>
           </Select>
+          <div className="flex rounded-md border border-border bg-secondary overflow-hidden">
+            <Button
+              variant={view === "list" ? "default" : "ghost"}
+              size="icon"
+              onClick={() => setView("list")}
+              className="rounded-none"
+              title="Liste"
+            >
+              <List className="h-4 w-4" />
+            </Button>
+            <Button
+              variant={view === "grid" ? "default" : "ghost"}
+              size="icon"
+              onClick={() => setView("grid")}
+              className="rounded-none"
+              title="Grille"
+            >
+              <LayoutGrid className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
 
-        <div className="rounded-xl border border-border bg-card/50 overflow-hidden">
-          {isLoading ? (
-            <p className="text-center text-muted-foreground py-12">Chargement...</p>
-          ) : filtered.length === 0 ? (
-            <p className="text-center text-muted-foreground py-12">Aucune track disponible.</p>
-          ) : (
-            filtered.map((track, i) => <TrackRow key={track.id} track={track} index={i} />)
-          )}
-        </div>
+        {isLoading ? (
+          <p className="text-center text-muted-foreground py-12">Chargement...</p>
+        ) : filtered.length === 0 ? (
+          <p className="text-center text-muted-foreground py-12">Aucune track disponible.</p>
+        ) : view === "list" ? (
+          <div className="rounded-xl border border-border bg-card/50 overflow-hidden">
+            {filtered.map((track, i) => <TrackRow key={track.id} track={track} index={i} />)}
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+            {filtered.map((t, i) => (
+              <div key={t.id} className="group relative">
+                <button
+                  onClick={() => playFrom(i)}
+                  className="block w-full aspect-square rounded-xl overflow-hidden border border-border group-hover:border-primary/60 transition-all group-hover:scale-[1.02] group-hover:shadow-lg"
+                >
+                  <img src={resolveCover(t)} alt={`${t.title} — ${t.artist}`} loading="lazy" className="w-full h-full object-cover" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <div className="absolute top-2 right-2 h-9 w-9 rounded-full bg-primary text-primary-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-lg">
+                    <Play className="h-4 w-4 fill-current" />
+                  </div>
+                </button>
+                <div className="mt-2 px-1 min-w-0">
+                  <Link to={`/tracks/${t.id}`} className="text-sm font-medium truncate block hover:text-primary">{t.title}</Link>
+                  <p className="text-xs text-muted-foreground truncate">{t.artist}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
         <p className="text-xs text-muted-foreground mt-3">{filtered.length} track{filtered.length > 1 ? "s" : ""}</p>
       </div>
     </Layout>
