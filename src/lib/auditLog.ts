@@ -1,8 +1,8 @@
 import { supabase } from "@/integrations/supabase/client";
 
 export type AuditAction =
-  | "track.create" | "track.update" | "track.delete"
-  | "user.password_reset"
+  | "track.create" | "track.update" | "track.delete" | "track.bulk_delete"
+  | "user.password_reset" | "user.role_promote" | "user.role_demote"
   | "subscription.create" | "subscription.update" | "subscription.delete";
 
 interface LogParams {
