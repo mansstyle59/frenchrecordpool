@@ -99,9 +99,13 @@ export default function AdminTracks() {
 
   const hasFilters = search || genre !== "all" || label !== "all" || bpmMin || bpmMax;
 
-  const uploadFile = async (file: File, bucket: string, path: string) => {
+  const uploadFile = async (file: File, bucket: string, path: string, step: string) => {
     const { error } = await supabase.storage.from(bucket).upload(path, file, { upsert: true });
-    if (error) throw error;
+    if (error) {
+      const e: any = new Error(`Upload ${step} échoué : ${error.message}`);
+      e.step = step;
+      throw e;
+    }
     const { data } = supabase.storage.from(bucket).getPublicUrl(path);
     return data.publicUrl;
   };
@@ -110,7 +114,7 @@ export default function AdminTracks() {
     if (!data.title || !data.artist) return;
     setSaving(true);
     try {
-      // 1) Vérifie une session valide côté serveur (refresh si besoin)
+      // Refresh + vérification de session
       let { data: userRes } = await supabase.auth.getUser();
       if (!userRes?.user) {
         await supabase.auth.refreshSession();
@@ -123,47 +127,33 @@ export default function AdminTracks() {
           description: "Reconnecte-toi pour publier des tracks.",
           variant: "destructive",
         });
-        navigate("/auth");
-        return;
-      }
-
-      // 2) Vérifie le rôle admin côté serveur (évite faux positifs RLS)
-      const { data: isAdminCheck, error: roleErr } = await supabase.rpc("has_role", {
-        _user_id: currentUser.id,
-        _role: "admin",
-      });
-      if (roleErr) throw roleErr;
-      if (!isAdminCheck) {
-        toast({
-          title: "Accès refusé",
-          description: "Ton compte n'a pas les droits admin. Reconnecte-toi avec un compte admin.",
-          variant: "destructive",
-        });
+        navigate("/login");
         return;
       }
 
       const trackId = editingTrack?.id ?? crypto.randomUUID();
-      let coverUrl = editingTrack?.cover_url ?? null;
-      let audioUrl = editingTrack?.audio_url ?? null;
-      let previewUrl = editingTrack?.preview_url ?? null;
+      let coverUrl: string | null = editingTrack?.cover_url ?? null;
+      let audioUrl: string | null = editingTrack?.audio_url ?? null;
+      let previewUrl: string | null = editingTrack?.preview_url ?? null;
 
-      if (data.coverFile) coverUrl = await uploadFile(data.coverFile, "track-covers", `${trackId}/cover.${data.coverFile.name.split(".").pop()}`);
+      if (data.coverFile) coverUrl = await uploadFile(data.coverFile, "track-covers", `${trackId}/cover.${data.coverFile.name.split(".").pop()}`, "pochette");
       else if (data.coverUrl) coverUrl = data.coverUrl;
-      if (data.audioFile) audioUrl = await uploadFile(data.audioFile, "track-audio", `${trackId}/audio.${data.audioFile.name.split(".").pop()}`);
+      if (data.audioFile) audioUrl = await uploadFile(data.audioFile, "track-audio", `${trackId}/audio.${data.audioFile.name.split(".").pop()}`, "audio");
       else if (data.audioUrl) audioUrl = data.audioUrl;
-      if (data.previewFile) previewUrl = await uploadFile(data.previewFile, "track-previews", `${trackId}/preview.${data.previewFile.name.split(".").pop()}`);
+      if (data.previewFile) previewUrl = await uploadFile(data.previewFile, "track-previews", `${trackId}/preview.${data.previewFile.name.split(".").pop()}`, "preview");
       else if (data.previewUrl) previewUrl = data.previewUrl;
 
-      const payload = {
+      const trackPayload = {
+        id: trackId,
         title: data.title,
         artist: data.artist,
-        genre: data.genre,
-        bpm: data.bpm ? parseInt(data.bpm) : null,
+        genre: data.genre || "",
+        bpm: data.bpm || null,
         musical_key: data.musicalKey || null,
-        version: data.version,
+        version: data.version || "Original",
         label: data.label || null,
         duration: data.duration || null,
-        tags: data.tags ? data.tags.split(",").map((t) => t.trim()) : [],
+        tags: data.tags ? data.tags.split(",").map((t) => t.trim()).filter(Boolean) : [],
         cover_url: coverUrl,
         audio_url: audioUrl,
         preview_url: previewUrl,
@@ -172,41 +162,44 @@ export default function AdminTracks() {
         instrumental_url: data.instrumentalUrl || (editingTrack as any)?.instrumental_url || null,
       };
 
-      if (editingTrack) {
-        const { error } = await supabase.from("tracks").update(payload).eq("id", editingTrack.id);
-        if (error) throw error;
-        await logAdminAction({
-          actorId: currentUser.id, action: "track.update",
-          entityType: "track", entityId: editingTrack.id,
-          entityLabel: `${data.title} — ${data.artist}`,
-          details: { changes: payload },
-        });
-        toast({ title: "Track modifiée !" });
-      } else {
-        const newId = trackId;
-        const { error } = await supabase.from("tracks").insert({ ...payload, id: newId, created_by: currentUser.id });
-        if (error) throw error;
-        await logAdminAction({
-          actorId: currentUser.id, action: "track.create",
-          entityType: "track", entityId: newId,
-          entityLabel: `${data.title} — ${data.artist}`,
-        });
-        toast({ title: "Track ajoutée !" });
-      }
+      // Insert/update via RPC SECURITY DEFINER — contourne tout faux positif RLS
+      const { data: rpcId, error: rpcErr } = await supabase.rpc("admin_upsert_track", {
+        _track: trackPayload as any,
+        _id: editingTrack ? editingTrack.id : null,
+      });
+      if (rpcErr) throw rpcErr;
 
+      await logAdminAction({
+        actorId: currentUser.id,
+        action: editingTrack ? "track.update" : "track.create",
+        entityType: "track",
+        entityId: (rpcId as any) ?? trackId,
+        entityLabel: `${data.title} — ${data.artist}`,
+        details: editingTrack ? { changes: trackPayload } : undefined,
+      });
+
+      toast({ title: editingTrack ? "Track modifiée !" : "Track ajoutée !" });
       queryClient.invalidateQueries({ queryKey: ["tracks"] });
       setDialogOpen(false);
       setEditingTrack(null);
     } catch (err: any) {
       const msg = err?.message || "";
-      const friendly = /row-level security|violates row-level/i.test(msg)
-        ? "Permission refusée par la base. Vérifie que tu es bien connecté en tant qu'admin, puis réessaie."
-        : msg || "Une erreur est survenue.";
+      let friendly = msg || "Une erreur est survenue.";
+      if (/not_admin/i.test(msg)) {
+        friendly = "Ton compte n'a pas les droits admin. Reconnecte-toi avec le compte admin.";
+      } else if (/not_authenticated/i.test(msg)) {
+        friendly = "Session expirée. Reconnecte-toi puis réessaie.";
+      } else if (err?.step) {
+        friendly = `Échec à l'étape « ${err.step} » : ${msg}. Vérifie le fichier (taille / format) et réessaie.`;
+      } else if (/row-level security|violates row-level/i.test(msg)) {
+        friendly = "Permission refusée. Déconnecte-toi puis reconnecte-toi en admin (dewulf.denis@gmail.com).";
+      }
       toast({ title: "Erreur", description: friendly, variant: "destructive" });
     } finally {
       setSaving(false);
     }
   };
+
 
 
   const openEdit = (track: DbTrack) => { setEditingTrack(track); setDialogOpen(true); };
