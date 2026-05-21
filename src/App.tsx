@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { PlayerProvider } from "@/contexts/PlayerContext";
@@ -10,7 +10,7 @@ import { BrandingProvider } from "@/contexts/BrandingContext";
 import MiniPlayer from "@/components/MiniPlayer";
 import SubscriptionRequiredDialog from "@/components/SubscriptionRequiredDialog";
 import Index from "./pages/Index";
-import Tracks from "./pages/Tracks";
+
 import TrackDetail from "./pages/TrackDetail";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
@@ -28,7 +28,7 @@ import AdminPromoCodes from "./pages/AdminPromoCodes";
 import Pricing from "./pages/Pricing";
 import Artists from "./pages/Artists";
 import Genres from "./pages/Genres";
-import TopTracks from "./pages/TopTracks";
+
 import NewReleases from "./pages/NewReleases";
 import Stems from "./pages/Stems";
 import NotFound from "./pages/NotFound";
@@ -48,7 +48,7 @@ const App = () => (
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<Index />} />
-              <Route path="/tracks" element={<Tracks />} />
+              <Route path="/tracks" element={<Navigate to="/new" replace />} />
               <Route path="/tracks/:id" element={<TrackDetail />} />
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
@@ -67,7 +67,7 @@ const App = () => (
               <Route path="/artists" element={<Artists />} />
 
               <Route path="/genres" element={<Genres />} />
-              <Route path="/top" element={<TopTracks />} />
+              <Route path="/top" element={<Navigate to="/new" replace />} />
               <Route path="/new" element={<NewReleases />} />
               <Route path="/stems" element={<Stems />} />
               <Route path="*" element={<NotFound />} />

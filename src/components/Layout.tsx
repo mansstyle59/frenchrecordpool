@@ -8,9 +8,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { usePlayer } from "@/contexts/PlayerContext";
 
 const navLinks = [
-  { to: "/tracks", label: "Catalogue" },
   { to: "/new", label: "Nouveautés" },
-  { to: "/top", label: "Top" },
   { to: "/genres", label: "Genres" },
   { to: "/artists", label: "Remixeurs" },
   { to: "/stems", label: "Stems" },
@@ -167,9 +165,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               <span className="font-display font-semibold gradient-text">French Record Pool</span>
             </div>
             <div className="flex gap-6 text-sm text-muted-foreground">
-              <Link to="/tracks" className="hover:text-foreground transition-colors">Catalogue</Link>
+              <Link to="/new" className="hover:text-foreground transition-colors">Nouveautés</Link>
               <Link to="/genres" className="hover:text-foreground transition-colors">Genres</Link>
-              <Link to="/top" className="hover:text-foreground transition-colors">Top</Link>
+              <Link to="/artists" className="hover:text-foreground transition-colors">Remixeurs</Link>
             </div>
             <p className="text-xs text-muted-foreground">© 2026 French Record Pool. Tous droits réservés.</p>
           </div>
