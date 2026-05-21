@@ -66,6 +66,7 @@ export default function NewReleases() {
   }, [tracks, search, genre, version, musicalKey, bpmActive, bpmRange, sort]);
 
   const visibleTracks = filtered.slice(0, visible);
+  const groupedVisible = useMemo(() => groupTracks(visibleTracks), [visibleTracks]);
   const activeFiltersCount =
     (genre !== "all" ? 1 : 0) +
     (version !== "all" ? 1 : 0) +
