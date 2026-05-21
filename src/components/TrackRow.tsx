@@ -42,7 +42,11 @@ export default function TrackRow({ track, index }: TrackRowProps) {
   const DownloadIcon = isExternalLink ? ExternalLink : Download;
 
   return (
-    <div className="group flex items-center gap-3 px-4 py-3 border-b border-border/40 last:border-0 hover:bg-secondary/40 transition-colors">
+    <div
+      className="group flex items-center gap-3 px-4 py-3 border-b border-border/40 last:border-0 hover:bg-secondary/40 transition-colors cursor-pointer"
+      onDoubleClick={handlePlay}
+      title="Double-cliquez pour lire"
+    >
       <div className="w-8 text-center shrink-0 font-mono">
         <span className="group-hover:hidden text-xs text-muted-foreground">
           {index !== undefined ? String(index + 1).padStart(2, "0") : ""}
@@ -52,6 +56,7 @@ export default function TrackRow({ track, index }: TrackRowProps) {
           size="icon"
           className="hidden group-hover:inline-flex h-8 w-8 text-primary"
           onClick={handlePlay}
+          onDoubleClick={(e) => e.stopPropagation()}
         >
           <Play className="h-4 w-4 fill-current" />
         </Button>
@@ -66,6 +71,7 @@ export default function TrackRow({ track, index }: TrackRowProps) {
         />
         <button
           onClick={handlePlay}
+          onDoubleClick={(e) => e.stopPropagation()}
           className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity"
           aria-label="Lire"
         >
@@ -84,6 +90,7 @@ export default function TrackRow({ track, index }: TrackRowProps) {
       <div className="flex-1 min-w-0">
         <Link
           to={`/tracks/${track.id}`}
+          onDoubleClick={(e) => e.stopPropagation()}
           className={`text-sm font-semibold truncate block hover:text-primary transition-colors ${isCurrentTrack ? "text-primary" : ""}`}
         >
           {track.title}
@@ -133,6 +140,7 @@ export default function TrackRow({ track, index }: TrackRowProps) {
             if (!user) { toast.error("Connectez-vous pour ajouter aux favoris"); return; }
             toggleFavorite(track.id);
           }}
+          onDoubleClick={(e) => e.stopPropagation()}
         >
           <Heart className={`h-4 w-4 ${isFavorite(track.id) ? "fill-current" : ""}`} />
         </Button>
@@ -143,6 +151,7 @@ export default function TrackRow({ track, index }: TrackRowProps) {
               size="icon"
               className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
               onClick={handleDownload}
+              onDoubleClick={(e) => e.stopPropagation()}
             >
               <DownloadIcon className="h-4 w-4" />
             </Button>
