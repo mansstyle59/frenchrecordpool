@@ -33,7 +33,7 @@ export default function TrackDetail() {
   }
 
   const handlePlay = () => {
-    play({ id: track.id, title: track.title, artist: track.artist, coverUrl: resolveCover(track), previewUrl: track.preview_url });
+    play({ id: track.id, title: track.title, artist: track.artist, coverUrl: resolveCover(track), previewUrl: track.preview_url || track.audio_url });
   };
 
   const handleDownload = () => downloadTrack(track.id, user, hasActiveSubscription);
