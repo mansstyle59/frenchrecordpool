@@ -58,6 +58,11 @@ export default function AdminTracks() {
 
   const genres = useMemo(() => Array.from(new Set(tracks.map(t => t.genre).filter(Boolean))).sort(), [tracks]);
   const labels = useMemo(() => Array.from(new Set(tracks.map(t => t.label).filter(Boolean))).sort() as string[], [tracks]);
+  const allTags = useMemo(() => {
+    const set = new Set<string>();
+    tracks.forEach(t => (t.tags ?? []).forEach(tag => tag && set.add(tag)));
+    return Array.from(set).sort();
+  }, [tracks]);
 
   const filtered = useMemo(() => {
     let res = [...tracks];
@@ -296,6 +301,8 @@ export default function AdminTracks() {
                 initialData={editingTrack}
                 saving={saving}
                 onSubmit={handleSubmit}
+                existingGenres={genres as string[]}
+                existingTags={allTags}
               />
             </DialogContent>
           </Dialog>
