@@ -110,17 +110,38 @@ export default function AdminTracks() {
     if (!data.title || !data.artist) return;
     setSaving(true);
     try {
-      // Refresh session to ensure JWT is fresh — évite les erreurs RLS dues à un token expiré
-      const { data: sess } = await supabase.auth.getSession();
-      if (!sess.session) {
+      // 1) Vérifie une session valide côté serveur (refresh si besoin)
+      let { data: userRes } = await supabase.auth.getUser();
+      if (!userRes?.user) {
         await supabase.auth.refreshSession();
+        ({ data: userRes } = await supabase.auth.getUser());
       }
-      const { data: sess2 } = await supabase.auth.getSession();
-      if (!sess2.session) {
-        toast({ title: "Session expirée", description: "Reconnecte-toi pour publier.", variant: "destructive" });
-        setSaving(false);
+      const currentUser = userRes?.user;
+      if (!currentUser) {
+        toast({
+          title: "Session expirée",
+          description: "Reconnecte-toi pour publier des tracks.",
+          variant: "destructive",
+        });
+        navigate("/auth");
         return;
       }
+
+      // 2) Vérifie le rôle admin côté serveur (évite faux positifs RLS)
+      const { data: isAdminCheck, error: roleErr } = await supabase.rpc("has_role", {
+        _user_id: currentUser.id,
+        _role: "admin",
+      });
+      if (roleErr) throw roleErr;
+      if (!isAdminCheck) {
+        toast({
+          title: "Accès refusé",
+          description: "Ton compte n'a pas les droits admin. Reconnecte-toi avec un compte admin.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       const trackId = editingTrack?.id ?? crypto.randomUUID();
       let coverUrl = editingTrack?.cover_url ?? null;
       let audioUrl = editingTrack?.audio_url ?? null;
@@ -155,7 +176,7 @@ export default function AdminTracks() {
         const { error } = await supabase.from("tracks").update(payload).eq("id", editingTrack.id);
         if (error) throw error;
         await logAdminAction({
-          actorId: user!.id, action: "track.update",
+          actorId: currentUser.id, action: "track.update",
           entityType: "track", entityId: editingTrack.id,
           entityLabel: `${data.title} — ${data.artist}`,
           details: { changes: payload },
@@ -163,10 +184,10 @@ export default function AdminTracks() {
         toast({ title: "Track modifiée !" });
       } else {
         const newId = trackId;
-        const { error } = await supabase.from("tracks").insert({ ...payload, id: newId, created_by: user!.id });
+        const { error } = await supabase.from("tracks").insert({ ...payload, id: newId, created_by: currentUser.id });
         if (error) throw error;
         await logAdminAction({
-          actorId: user!.id, action: "track.create",
+          actorId: currentUser.id, action: "track.create",
           entityType: "track", entityId: newId,
           entityLabel: `${data.title} — ${data.artist}`,
         });
@@ -179,13 +200,14 @@ export default function AdminTracks() {
     } catch (err: any) {
       const msg = err?.message || "";
       const friendly = /row-level security|violates row-level/i.test(msg)
-        ? "Permission refusée. Ta session a peut-être expiré — reconnecte-toi en tant qu'admin et réessaie."
-        : msg;
+        ? "Permission refusée par la base. Vérifie que tu es bien connecté en tant qu'admin, puis réessaie."
+        : msg || "Une erreur est survenue.";
       toast({ title: "Erreur", description: friendly, variant: "destructive" });
     } finally {
       setSaving(false);
     }
   };
+
 
   const openEdit = (track: DbTrack) => { setEditingTrack(track); setDialogOpen(true); };
   const openAdd = () => { setEditingTrack(null); setDialogOpen(true); };
