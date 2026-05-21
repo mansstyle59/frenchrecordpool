@@ -292,6 +292,7 @@ export default function AdminUsers() {
                           <Ban className="h-3 w-3" /> Bloqué
                         </Badge>
                       )}
+                    </td>
                     <td className="px-4 py-3">
                       {active ? (
                         <Badge className="bg-primary/15 text-primary border-primary/30 gap-1">
@@ -315,6 +316,27 @@ export default function AdminUsers() {
                         )}
                         <Button variant="ghost" size="sm" className="gap-1" onClick={() => handlePasswordReset(p)}>
                           <KeyRound className="h-3 w-3" /> Mdp
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className={`gap-1 ${p.is_blocked ? "text-primary" : "text-amber-500 hover:text-amber-600"}`}
+                          onClick={() => toggleBlock(p)}
+                          disabled={p.user_id === user?.id}
+                          title={p.is_blocked ? "Débloquer" : "Bloquer"}
+                        >
+                          {p.is_blocked ? <CheckCircle2 className="h-3 w-3" /> : <Ban className="h-3 w-3" />}
+                          {p.is_blocked ? "Débloquer" : "Bloquer"}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="gap-1 text-destructive hover:text-destructive hover:bg-destructive/10"
+                          onClick={() => setConfirmDelete(p)}
+                          disabled={p.user_id === user?.id}
+                          title="Supprimer"
+                        >
+                          <Trash2 className="h-3 w-3" /> Supprimer
                         </Button>
                       </div>
                     </td>
