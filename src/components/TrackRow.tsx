@@ -140,6 +140,7 @@ export default function TrackRow({ track, index }: TrackRowProps) {
             if (!user) { toast.error("Connectez-vous pour ajouter aux favoris"); return; }
             toggleFavorite(track.id);
           }}
+          onDoubleClick={(e) => e.stopPropagation()}
         >
           <Heart className={`h-4 w-4 ${isFavorite(track.id) ? "fill-current" : ""}`} />
         </Button>
