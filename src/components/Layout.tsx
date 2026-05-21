@@ -1,9 +1,10 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Search, Menu, X, Disc3, LogIn, LogOut, Shield, Mic2 } from "lucide-react";
+import { Search, Menu, X, Disc3, LogIn, LogOut, Shield, Mic2, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import ThemeToggle from "@/components/ThemeToggle";
 import NotificationBell from "@/components/NotificationBell";
+import ViewAsUserBanner from "@/components/ViewAsUserBanner";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePlayer } from "@/contexts/PlayerContext";
