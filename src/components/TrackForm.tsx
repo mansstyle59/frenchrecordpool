@@ -278,7 +278,61 @@ export default function TrackForm({ initialData, saving, onSubmit, existingGenre
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Auto-fill metadata from iTunes / Deezer
+  const runMetaSearch = async () => {
+    const q = metaQuery.trim() || `${artist} ${title}`.trim();
+    if (!q) {
+      toast({ title: "Recherche vide", description: "Tape un artiste ou un titre.", variant: "destructive" });
+      return;
+    }
+    setMetaSearching(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("cover-tools", {
+        body: { action: "meta_search", query: q },
+      });
+      if (error || (data as any)?.error) throw new Error((data as any)?.error || error?.message || "Erreur");
+      const results = ((data as any).results ?? []) as any[];
+      setMetaResults(results);
+      if (!results.length) toast({ title: "Aucun résultat", description: "Essaie une autre formulation." });
+    } catch (err: any) {
+      toast({ title: "Erreur de recherche", description: err?.message ?? "Inconnue", variant: "destructive" });
+    } finally {
+      setMetaSearching(false);
+    }
+  };
+
+  const applyMetaResult = async (r: any) => {
+    if (r.artist) setArtist(r.artist);
+    if (r.title) setTitle(r.title);
+    if (r.genre && !genre) setGenre(r.genre);
+    if (r.album && !label) setLabel(r.album);
+    if (r.durationMs && !duration) {
+      const total = Math.round(r.durationMs / 1000);
+      const m = Math.floor(total / 60);
+      const s = String(total % 60).padStart(2, "0");
+      setDuration(`${m}:${s}`);
+    }
+    if (r.coverUrl && !coverFile && !coverUrl) {
+      try {
+        const proxy = await supabase.functions.invoke("cover-tools", {
+          body: { action: "fetch", url: r.coverUrl },
+        });
+        const dataUrl = (proxy.data as any)?.dataUrl as string | undefined;
+        if (dataUrl) {
+          const res = await fetch(dataUrl);
+          const blob = await res.blob();
+          setCoverFile(new File([blob], "cover.jpg", { type: blob.type || "image/jpeg" }));
+        } else {
+          setCoverUrl(r.coverUrl);
+        }
+      } catch {
+        setCoverUrl(r.coverUrl);
+      }
+    }
+    setMetaResults([]);
+    toast({ title: "Métadonnées appliquées", description: `${r.source} · ${r.artist} — ${r.title}` });
+  };
+
     e.preventDefault();
     const tagsStr = tagList.join(", ");
     const result = trackSchema.safeParse({
