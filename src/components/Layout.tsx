@@ -33,8 +33,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen flex flex-col">
       {/* Navbar */}
-      <header className="sticky top-0 z-50 glass">
-        <div className="container flex items-center justify-between h-16 gap-4">
+      <header className="sticky top-0 z-50 glass safe-top">
+        <div className="container flex items-center justify-between h-14 sm:h-16 gap-2 sm:gap-4">
           <Link to="/" className="flex items-center gap-2 shrink-0">
             <Disc3 className="h-7 w-7 text-primary animate-pulse-glow" />
             <span className="font-display font-bold text-lg gradient-text hidden sm:inline">
@@ -178,9 +178,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
       <ViewAsUserBanner />
 
-      <main className={`flex-1 ${currentTrack ? "pb-16" : ""}`}>{children}</main>
+      <main className={`flex-1 ${currentTrack ? "pb-20 sm:pb-16" : ""}`}>{children}</main>
 
-      <footer className={`border-t border-border py-8 mt-12 ${currentTrack ? "mb-16" : ""}`}>
+      <footer className={`border-t border-border py-8 mt-12 ${currentTrack ? "mb-20 sm:mb-16" : ""}`}>
         <div className="container">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="flex items-center gap-2">
