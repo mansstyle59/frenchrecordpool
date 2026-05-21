@@ -59,8 +59,8 @@ export default function Tracks() {
     const t = filtered[idx];
     if (!t) return;
     play(
-      { id: t.id, title: t.title, artist: t.artist, coverUrl: resolveCover(t), previewUrl: t.preview_url },
-      filtered.map((x) => ({ id: x.id, title: x.title, artist: x.artist, coverUrl: resolveCover(x), previewUrl: x.preview_url })),
+      { id: t.id, title: t.title, artist: t.artist, coverUrl: resolveCover(t), previewUrl: t.preview_url || t.audio_url },
+      filtered.map((x) => ({ id: x.id, title: x.title, artist: x.artist, coverUrl: resolveCover(x), previewUrl: x.preview_url || x.audio_url })),
     );
   };
 

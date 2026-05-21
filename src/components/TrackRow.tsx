@@ -31,7 +31,7 @@ export default function TrackRow({ track, index }: TrackRowProps) {
         title: track.title,
         artist: track.artist,
         coverUrl: resolveCover(track),
-        previewUrl: track.preview_url,
+        previewUrl: track.preview_url || track.audio_url,
       });
     }
   };
