@@ -223,7 +223,7 @@ export default function NewReleases() {
               <div className="hidden md:grid grid-cols-[32px_56px_1fr_auto_112px_56px_48px_48px_auto] gap-3 px-4 py-2.5 border-b border-border/60 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70 bg-secondary/30">
                 <span>#</span><span></span><span>Titre · Remixeur</span><span className="hidden sm:block">Version</span><span className="hidden md:block">Genre</span><span className="hidden lg:block text-center">BPM</span><span className="hidden lg:block text-center">Key</span><span className="text-right">Time</span><span></span>
               </div>
-              {visibleTracks.map((track, i) => <TrackRow key={track.id} track={track} index={i} />)}
+              {groupedVisible.map((g, i) => <TrackGroupRow key={g.key} group={g} index={i} />)}
             </div>
 
             {visible < filtered.length && (
