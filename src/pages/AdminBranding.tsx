@@ -66,17 +66,13 @@ const PRESETS: Array<{ name: string; patch: Partial<Branding> }> = [
 ];
 
 export default function AdminBranding() {
-  const { user, loading, isAdmin } = useAuth();
-  const navigate = useNavigate();
+  const { user, isAdmin } = useAuth();
   const { branding, applyPreview, refresh } = useBranding();
   const { theme, setTheme } = useTheme();
   const [draft, setDraft] = useState<Branding | null>(null);
   const [saving, setSaving] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
 
-  useEffect(() => {
-    if (!loading && (!user || !isAdmin)) navigate("/login");
-  }, [user, loading, isAdmin, navigate]);
 
   useEffect(() => {
     if (branding && !draft) setDraft(branding);
