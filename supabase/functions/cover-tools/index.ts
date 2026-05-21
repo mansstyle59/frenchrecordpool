@@ -152,9 +152,17 @@ Deno.serve(async (req) => {
 
     if (action === "soundcloud") {
       if (!url) return json({ error: "url manquant" }, 400);
-      const thumb = await fetchSoundCloudThumb(url);
-      if (!thumb) return json({ error: "Miniature SoundCloud indisponible" }, 404);
-      return json({ url: thumb });
+      const meta = await fetchSoundCloudOEmbed(url);
+      if (!meta) return json({ error: "SoundCloud indisponible" }, 404);
+      // Backward-compat: also expose `url` for legacy thumbnail callers
+      return json({ ...meta, url: meta.thumbnail });
+    }
+
+    if (action === "soundcloud_meta") {
+      if (!url) return json({ error: "url manquant" }, 400);
+      const meta = await fetchSoundCloudOEmbed(url);
+      if (!meta) return json({ error: "SoundCloud indisponible" }, 404);
+      return json(meta);
     }
 
     if (action === "generate") {
