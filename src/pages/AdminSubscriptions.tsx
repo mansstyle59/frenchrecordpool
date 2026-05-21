@@ -125,6 +125,6 @@ export default function AdminSubscriptions() {
           </div>
         </div>
       </div>
-    </div>
+    </AdminLayout>
   );
 }
