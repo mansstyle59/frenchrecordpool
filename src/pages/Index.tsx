@@ -41,7 +41,11 @@ export default function Index() {
     <Layout>
       {/* Hero */}
       <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-cover bg-center opacity-30" style={{ backgroundImage: `url(${heroBg})` }} />
+        <div className="absolute inset-0 bg-cover bg-center opacity-30" style={{ backgroundImage: `url(${heroBgUrl})` }} />
+        {/* Invisible CMS-editable handle for the hero background */}
+        <div className="absolute top-2 left-2 z-10 hidden">
+          <CmsImage editKey="home.hero.bg" src={heroBgUrl} alt="" className="w-10 h-10" />
+        </div>
         <div className="absolute inset-0 bg-gradient-to-b from-background/70 via-background/85 to-background" />
 
         {/* Animated glow blobs */}
