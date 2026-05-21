@@ -85,17 +85,40 @@ export function readId3Tags(file: File): Promise<Partial<AudioMetadata>> {
   });
 }
 
-// Devine BPM et tonalité depuis le nom de fichier (ex: "Track - 128 BPM - Am.mp3")
-function parseFromFilename(name: string): { bpm?: number; key?: string } {
-  const cleaned = name.replace(/\.[^.]+$/, "");
-  const out: { bpm?: number; key?: string } = {};
+// Devine artiste / titre / version / BPM / tonalité depuis le nom de fichier
+// Exemples: "Artist - Title (DJ Yass Remix) [128 BPM - Am].mp3"
+function parseFromFilename(name: string): { bpm?: number; key?: string; artist?: string; title?: string; version?: string } {
+  let cleaned = name.replace(/\.[^.]+$/, "").trim();
+  const out: { bpm?: number; key?: string; artist?: string; title?: string; version?: string } = {};
+
   const bpmMatch = cleaned.match(/(\d{2,3})\s*(?:bpm|BPM)/);
   if (bpmMatch) {
     const v = parseInt(bpmMatch[1], 10);
     if (v >= 40 && v <= 260) out.bpm = v;
+    cleaned = cleaned.replace(bpmMatch[0], "").trim();
   }
   const keyMatch = cleaned.match(/\b([A-G](?:#|b)?(?:m|maj|min)?)\b(?!\w)/);
   if (keyMatch && /[A-G]/.test(keyMatch[1])) out.key = keyMatch[1];
+
+  // Extract version inside parentheses or brackets: (X Remix), [Extended Edit]…
+  const versionMatch = cleaned.match(/[\(\[]([^\)\]]*?(?:remix|edit|mix|version|bootleg|mashup|flip|rework|vip|extended|intro|clean|dirty|acapella|instrumental)[^\)\]]*)[\)\]]/i);
+  if (versionMatch) {
+    out.version = versionMatch[1].trim();
+    cleaned = cleaned.replace(versionMatch[0], "").trim();
+  }
+  // Remove residual bracketed segments (e.g. [www.site.com])
+  cleaned = cleaned.replace(/[\(\[][^\)\]]*[\)\]]/g, "").replace(/\s{2,}/g, " ").trim();
+  // Trim trailing separators
+  cleaned = cleaned.replace(/[-–—_]+$/g, "").trim();
+
+  // Split "Artist - Title"
+  const parts = cleaned.split(/\s+[-–—]\s+/);
+  if (parts.length >= 2) {
+    out.artist = parts[0].trim();
+    out.title = parts.slice(1).join(" - ").trim();
+  } else if (cleaned) {
+    out.title = cleaned;
+  }
   return out;
 }
 
