@@ -732,7 +732,7 @@ export default function TrackForm({ initialData, saving, onSubmit, existingGenre
                       variant="outline"
                       size="sm"
                       className="h-9 w-full gap-1.5"
-                      disabled={!audioFile || previewGenerating}
+                      disabled={(!audioFile && !audioUrl.trim()) || previewGenerating}
                       onClick={regeneratePreview}
                     >
                       <RefreshCw className={`h-3.5 w-3.5 ${previewGenerating ? "animate-spin" : ""}`} />
