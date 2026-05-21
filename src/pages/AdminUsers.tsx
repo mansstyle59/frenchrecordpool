@@ -231,6 +231,14 @@ export default function AdminUsers() {
               <SelectItem value="none">Sans abonnement actif</SelectItem>
             </SelectContent>
           </Select>
+          <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as any)}>
+            <SelectTrigger className="w-full lg:w-44 bg-secondary border-border"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tous les statuts</SelectItem>
+              <SelectItem value="active">Comptes actifs</SelectItem>
+              <SelectItem value="blocked">Comptes bloqués</SelectItem>
+            </SelectContent>
+          </Select>
           {hasFilters && (
             <Button variant="ghost" onClick={resetFilters} className="gap-1">
               <X className="h-4 w-4" /> Réinitialiser
@@ -277,9 +285,13 @@ export default function AdminUsers() {
                       {isAdminRole ? (
                         <Badge className="bg-accent/15 text-accent border-accent/30 gap-1"><Shield className="h-3 w-3" /> Admin</Badge>
                       ) : (
-                        <Badge variant="outline" className="text-xs">Client</Badge>
+              <Badge variant="outline" className="text-xs">Client</Badge>
                       )}
-                    </td>
+                      {p.is_blocked && (
+                        <Badge className="ml-1 bg-destructive/15 text-destructive border-destructive/30 gap-1">
+                          <Ban className="h-3 w-3" /> Bloqué
+                        </Badge>
+                      )}
                     <td className="px-4 py-3">
                       {active ? (
                         <Badge className="bg-primary/15 text-primary border-primary/30 gap-1">
