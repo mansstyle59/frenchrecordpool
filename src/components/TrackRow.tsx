@@ -69,6 +69,19 @@ export default function TrackRow({ track, index }: TrackRowProps) {
   };
 
   const handlePlay = () => {
+    stopPreview();
+    if (isCurrentTrack) {
+      toggle();
+    } else {
+      play({
+        id: track.id,
+        title: track.title,
+        artist: track.artist,
+        coverUrl: resolveCover(track),
+        previewUrl: previewSrc,
+      });
+    }
+  };
     if (isCurrentTrack) {
       toggle();
     } else {
