@@ -24,6 +24,7 @@ const ACTION_LABELS: Record<string, string> = {
 function actionIcon(action: string) {
   if (action.startsWith("track.")) return <FileMusic className="h-3.5 w-3.5" />;
   if (action.startsWith("subscription.")) return <CreditCard className="h-3.5 w-3.5" />;
+  if (action.startsWith("user.role_")) return <Shield className="h-3.5 w-3.5" />;
   if (action === "user.password_reset") return <KeyRound className="h-3.5 w-3.5" />;
   return <User className="h-3.5 w-3.5" />;
 }
