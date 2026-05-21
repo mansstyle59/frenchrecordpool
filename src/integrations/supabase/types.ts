@@ -502,6 +502,11 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_delete_track: { Args: { _id: string }; Returns: undefined }
+      admin_upsert_track: {
+        Args: { _id?: string; _track: Json }
+        Returns: string
+      }
       has_active_subscription: { Args: { _user_id: string }; Returns: boolean }
       has_role: {
         Args: {
