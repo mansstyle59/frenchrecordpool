@@ -48,11 +48,24 @@ export function readId3Tags(file: File): Promise<Partial<AudioMetadata>> {
       jsmediatags.read(file, {
         onSuccess: (result: any) => {
           const tags = result.tags || {};
-          // jsmediatags exposes both human keys (title, artist, genre) AND frame keys (TBPM, TKEY, TIT2...)
           const bpmRaw =
             tags.TBPM?.data ?? tags.bpm ?? tags.TBP?.data ?? tags.tempo;
           const keyRaw = tags.TKEY?.data ?? tags.key ?? tags.initialKey;
           const bpmNum = bpmRaw ? parseInt(String(bpmRaw).replace(/[^\d.]/g, ""), 10) : NaN;
+
+          // Extract embedded cover art (APIC frame)
+          let pictureFile: File | undefined;
+          try {
+            const pic = tags.picture || tags.APIC?.data;
+            if (pic && Array.isArray(pic.data) && pic.data.length > 0) {
+              const bytes = new Uint8Array(pic.data);
+              const mime = pic.format || "image/jpeg";
+              const ext = mime.includes("png") ? "png" : "jpg";
+              const blob = new Blob([bytes], { type: mime });
+              pictureFile = new File([blob], `cover.${ext}`, { type: mime });
+            }
+          } catch { /* ignore */ }
+
           resolve({
             title: tags.title || tags.TIT2?.data || undefined,
             artist: tags.artist || tags.TPE1?.data || undefined,
@@ -61,6 +74,7 @@ export function readId3Tags(file: File): Promise<Partial<AudioMetadata>> {
             comment: tags.comment?.text || undefined,
             bpm: Number.isFinite(bpmNum) && bpmNum > 0 ? bpmNum : undefined,
             key: keyRaw ? String(keyRaw).trim() : undefined,
+            pictureFile,
           });
         },
         onError: () => resolve({}),
