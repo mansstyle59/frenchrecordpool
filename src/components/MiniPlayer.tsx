@@ -70,14 +70,16 @@ export default function MiniPlayer() {
   return (
     <>
       <audio ref={audioRef} preload="auto" />
-      <div className="fixed bottom-0 left-1 right-1 z-50 glass border-t border-border">
-        <div className="container flex items-center gap-3 h-16">
+      <div className="fixed bottom-0 left-0 right-0 z-50 glass border-t border-border safe-bottom safe-x">
+        <div className="container flex items-center gap-2 sm:gap-3 h-16">
           <img
             src={currentTrack.coverUrl || ""}
             alt=""
-            className="h-10 w-10 rounded object-cover shrink-0 ring-1 ring-border"
+            loading="lazy"
+            decoding="async"
+            className="h-10 w-10 sm:h-11 sm:w-11 rounded object-cover shrink-0 ring-1 ring-border"
           />
-          <div className="min-w-0 flex-shrink-0 w-32 sm:w-48">
+          <div className="min-w-0 flex-1 sm:flex-none sm:w-48 lg:w-56">
             <p className="text-sm font-medium truncate">{currentTrack.title}</p>
             <p className="text-xs text-muted-foreground truncate">{currentTrack.artist}</p>
           </div>

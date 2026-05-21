@@ -33,8 +33,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen flex flex-col">
       {/* Navbar */}
-      <header className="sticky top-0 z-50 glass">
-        <div className="container flex items-center justify-between h-16 gap-4">
+      <header className="sticky top-0 z-50 glass safe-top">
+        <div className="container flex items-center justify-between h-14 sm:h-16 gap-2 sm:gap-4">
           <Link to="/" className="flex items-center gap-2 shrink-0">
             <Disc3 className="h-7 w-7 text-primary animate-pulse-glow" />
             <span className="font-display font-bold text-lg gradient-text hidden sm:inline">
