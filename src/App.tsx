@@ -50,6 +50,7 @@ const App = () => (
       <AuthProvider>
         <BrandingProvider>
         <PlayerProvider>
+          <CmsProvider>
           <TooltipProvider>
           <Toaster />
           <Sonner />
@@ -88,8 +89,10 @@ const App = () => (
             </Routes>
             <MiniPlayer />
             <SubscriptionRequiredDialog />
+            <CmsEditBar />
           </BrowserRouter>
           </TooltipProvider>
+          </CmsProvider>
         </PlayerProvider>
         </BrandingProvider>
       </AuthProvider>
