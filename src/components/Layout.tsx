@@ -10,7 +10,7 @@ import CmsLink from "@/components/cms/CmsLink";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePlayer } from "@/contexts/PlayerContext";
-import { useCms, useCmsValue } from "@/contexts/CmsContext";
+
 
 const NAV_DEFAULTS = [
   { key: "nav.new", to: "/new", label: "Nouveautés" },
