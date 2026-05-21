@@ -10,6 +10,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useTracks } from "@/hooks/useTracks";
+import { groupTracks } from "@/lib/groupTracks";
+import TrackGroupRow from "@/components/TrackGroupRow";
 
 type SortOption = "newest" | "popular" | "az" | "bpm";
 
@@ -64,6 +66,7 @@ export default function NewReleases() {
   }, [tracks, search, genre, version, musicalKey, bpmActive, bpmRange, sort]);
 
   const visibleTracks = filtered.slice(0, visible);
+  const groupedVisible = useMemo(() => groupTracks(visibleTracks), [visibleTracks]);
   const activeFiltersCount =
     (genre !== "all" ? 1 : 0) +
     (version !== "all" ? 1 : 0) +
@@ -220,7 +223,7 @@ export default function NewReleases() {
               <div className="hidden md:grid grid-cols-[32px_56px_1fr_auto_112px_56px_48px_48px_auto] gap-3 px-4 py-2.5 border-b border-border/60 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70 bg-secondary/30">
                 <span>#</span><span></span><span>Titre · Remixeur</span><span className="hidden sm:block">Version</span><span className="hidden md:block">Genre</span><span className="hidden lg:block text-center">BPM</span><span className="hidden lg:block text-center">Key</span><span className="text-right">Time</span><span></span>
               </div>
-              {visibleTracks.map((track, i) => <TrackRow key={track.id} track={track} index={i} />)}
+              {groupedVisible.map((g, i) => <TrackGroupRow key={g.key} group={g} index={i} />)}
             </div>
 
             {visible < filtered.length && (
