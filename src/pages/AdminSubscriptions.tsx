@@ -1,6 +1,5 @@
-import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, Disc3, Pencil, Trash2 } from "lucide-react";
+import { useState } from "react";
+import { Pencil, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -9,16 +8,13 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { logAdminAction } from "@/lib/auditLog";
+import AdminLayout from "@/components/admin/AdminLayout";
 
 export default function AdminSubscriptions() {
-  const { user, loading, isAdmin } = useAuth();
-  const navigate = useNavigate();
+  const { user, isAdmin } = useAuth();
   const qc = useQueryClient();
   const [editing, setEditing] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!loading && (!user || !isAdmin)) navigate("/login");
-  }, [user, loading, isAdmin, navigate]);
 
   const { data: subs = [] } = useQuery({
     queryKey: ["admin-subscriptions"],
