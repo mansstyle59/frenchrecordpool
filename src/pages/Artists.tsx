@@ -18,9 +18,9 @@ export default function Artists() {
   return (
     <Layout>
       <div className="container py-8">
-        <h1 className="font-display text-3xl font-bold mb-6">Artistes</h1>
+        <h1 className="font-display text-3xl font-bold mb-6">Remixeurs</h1>
         {isLoading ? <p className="text-muted-foreground">Chargement...</p> :
-         artists.length === 0 ? <p className="text-muted-foreground">Aucun artiste.</p> : (
+         artists.length === 0 ? <p className="text-muted-foreground">Aucun remixeur.</p> : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
             {artists.map((artist) => (
               <Link key={artist.name} to={`/tracks?artist=${encodeURIComponent(artist.name)}`} className="group bg-card border border-border rounded-xl p-4 text-center hover:border-primary/40 transition-all">

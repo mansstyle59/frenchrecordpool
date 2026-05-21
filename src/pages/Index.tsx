@@ -98,7 +98,7 @@ export default function Index() {
           >
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input name="q" placeholder="Titre, artiste, genre..." className="pl-10 h-12 bg-secondary/80 border-border text-base" />
+              <Input name="q" placeholder="Titre, remixeur, genre..." className="pl-10 h-12 bg-secondary/80 border-border text-base" />
             </div>
             <Button type="submit" variant="hero" size="lg" className="shadow-lg shadow-primary/30">Rechercher</Button>
           </motion.form>
@@ -112,7 +112,7 @@ export default function Index() {
           >
             {[
               { icon: Headphones, label: "Tracks", value: tracks.length },
-              { icon: Users, label: "Artistes", value: artistsCount },
+              { icon: Users, label: "Remixeurs", value: artistsCount },
               { icon: TrendingUp, label: "Téléchargements", value: totalDownloads },
             ].map((s) => (
               <div key={s.label} className="rounded-xl border border-border bg-card/40 backdrop-blur px-3 py-4">

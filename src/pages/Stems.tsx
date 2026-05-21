@@ -73,7 +73,7 @@ export default function Stems() {
               <Input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Rechercher un titre, artiste, genre..."
+                placeholder="Rechercher un titre, remixeur, genre..."
                 className="pl-9 bg-secondary border-border"
               />
             </div>

@@ -171,7 +171,7 @@ export default function TrackForm({ initialData, saving, onSubmit }: TrackFormPr
               <Input value={title} onChange={(e) => setTitle(e.target.value)} required className="bg-secondary border-border" />
             </div>
             <div className="space-y-1">
-              <Label>Artiste *</Label>
+              <Label>Remixeur *</Label>
               <Input value={artist} onChange={(e) => setArtist(e.target.value)} required className="bg-secondary border-border" />
             </div>
           </div>

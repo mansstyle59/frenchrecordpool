@@ -12,7 +12,7 @@ const navLinks = [
   { to: "/new", label: "Nouveautés" },
   { to: "/top", label: "Top" },
   { to: "/genres", label: "Genres" },
-  { to: "/artists", label: "Artistes" },
+  { to: "/artists", label: "Remixeurs" },
   { to: "/stems", label: "Stems" },
 ];
 
@@ -60,7 +60,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           <div className="flex items-center gap-2">
             {searchOpen && (
               <Input
-                placeholder="Rechercher un titre, artiste..."
+                placeholder="Rechercher un titre, remixeur..."
                 className="w-48 lg:w-64 bg-secondary border-border"
                 autoFocus
                 onBlur={() => setSearchOpen(false)}
