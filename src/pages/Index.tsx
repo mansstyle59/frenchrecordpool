@@ -6,15 +6,19 @@ import { Input } from "@/components/ui/input";
 import Layout from "@/components/Layout";
 import TrackRow from "@/components/TrackRow";
 import GenreCard from "@/components/GenreCard";
+import CmsText from "@/components/cms/CmsText";
+import CmsImage from "@/components/cms/CmsImage";
 import { useTracks } from "@/hooks/useTracks";
 import { usePlayer } from "@/contexts/PlayerContext";
 import { resolveCover } from "@/lib/trackCover";
+import { useCmsValue, useCms } from "@/contexts/CmsContext";
 
 import heroBg from "@/assets/hero-bg.jpg";
 
 export default function Index() {
   const { data: tracks = [], isLoading } = useTracks();
   const { play } = usePlayer();
+  const heroBgUrl = useCmsValue<string>("home.hero.bg", heroBg);
   const topTracks = [...tracks].sort((a, b) => (b.downloads ?? 0) - (a.downloads ?? 0)).slice(0, 5);
   const newTracks = [...tracks].sort((a, b) => (b.release_date ?? "").localeCompare(a.release_date ?? "")).slice(0, 8);
   const featured = newTracks.slice(0, 6);
@@ -37,7 +41,8 @@ export default function Index() {
     <Layout>
       {/* Hero */}
       <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-cover bg-center opacity-30" style={{ backgroundImage: `url(${heroBg})` }} />
+        <div className="absolute inset-0 bg-cover bg-center opacity-30" style={{ backgroundImage: `url(${heroBgUrl})` }} />
+        <HeroBgEditor src={heroBgUrl} />
         <div className="absolute inset-0 bg-gradient-to-b from-background/70 via-background/85 to-background" />
 
         {/* Animated glow blobs */}
@@ -64,7 +69,7 @@ export default function Index() {
             transition={{ duration: 0.6 }}
             className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.3em] text-primary/90 mb-4 px-3 py-1 rounded-full border border-primary/30 bg-primary/5"
           >
-            <Sparkles className="h-3 w-3" /> Pool exclusif · DJs francophones
+            <Sparkles className="h-3 w-3" /> <CmsText editKey="home.hero.badge">Pool exclusif · DJs francophones</CmsText>
           </motion.span>
 
           <motion.h1
@@ -73,7 +78,7 @@ export default function Index() {
             transition={{ duration: 0.8, ease: "easeOut" }}
             className="font-display text-5xl md:text-8xl font-bold mb-4 leading-[1.05] tracking-tight"
           >
-            <span className="gradient-text">French Record Pool</span>
+            <CmsText editKey="home.hero.title" as="span" className="gradient-text">French Record Pool</CmsText>
           </motion.h1>
 
           <motion.p
@@ -82,7 +87,7 @@ export default function Index() {
             transition={{ duration: 0.7, delay: 0.2 }}
             className="text-lg md:text-2xl text-muted-foreground max-w-2xl mx-auto mb-10"
           >
-            Edits, remixes & exclusivités. Mis à jour chaque semaine pour vos sets.
+            <CmsText editKey="home.hero.subtitle">Edits, remixes & exclusivités. Mis à jour chaque semaine pour vos sets.</CmsText>
           </motion.p>
 
           <motion.form
@@ -294,6 +299,19 @@ function TrackListShell({ isLoading, empty, emptyText, children }: { isLoading: 
       ) : (
         <div>{children}</div>
       )}
+    </div>
+  );
+}
+
+function HeroBgEditor({ src }: { src: string }) {
+  const { editMode } = useCms();
+  if (!editMode) return null;
+  return (
+    <div className="absolute top-4 left-4 z-20">
+      <div className="rounded-lg border border-primary/40 bg-background/80 backdrop-blur p-2 flex items-center gap-2 text-xs">
+        <span className="text-muted-foreground">Fond d'écran</span>
+        <CmsImage editKey="home.hero.bg" src={src} alt="" className="w-12 h-8 object-cover rounded" />
+      </div>
     </div>
   );
 }

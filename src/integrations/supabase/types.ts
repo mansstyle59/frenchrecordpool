@@ -101,6 +101,69 @@ export type Database = {
         }
         Relationships: []
       }
+      cms_content: {
+        Row: {
+          created_at: string
+          key: string
+          published_at: string | null
+          published_by: string | null
+          type: string
+          updated_at: string
+          updated_by: string | null
+          value_draft: Json | null
+          value_published: Json | null
+        }
+        Insert: {
+          created_at?: string
+          key: string
+          published_at?: string | null
+          published_by?: string | null
+          type: string
+          updated_at?: string
+          updated_by?: string | null
+          value_draft?: Json | null
+          value_published?: Json | null
+        }
+        Update: {
+          created_at?: string
+          key?: string
+          published_at?: string | null
+          published_by?: string | null
+          type?: string
+          updated_at?: string
+          updated_by?: string | null
+          value_draft?: Json | null
+          value_published?: Json | null
+        }
+        Relationships: []
+      }
+      cms_content_versions: {
+        Row: {
+          action: string
+          content_key: string
+          created_at: string
+          created_by: string | null
+          id: string
+          value: Json | null
+        }
+        Insert: {
+          action: string
+          content_key: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          value?: Json | null
+        }
+        Update: {
+          action?: string
+          content_key?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          value?: Json | null
+        }
+        Relationships: []
+      }
       downloads: {
         Row: {
           downloaded_at: string
@@ -646,7 +709,27 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      cms_content_public: {
+        Row: {
+          key: string | null
+          published_at: string | null
+          type: string | null
+          value: Json | null
+        }
+        Insert: {
+          key?: string | null
+          published_at?: string | null
+          type?: string | null
+          value?: Json | null
+        }
+        Update: {
+          key?: string | null
+          published_at?: string | null
+          type?: string | null
+          value?: Json | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       admin_delete_track: { Args: { _id: string }; Returns: undefined }
@@ -671,6 +754,13 @@ export type Database = {
       admin_upsert_track: {
         Args: { _id?: string; _track: Json }
         Returns: string
+      }
+      cms_publish: { Args: { _keys?: string[] }; Returns: number }
+      cms_restore_version: { Args: { _version_id: string }; Returns: undefined }
+      cms_revert_draft: { Args: { _key: string }; Returns: undefined }
+      cms_save_draft: {
+        Args: { _key: string; _type: string; _value: Json }
+        Returns: undefined
       }
       dj_submit_track: { Args: { _track: Json }; Returns: string }
       dj_update_own_track: {

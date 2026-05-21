@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import ThemeToggle from "@/components/ThemeToggle";
 import NotificationBell from "@/components/NotificationBell";
 import ViewAsUserBanner from "@/components/ViewAsUserBanner";
+import CmsText from "@/components/cms/CmsText";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePlayer } from "@/contexts/PlayerContext";
@@ -191,7 +192,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               <Link to="/genres" className="hover:text-foreground transition-colors">Genres</Link>
               <Link to="/artists" className="hover:text-foreground transition-colors">Remixeurs</Link>
             </div>
-            <p className="text-xs text-muted-foreground">© 2026 French Record Pool. Tous droits réservés.</p>
+            <p className="text-xs text-muted-foreground"><CmsText editKey="footer.copyright">© 2026 French Record Pool. Tous droits réservés.</CmsText></p>
           </div>
         </div>
       </footer>

@@ -1,109 +1,118 @@
-# Plateforme DJ : soumissions + validation admin
+# CMS visuel inline — édition par crayon (admin)
 
-## Vue d'ensemble
+Objectif : permettre à l'admin de modifier textes, images, couleurs secondaires et l'ordre des sections directement depuis le site public via une icône crayon, **sans toucher au branding actuel** (logo, palette principale, typo, glassmorphism restent intacts).
 
-Chaque utilisateur peut devenir « DJ » et soumettre des morceaux depuis son dashboard. Toute soumission ou modification entre en file d'attente et doit être validée par l'admin avant publication publique. L'admin peut corriger les métadonnées avant d'approuver. Notifications in-app temps réel.
+Livré en **3 vagues** pour shipper utile vite. Validation explicite avant chaque vague.
 
-## 1. Base de données
+---
 
-### Modifs sur `tracks`
-- `status` : `pending` | `approved` | `rejected` (par défaut `pending`, sauf imports admin → `approved`)
-- `submitted_by` : uuid du DJ propriétaire
-- `rejection_reason` : texte (motif de refus)
-- `reviewed_by`, `reviewed_at`
-- Affichage public filtré sur `status = 'approved'`
+## Vague 1 — Édition inline de contenu (texte + images)
 
-### Nouvelle table `track_revisions`
-Stocke les modifications proposées par un DJ sur un morceau déjà approuvé (pour ne pas écraser le live tant que non validé).
-- `track_id`, `submitted_by`, `payload` (jsonb avec champs modifiés + cover/audio temporaires)
-- `status` (pending/approved/rejected), `rejection_reason`
-- À l'approbation : merge dans `tracks` + suppression de la revision
+### 1.1 Base de données
+Nouvelle table `cms_content` :
+- `key` (text, unique) — ex: `home.hero.title`, `footer.copyright`, `page.about.body`
+- `type` — `text` | `richtext` | `image` | `url` | `color`
+- `value_draft` (jsonb) — version en cours d'édition
+- `value_published` (jsonb) — version visible publiquement
+- `updated_at`, `updated_by`, `published_at`, `published_by`
 
-### Nouvelle table `notifications`
-- `user_id`, `type` (`submission_received`, `submission_approved`, `submission_rejected`, `new_pending_submission`)
-- `title`, `body`, `link`, `read_at`, `data` jsonb
-- Realtime activé
+Table `cms_content_versions` (historique automatique via trigger) :
+- `content_key`, `value`, `created_at`, `created_by`, `action` (`save`|`publish`|`revert`)
 
-### Rôle `dj`
-Ajout à l'enum `app_role`. Attribué automatiquement à la 1ʳᵉ soumission. Helper `has_role(uid, 'dj')`.
+RLS :
+- Public : lecture de `value_published` uniquement (via vue `cms_content_public`).
+- Admin : tout droits via `has_role(admin)`.
 
-### RLS clés
-- `tracks` public : `SELECT WHERE status = 'approved' OR submitted_by = auth.uid() OR is_admin`
-- DJs : `INSERT WHERE submitted_by = auth.uid()` + `UPDATE/DELETE WHERE submitted_by = auth.uid() AND status = 'pending'`
-- Admins : tous droits
-- `track_revisions` : DJ voit/insère les siennes, admin tout
-- `notifications` : utilisateur voit/marque les siennes ; admin insère pour autrui via fonction security definer
+RPC : `cms_save_draft(key, value)`, `cms_publish(key)`, `cms_revert(version_id)`.
 
-### Triggers
-- À l'insert d'un track avec `status=pending` → notifier tous les admins (`new_pending_submission`)
-- À l'update de `status` → notifier le DJ propriétaire (`submission_approved` / `submission_rejected`)
+### 1.2 Couche front
+- `CmsProvider` : charge tous les `value_published` au mount (1 requête), expose `useCmsValue(key, fallback)`.
+- Mode admin : en plus, charge les `value_draft`, écoute realtime sur `cms_content`.
+- Hook `useEditMode()` : toggle global via bouton "Édition" dans le header admin (sticky).
 
-## 2. Espace DJ (`/dj/*`)
+### 1.3 Composants inline
+- `<CmsText editKey="home.hero.title" as="h1" className="..." >Fallback</CmsText>`
+  - Hors mode édition → rendu normal.
+  - Mode édition → wrapper avec hover crayon ; click → `contentEditable` (text) ou modal Tiptap (richtext) ; debounced save (800 ms) → toast "Brouillon enregistré".
+- `<CmsImage editKey="home.hero.bg" src={fallback} alt="…" />`
+  - Crayon → modal avec upload (réutilise le pipeline covers V1) ou URL ; preview avant save.
+- `<CmsLink editKey="home.cta.url" />` pour les CTA.
 
-- `/dj` Dashboard : compteurs (en attente, approuvés, refusés, total téléchargements de mes tracks), liste des notifications récentes
-- `/dj/tracks` Mes soumissions : table avec statut, recherche, filtre par statut
-- `/dj/upload` Nouveau morceau (réutilise `TrackForm` existant)
-- `/dj/edit/:id` Modifier (création de revision si déjà approuvé, édition directe si pending)
-- Bouton « Supprimer » disponible uniquement sur pending/rejected
+### 1.4 Migration douce
+Remplacer dans **Index.tsx, Layout (footer), pages statiques** les textes hardcodés par `<CmsText>` avec leur valeur actuelle comme `fallback`. Aucun reload : si la clé n'existe pas en base, on rend le fallback → rien ne casse.
 
-## 3. Admin — modération
+### 1.5 Barre d'édition flottante (admins seulement)
+En bas à droite quand `editMode=on` :
+- Compteur "X brouillons non publiés"
+- Bouton **Prévisualiser** (toggle entre `draft` et `published`)
+- Bouton **Publier tout** / **Publier sélection**
+- Bouton **Annuler** (revert au dernier publié)
+- Lien "Historique" → drawer listant `cms_content_versions` avec restore.
 
-- Nouvelle page `/admin/queue` : file d'attente unifiée (nouveaux + revisions), tri par date, filtres par DJ/statut/type
-- Détail soumission : preview audio + cover + toutes métadonnées **éditables** (titre, artiste, genre, BPM, key, version, label, tags, cover, date)
-- Actions : **Approuver** (avec corrections appliquées), **Refuser** (motif obligatoire), **Modifier et renvoyer** au DJ
-- Badge compteur dans la sidebar admin avec le nombre de pending (realtime)
-- Historique : `/admin/audit` affiche déjà ça → ajout des events `track_approved` / `track_rejected`
+---
 
-## 4. Notifications
+## Vague 2 — Sections dynamiques (drag & drop, add/remove)
 
-- Cloche dans le header (`NotificationBell.tsx`) avec compteur non-lus + dropdown des 10 dernières
-- Subscription realtime via Supabase channel sur `notifications WHERE user_id = me`
-- Marquage `read_at` au clic
-- Toast Sonner sur nouvelle notification reçue en live
+### 2.1 Modèle
+Table `cms_sections` :
+- `page` (text, ex: `home`, `about`)
+- `position` (int)
+- `type` (`hero` | `tracks_grid` | `genres_strip` | `featured_djs` | `rich_block` | `cta_band`)
+- `props` (jsonb) — config spécifique du composant
+- `is_visible` (bool)
+- `status` (`draft` | `published`)
 
-## 5. Workflow
+### 2.2 Front
+- `<DynamicPage page="home" fallbackSections={[...]} />` : charge `cms_sections` triées, rend chaque type via registry.
+- Mode édition : chaque section gagne une barre d'outils (↑↓ position, œil masquer, crayon édition props, poubelle).
+- Drag & drop via `@dnd-kit/sortable` (déjà compatible RSC-free).
+- Bouton "+ Ajouter une section" → menu des types disponibles avec preview miniature.
 
-```text
-DJ upload                          Admin
-    │                                │
-    ├─ INSERT track (pending) ──────▶│
-    │                                ├─ notif "new_pending"
-    │  notif "submission_received"   │
-    │◀── (auto via trigger)          │
-    │                                ├─ corrige métas si besoin
-    │                                ├─ Approve → status=approved
-    │  notif "approved" ◀────────────┤   (visible publiquement)
-    │                                │
-    │                                └─ Reject → status=rejected
-    │  notif "rejected" + motif ◀────┘
-    │
-    └─ Modifier track approuvé
-       → crée track_revision (pending)
-       → admin l'approuve → merge dans tracks
-```
+### 2.3 Homepage migrée en sections
+La page d'accueil actuelle devient un assemblage par défaut de sections dont l'admin peut changer l'ordre/visibilité sans toucher au code.
 
-## 6. Détails techniques
+---
 
-- `tracks` public listing (`useTracks`, NewReleases, Index) filtré sur `status = 'approved'`
-- `AdminTracks` montre **tous** les tracks (avec badge statut)
-- `admin_upsert_track` RPC ajustée pour pouvoir setter `status` (admin) ; nouveau RPC `dj_submit_track` qui force status=pending et submitted_by=auth.uid()
-- Nouveau RPC `admin_review_track(_id, _decision, _reason, _patch jsonb)` qui applique le patch + change le statut + écrit l'audit
-- Sidebar : 2 nouveaux items (`/dj`, `/admin/queue`)
-- Routes protégées : `/dj/*` exige user connecté ; `/admin/queue` exige admin
+## Vague 3 — Branding secondaire + polish
 
-## 7. Hors scope (peut venir après)
+- Édition des **couleurs secondaires uniquement** (accent, muted, border) via color picker dans `AdminBranding` existant. Couleurs primaires + logo restent verrouillées par défaut, avec un cadenas explicite "Modifier le branding principal" pour éviter les accidents.
+- Édition du menu de navigation (labels, ordre, visibilité — pas les routes).
+- Édition du footer (colonnes, liens).
+- Undo/Redo niveau session (Ctrl+Z / Ctrl+Shift+Z) sur la dernière édition.
+- Logs d'édition dans `admin_audit_logs` (déjà en place).
 
-- Notifications email (pour plus tard, Lovable Email)
-- Système de versions/historique complet de chaque track
-- Commentaires de revue (chat admin↔DJ)
-- Stats publiques sur les profils DJ
+---
 
-## 8. Livraison
+## Hors-scope explicite
+- Pas de page builder libre style Wix : on reste sur un système de **sections typées** maintenables.
+- Pas de rate limiting backend (limitation connue de la plateforme — throttle côté client uniquement si nécessaire).
+- Pas de multilingue dans cette première itération.
+- Branding principal (logo, primary, typo) reste géré dans `AdminBranding` actuel, pas via crayon inline.
 
-À cause de la taille, je propose de livrer en **2 vagues** :
+---
 
-**Vague 1 (cette demande)** : schéma + RLS + status tracks + dashboard DJ + page admin de modération + notifications in-app + filtrage public des tracks approuvés.
+## Détails techniques
 
-**Vague 2 (à demander ensuite)** : revisions séparées (modifs de tracks approuvés), notifications email, historique enrichi.
+**Performance**
+- Une seule requête initiale pour tous les `cms_content` (cache React Query 5 min, invalidation realtime).
+- `<CmsText>` ne re-render que sa propre branche grâce à un sélecteur ciblé sur la clé.
+- Mode édition désactivé par défaut → zéro coût pour les visiteurs.
 
-Confirme « ok » et je lance la vague 1.
+**Sécurité**
+- RLS strict : seuls les admins lisent les `draft` et écrivent.
+- Trigger automatique versionnant chaque save dans `cms_content_versions`.
+- Mode édition côté front protégé par `realIsAdmin` (pas par `isAdmin` qui peut être bypass par "view as user").
+- Validation côté RPC : longueurs max, type matching `cms_content.type`.
+
+**SEO**
+- Rendu HTML inchangé pour le public (toujours `value_published`).
+- Pas d'hydratation supplémentaire visible — le wrapper crayon n'existe que si `editMode && realIsAdmin`.
+
+**Compatibilité**
+- Aucune classe Tailwind ni token de design touché.
+- Composants existants (`TrackCard`, `MiniPlayer`, etc.) inchangés.
+- Migration progressive page par page.
+
+---
+
+Tu valides la **Vague 1** telle quelle, ou tu veux ajuster le scope (par exemple commencer uniquement par la homepage, ou inclure tout de suite les sections dynamiques) ?
