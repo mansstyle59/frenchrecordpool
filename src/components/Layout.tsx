@@ -1,7 +1,8 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Search, Menu, X, Disc3, LogIn, LogOut, Shield, Mic2, Eye, EyeOff } from "lucide-react";
+import { Search, Menu, Disc3, LogIn, LogOut, Shield, Mic2, Eye, EyeOff, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import ThemeToggle from "@/components/ThemeToggle";
 import NotificationBell from "@/components/NotificationBell";
 import ViewAsUserBanner from "@/components/ViewAsUserBanner";
@@ -23,44 +24,109 @@ const NAV_DEFAULTS = [
 export default function Layout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const navigate = useNavigate();
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const { user, isAdmin, realIsAdmin, viewAsUser, setViewAsUser, profile, signOut } = useAuth();
   const { currentTrack } = usePlayer();
 
   const handleSignOut = async () => {
     await signOut();
+    setMenuOpen(false);
     navigate("/");
   };
+
+  const closeMenu = () => setMenuOpen(false);
 
   return (
     <div className="min-h-screen flex flex-col">
       {/* Navbar */}
       <header className="sticky top-0 z-50 glass safe-top">
         <div className="container flex items-center justify-between h-14 sm:h-16 gap-2 sm:gap-4">
-          <Link to="/" className="flex items-center gap-2 shrink-0">
-            <Disc3 className="h-7 w-7 text-primary animate-pulse-glow" />
-            <span className="font-display font-bold text-lg gradient-text hidden sm:inline">
-              French Record Pool
-            </span>
-          </Link>
+          <div className="flex items-center gap-2">
+            <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" aria-label="Menu">
+                  <Menu className="h-5 w-5" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="w-[300px] sm:w-[340px] p-0 flex flex-col">
+                <SheetHeader className="p-4 border-b border-border">
+                  <SheetTitle className="flex items-center gap-2">
+                    <Disc3 className="h-6 w-6 text-primary" />
+                    <span className="font-display gradient-text">French Record Pool</span>
+                  </SheetTitle>
+                </SheetHeader>
 
-          <nav className="hidden md:flex items-center gap-1">
-            {NAV_DEFAULTS.map((link) => (
-              <Link
-                key={link.to}
-                to={link.to}
-                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                  location.pathname === link.to
-                    ? "text-primary bg-primary/10"
-                    : "text-muted-foreground hover:text-foreground hover:bg-secondary"
-                }`}
-              >
-                <CmsText editKey={link.key}>{link.label}</CmsText>
-              </Link>
-            ))}
-          </nav>
+                <div className="flex-1 overflow-y-auto p-4 space-y-6">
+                  <nav className="space-y-1">
+                    {NAV_DEFAULTS.map((link) => (
+                      <Link
+                        key={link.to}
+                        to={link.to}
+                        onClick={closeMenu}
+                        className={`block px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                          location.pathname === link.to
+                            ? "text-primary bg-primary/10"
+                            : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+                        }`}
+                      >
+                        <CmsText editKey={link.key}>{link.label}</CmsText>
+                      </Link>
+                    ))}
+                  </nav>
 
+                  {user ? (
+                    <div className="space-y-1 border-t border-border pt-4">
+                      <Link to="/dashboard" onClick={closeMenu} className="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary">
+                        <User className="h-4 w-4" /> {profile?.dj_name || "Mon compte"}
+                      </Link>
+                      <Link to="/dj" onClick={closeMenu} className="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary">
+                        <Mic2 className="h-4 w-4" /> Espace DJ
+                      </Link>
+                      {isAdmin && (
+                        <Link to="/admin" onClick={closeMenu} className="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium text-primary hover:bg-primary/10">
+                          <Shield className="h-4 w-4" /> Admin
+                        </Link>
+                      )}
+                      {realIsAdmin && (
+                        <button
+                          onClick={() => { setViewAsUser(!viewAsUser); closeMenu(); }}
+                          className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary"
+                        >
+                          {viewAsUser ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          {viewAsUser ? "Quitter aperçu" : "Voir comme user"}
+                        </button>
+                      )}
+                      <button
+                        onClick={handleSignOut}
+                        className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary"
+                      >
+                        <LogOut className="h-4 w-4" /> Déconnexion
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-2 border-t border-border pt-4">
+                      <Link to="/login" onClick={closeMenu} className="block">
+                        <Button variant="outline" className="w-full gap-2" size="sm">
+                          <LogIn className="h-4 w-4" /> Connexion
+                        </Button>
+                      </Link>
+                      <Link to="/signup" onClick={closeMenu} className="block">
+                        <Button variant="hero" className="w-full" size="sm">S'inscrire</Button>
+                      </Link>
+                    </div>
+                  )}
+                </div>
+              </SheetContent>
+            </Sheet>
+
+            <Link to="/" className="flex items-center gap-2 shrink-0">
+              <Disc3 className="h-7 w-7 text-primary animate-pulse-glow" />
+              <span className="font-display font-bold text-lg gradient-text hidden sm:inline">
+                French Record Pool
+              </span>
+            </Link>
+          </div>
 
           <div className="flex items-center gap-2">
             {searchOpen && (
@@ -79,106 +145,26 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             {user ? (
               <>
                 <NotificationBell />
-                {realIsAdmin && (
-                  <Button
-                    variant={viewAsUser ? "default" : "ghost"}
-                    size="sm"
-                    className="gap-1"
-                    onClick={() => setViewAsUser(!viewAsUser)}
-                    title={viewAsUser ? "Quitter le mode aperçu utilisateur" : "Voir le site comme un utilisateur"}
-                  >
-                    {viewAsUser ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    <span className="hidden lg:inline">{viewAsUser ? "Aperçu" : "Voir comme user"}</span>
-                  </Button>
-                )}
                 {isAdmin && (
-                  <Link to="/admin">
+                  <Link to="/admin" className="hidden sm:inline-flex">
                     <Button variant="ghost" size="sm" className="gap-1">
-                      <Shield className="h-4 w-4" /> <span className="hidden sm:inline">Admin</span>
+                      <Shield className="h-4 w-4" /> <span className="hidden lg:inline">Admin</span>
                     </Button>
                   </Link>
                 )}
-                <Link to="/dj">
-                  <Button variant="ghost" size="sm" className="gap-1 hidden sm:inline-flex">
-                    <Mic2 className="h-4 w-4" /> Espace DJ
-                  </Button>
-                </Link>
-                <Link to="/dashboard">
-                  <Button variant="ghost" size="sm" className="hidden sm:inline-flex">
+                <Link to="/dashboard" className="hidden sm:inline-flex">
+                  <Button variant="ghost" size="sm">
                     {profile?.dj_name || "Mon compte"}
                   </Button>
                 </Link>
-                <Button variant="ghost" size="icon" onClick={handleSignOut} title="Déconnexion">
-                  <LogOut className="h-4 w-4" />
-                </Button>
               </>
             ) : (
-              <>
-                <Link to="/login">
-                  <Button variant="ghost" size="sm" className="hidden sm:inline-flex gap-1">
-                    <LogIn className="h-4 w-4" /> Connexion
-                  </Button>
-                </Link>
-                <Link to="/signup">
-                  <Button variant="hero" size="sm" className="hidden sm:inline-flex">
-                    S'inscrire
-                  </Button>
-                </Link>
-              </>
+              <Link to="/signup" className="hidden sm:inline-flex">
+                <Button variant="hero" size="sm">S'inscrire</Button>
+              </Link>
             )}
-            <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setMobileOpen(!mobileOpen)}>
-              {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-            </Button>
           </div>
         </div>
-
-        {mobileOpen && (
-          <nav className="md:hidden border-t border-border px-4 pb-4 pt-2 space-y-1">
-            {NAV_DEFAULTS.map((link) => (
-              <Link
-                key={link.to}
-                to={link.to}
-                onClick={() => setMobileOpen(false)}
-                className={`block px-3 py-2 rounded-md text-sm font-medium ${
-                  location.pathname === link.to
-                    ? "text-primary bg-primary/10"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                <CmsText editKey={link.key}>{link.label}</CmsText>
-              </Link>
-            ))}
-
-            <div className="flex flex-col gap-2 pt-2">
-              {user ? (
-                <>
-                  {isAdmin && (
-                    <Link to="/admin" onClick={() => setMobileOpen(false)}>
-                      <Button variant="hero" className="w-full gap-2" size="sm">
-                        <Shield className="h-4 w-4" /> Admin
-                      </Button>
-                    </Link>
-                  )}
-                  <div className="flex gap-2">
-                    <Link to="/dashboard" className="flex-1" onClick={() => setMobileOpen(false)}>
-                      <Button variant="outline" className="w-full" size="sm">Mon compte</Button>
-                    </Link>
-                    <Button variant="ghost" size="sm" onClick={handleSignOut}>Déconnexion</Button>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <Link to="/login" className="flex-1">
-                    <Button variant="outline" className="w-full" size="sm">Connexion</Button>
-                  </Link>
-                  <Link to="/signup" className="flex-1">
-                    <Button variant="hero" className="w-full" size="sm">S'inscrire</Button>
-                  </Link>
-                </>
-              )}
-            </div>
-          </nav>
-        )}
       </header>
 
       <ViewAsUserBanner />
