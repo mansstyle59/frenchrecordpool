@@ -76,7 +76,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 <NotificationBell />
                 {realIsAdmin && (
                   <Button
-                    variant={viewAsUser ? "accent" as any : "ghost"}
+                    variant={viewAsUser ? "default" : "ghost"}
                     size="sm"
                     className="gap-1"
                     onClick={() => setViewAsUser(!viewAsUser)}
