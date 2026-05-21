@@ -42,10 +42,10 @@ export default function TrackRow({ track, index }: TrackRowProps) {
   const DownloadIcon = isExternalLink ? ExternalLink : Download;
 
   return (
-    <div className="group flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-secondary/50 transition-colors">
-      <div className="w-8 text-center shrink-0">
-        <span className="group-hover:hidden text-sm text-muted-foreground">
-          {index !== undefined ? index + 1 : ""}
+    <div className="group flex items-center gap-3 px-4 py-3 border-b border-border/40 last:border-0 hover:bg-secondary/40 transition-colors">
+      <div className="w-8 text-center shrink-0 font-mono">
+        <span className="group-hover:hidden text-xs text-muted-foreground">
+          {index !== undefined ? String(index + 1).padStart(2, "0") : ""}
         </span>
         <Button
           variant="ghost"
@@ -53,44 +53,74 @@ export default function TrackRow({ track, index }: TrackRowProps) {
           className="hidden group-hover:inline-flex h-8 w-8 text-primary"
           onClick={handlePlay}
         >
-          <Play className="h-4 w-4" />
+          <Play className="h-4 w-4 fill-current" />
         </Button>
       </div>
 
-      <img
-        src={resolveCover(track)}
-        alt={track.title}
-        className="h-10 w-10 rounded object-cover shrink-0"
-        loading="lazy"
-      />
+      <div className="relative h-11 w-11 shrink-0 rounded-md overflow-hidden ring-1 ring-border/60 shadow-sm">
+        <img
+          src={resolveCover(track)}
+          alt={track.title}
+          className="h-full w-full object-cover"
+          loading="lazy"
+        />
+        <button
+          onClick={handlePlay}
+          className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity"
+          aria-label="Lire"
+        >
+          {isCurrentTrack && isPlaying ? (
+            <span className="flex gap-0.5 items-end">
+              <span className="w-0.5 h-3 bg-white animate-pulse" />
+              <span className="w-0.5 h-2 bg-white animate-pulse [animation-delay:120ms]" />
+              <span className="w-0.5 h-4 bg-white animate-pulse [animation-delay:240ms]" />
+            </span>
+          ) : (
+            <Play className="h-4 w-4 fill-white text-white" />
+          )}
+        </button>
+      </div>
 
       <div className="flex-1 min-w-0">
         <Link
           to={`/tracks/${track.id}`}
-          className="text-sm font-medium truncate block hover:text-primary transition-colors"
+          className={`text-sm font-semibold truncate block hover:text-primary transition-colors ${isCurrentTrack ? "text-primary" : ""}`}
         >
           {track.title}
         </Link>
         <p className="text-xs text-muted-foreground truncate">{track.artist}</p>
       </div>
 
-      <Badge variant="outline" className="hidden sm:inline-flex text-xs shrink-0">
-        {track.version || "Original"}
-      </Badge>
+      {track.version && (
+        <Badge
+          variant="outline"
+          className="hidden sm:inline-flex text-[10px] font-bold uppercase tracking-wider shrink-0 border-primary/30 text-primary bg-primary/5"
+        >
+          {track.version}
+        </Badge>
+      )}
 
-      <span className="hidden md:block text-xs text-muted-foreground w-24 truncate">
+      <span className="hidden md:block text-xs text-muted-foreground/80 w-28 truncate">
         {track.genre}
       </span>
 
-      <span className="hidden lg:block text-xs text-muted-foreground w-12 text-center">
-        {track.bpm}
-      </span>
+      {track.bpm ? (
+        <span className="hidden lg:inline-flex items-center justify-center w-14 text-[11px] font-mono font-bold tabular-nums px-2 py-0.5 rounded bg-secondary text-foreground/90">
+          {track.bpm}
+        </span>
+      ) : (
+        <span className="hidden lg:block w-14" />
+      )}
 
-      <span className="hidden lg:block text-xs text-muted-foreground w-10 text-center">
-        {track.musical_key}
-      </span>
+      {track.musical_key ? (
+        <span className="hidden lg:inline-flex items-center justify-center w-12 text-[11px] font-mono font-bold px-2 py-0.5 rounded bg-accent/10 text-accent border border-accent/20">
+          {track.musical_key}
+        </span>
+      ) : (
+        <span className="hidden lg:block w-12" />
+      )}
 
-      <span className="text-xs text-muted-foreground w-12 text-right shrink-0">
+      <span className="text-xs text-muted-foreground/70 w-12 text-right shrink-0 font-mono tabular-nums">
         {track.duration}
       </span>
 
@@ -98,7 +128,7 @@ export default function TrackRow({ track, index }: TrackRowProps) {
         <Button
           variant="ghost"
           size="icon"
-          className={`h-8 w-8 ${isFavorite(track.id) ? "text-red-500 hover:text-red-400" : "text-muted-foreground hover:text-accent"}`}
+          className={`h-8 w-8 ${isFavorite(track.id) ? "text-accent hover:text-accent" : "text-muted-foreground hover:text-accent"}`}
           onClick={() => {
             if (!user) { toast.error("Connectez-vous pour ajouter aux favoris"); return; }
             toggleFavorite(track.id);
@@ -111,7 +141,7 @@ export default function TrackRow({ track, index }: TrackRowProps) {
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 text-muted-foreground hover:text-primary"
+              className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
               onClick={handleDownload}
             >
               <DownloadIcon className="h-4 w-4" />
