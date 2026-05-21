@@ -26,7 +26,7 @@ export default function TrackDetail() {
       <Layout>
         <div className="container py-20 text-center">
           <p className="text-muted-foreground">Track introuvable.</p>
-          <Link to="/tracks"><Button variant="outline" className="mt-4">Retour au catalogue</Button></Link>
+          <Link to="/new"><Button variant="outline" className="mt-4">Retour aux nouveautés</Button></Link>
         </div>
       </Layout>
     );
@@ -44,7 +44,7 @@ export default function TrackDetail() {
   return (
     <Layout>
       <div className="container py-8">
-        <Link to="/tracks" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-6">
+        <Link to="/new" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-6">
           <ArrowLeft className="h-4 w-4" /> Retour
         </Link>
         <div className="flex flex-col md:flex-row gap-8">

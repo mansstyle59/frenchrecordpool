@@ -92,7 +92,7 @@ export default function Index() {
             onSubmit={(e) => {
               e.preventDefault();
               const q = (e.currentTarget.elements.namedItem("q") as HTMLInputElement).value;
-              window.location.href = `/tracks${q ? `?q=${encodeURIComponent(q)}` : ""}`;
+              window.location.href = `/new${q ? `?q=${encodeURIComponent(q)}` : ""}`;
             }}
             className="flex items-center max-w-lg mx-auto gap-2"
           >
@@ -135,7 +135,7 @@ export default function Index() {
               {marquee.map((g, i) => (
                 <Link
                   key={`${g}-${i}`}
-                  to={`/tracks?q=${encodeURIComponent(g)}`}
+                  to={`/new?q=${encodeURIComponent(g)}`}
                   className="text-sm uppercase tracking-[0.25em] text-muted-foreground hover:text-primary transition-colors"
                 >
                   {g} <span className="text-primary/50 mx-4">•</span>
@@ -232,7 +232,7 @@ export default function Index() {
 
       {/* Top */}
       <section className="container py-12">
-        <SectionHeader icon={<TrendingUp className="h-4 w-4" />} title="Top Téléchargements" subtitle="Ce que les DJs jouent en ce moment." href="/top" accent />
+        <SectionHeader icon={<TrendingUp className="h-4 w-4" />} title="Top Téléchargements" subtitle="Ce que les DJs jouent en ce moment." href="/new" accent />
         <TrackListShell isLoading={isLoading} empty={topTracks.length === 0} emptyText="Aucune track disponible.">
           {topTracks.map((track, i) => <TrackRow key={track.id} track={track} index={i} />)}
         </TrackListShell>
