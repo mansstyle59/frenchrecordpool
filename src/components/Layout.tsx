@@ -6,16 +6,19 @@ import ThemeToggle from "@/components/ThemeToggle";
 import NotificationBell from "@/components/NotificationBell";
 import ViewAsUserBanner from "@/components/ViewAsUserBanner";
 import CmsText from "@/components/cms/CmsText";
+import CmsLink from "@/components/cms/CmsLink";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePlayer } from "@/contexts/PlayerContext";
+import { useCms, useCmsValue } from "@/contexts/CmsContext";
 
-const navLinks = [
-  { to: "/new", label: "Nouveautés" },
-  { to: "/genres", label: "Genres" },
-  { to: "/artists", label: "Remixeurs" },
-  { to: "/stems", label: "Stems" },
+const NAV_DEFAULTS = [
+  { key: "nav.new", to: "/new", label: "Nouveautés" },
+  { key: "nav.genres", to: "/genres", label: "Genres" },
+  { key: "nav.artists", to: "/artists", label: "Remixeurs" },
+  { key: "nav.stems", to: "/stems", label: "Stems" },
 ];
+
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
