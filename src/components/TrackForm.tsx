@@ -713,6 +713,18 @@ export default function TrackForm({ initialData, saving, onSubmit, existingGenre
             </div>
           </div>
 
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <Label className="text-xs">Sous-genre</Label>
+              <Input value={subgenre} onChange={(e) => setSubgenre(e.target.value)} placeholder="Deep House, Afro Tech…" className="bg-secondary border-border" />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Mood / Ambiance</Label>
+              <Input value={mood} onChange={(e) => setMood(e.target.value)} placeholder="Energetic, Chill, Dark…" className="bg-secondary border-border" />
+            </div>
+          </div>
+
+
           {/* Tags chip input */}
           <div className="space-y-2">
             <Label className="flex items-center gap-1"><TagIcon className="h-3 w-3" /> Tags <span className="text-muted-foreground font-normal">— Entrée ou virgule pour valider</span></Label>
