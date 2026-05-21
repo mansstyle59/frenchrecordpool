@@ -304,7 +304,7 @@ function TrackListShell({ isLoading, empty, emptyText, children }: { isLoading: 
 }
 
 function HeroBgEditor({ src }: { src: string }) {
-  const { editMode } = useCmsEditMode();
+  const { editMode } = useCms();
   if (!editMode) return null;
   return (
     <div className="absolute top-4 left-4 z-20">
@@ -314,10 +314,4 @@ function HeroBgEditor({ src }: { src: string }) {
       </div>
     </div>
   );
-}
-
-function useCmsEditMode() {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const mod = require("@/contexts/CmsContext");
-  return mod.useCms();
 }
