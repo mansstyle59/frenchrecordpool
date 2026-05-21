@@ -75,87 +75,106 @@ export default function Tracks() {
 
   return (
     <Layout>
+      {/* Hero header */}
+      <section className="relative border-b border-border/50 overflow-hidden">
+        <div className="absolute -top-32 -left-32 w-[28rem] h-[28rem] rounded-full bg-primary/20 blur-3xl" />
+        <div className="absolute -bottom-32 -right-32 w-[28rem] h-[28rem] rounded-full bg-accent/15 blur-3xl" />
+        <div className="relative container py-10 md:py-14">
+          <span className="inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.3em] text-primary px-3 py-1 rounded-full border border-primary/30 bg-primary/5">
+            <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
+            Catalogue complet · {tracks.length} titre{tracks.length > 1 ? "s" : ""}
+          </span>
+          <h1 className="font-display text-4xl md:text-6xl font-bold tracking-tight mt-4">
+            <span className="gradient-text">Catalogue</span>
+          </h1>
+          <p className="text-muted-foreground mt-2 text-base md:text-lg max-w-xl">
+            Filtrez par genre, tonalité, BPM. Préécoutez et téléchargez instantanément.
+          </p>
+        </div>
+      </section>
+
       <div className="container py-8">
-        <h1 className="font-display text-3xl font-bold mb-6">Catalogue</h1>
+        {/* Glassmorphic filter dock */}
+        <div className="rounded-2xl border border-border bg-card/40 backdrop-blur-xl p-3 mb-4 shadow-xl shadow-primary/5">
+          <div className="flex flex-col lg:flex-row gap-2">
+            <div className="relative flex-1 min-w-[200px]">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input placeholder="Rechercher titre, remixeur, genre..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10 h-11 bg-secondary/60 border-border/60" />
+            </div>
 
-        <div className="flex flex-col sm:flex-row gap-3 mb-4">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Rechercher titre, remixeur, genre..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10 bg-secondary border-border" />
-          </div>
+            <Select value={genre} onValueChange={setGenre}>
+              <SelectTrigger className="h-11 w-full lg:w-40 bg-secondary/60 border-border/60"><SelectValue placeholder="Genre" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tous les genres</SelectItem>
+                {Array.from(new Set(tracks.map((t) => t.genre).filter(Boolean))).sort().map((g: string) => <SelectItem key={g} value={g}>{g}</SelectItem>)}
+              </SelectContent>
+            </Select>
 
-          <Select value={genre} onValueChange={setGenre}>
-            <SelectTrigger className="w-full sm:w-40 bg-secondary border-border"><SelectValue placeholder="Genre" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Tous les genres</SelectItem>
-              {Array.from(new Set(tracks.map((t) => t.genre).filter(Boolean))).sort().map((g: string) => <SelectItem key={g} value={g}>{g}</SelectItem>)}
-            </SelectContent>
-          </Select>
+            <Select value={musicalKey} onValueChange={setMusicalKey}>
+              <SelectTrigger className="h-11 w-full lg:w-32 bg-secondary/60 border-border/60"><SelectValue placeholder="Tonalité" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Toutes</SelectItem>
+                {allKeys.map((k) => <SelectItem key={k} value={k}>{k}</SelectItem>)}
+              </SelectContent>
+            </Select>
 
-          <Select value={musicalKey} onValueChange={setMusicalKey}>
-            <SelectTrigger className="w-full sm:w-32 bg-secondary border-border"><SelectValue placeholder="Tonalité" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Toutes</SelectItem>
-              {allKeys.map((k) => <SelectItem key={k} value={k}>{k}</SelectItem>)}
-            </SelectContent>
-          </Select>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="h-11 bg-secondary/60 border-border/60 gap-2">
+                  <SlidersHorizontal className="h-4 w-4" />
+                  BPM {bpmActive && <Badge variant="secondary" className="ml-1">{bpmRange[0]}–{bpmRange[1]}</Badge>}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-72 space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">Plage BPM</span>
+                  <span className="text-sm text-muted-foreground">{bpmRange[0]} – {bpmRange[1]}</span>
+                </div>
+                <Slider
+                  min={40}
+                  max={220}
+                  step={1}
+                  value={bpmRange}
+                  onValueChange={(v) => { setBpmRange([v[0], v[1]] as [number, number]); setBpmActive(true); }}
+                />
+                <div className="flex gap-2 flex-wrap">
+                  {[[60, 90, "Hip-Hop"], [90, 110, "Reggaeton"], [120, 130, "House"], [128, 140, "Techno"], [140, 160, "DnB"]].map(([lo, hi, label]) => (
+                    <Button
+                      key={label as string}
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 text-xs"
+                      onClick={() => { setBpmRange([lo as number, hi as number]); setBpmActive(true); }}
+                    >
+                      {label}
+                    </Button>
+                  ))}
+                </div>
+                <div className="flex justify-between">
+                  <Button size="sm" variant="ghost" onClick={() => { setBpmActive(false); setBpmRange([60, 200]); }}>Réinitialiser</Button>
+                  <Button size="sm" variant="hero" onClick={() => setBpmActive(true)}>Appliquer</Button>
+                </div>
+              </PopoverContent>
+            </Popover>
 
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="outline" className="bg-secondary border-border gap-2">
-                <SlidersHorizontal className="h-4 w-4" />
-                BPM {bpmActive && <Badge variant="secondary" className="ml-1">{bpmRange[0]}–{bpmRange[1]}</Badge>}
+            <Select value={sort} onValueChange={(v) => setSort(v as SortOption)}>
+              <SelectTrigger className="h-11 w-full lg:w-36 bg-secondary/60 border-border/60"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="newest">Nouveautés</SelectItem>
+                <SelectItem value="popular">Popularité</SelectItem>
+                <SelectItem value="az">A → Z</SelectItem>
+                <SelectItem value="bpm">BPM</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <div className="flex h-11 rounded-md border border-border/60 bg-secondary/60 overflow-hidden">
+              <Button variant={view === "list" ? "default" : "ghost"} size="icon" onClick={() => setView("list")} className="h-full rounded-none" title="Liste">
+                <List className="h-4 w-4" />
               </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-72 space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Plage BPM</span>
-                <span className="text-sm text-muted-foreground">{bpmRange[0]} – {bpmRange[1]}</span>
-              </div>
-              <Slider
-                min={40}
-                max={220}
-                step={1}
-                value={bpmRange}
-                onValueChange={(v) => { setBpmRange([v[0], v[1]] as [number, number]); setBpmActive(true); }}
-              />
-              <div className="flex gap-2 flex-wrap">
-                {[[60, 90, "Hip-Hop"], [90, 110, "Reggaeton"], [120, 130, "House"], [128, 140, "Techno"], [140, 160, "DnB"]].map(([lo, hi, label]) => (
-                  <Button
-                    key={label as string}
-                    size="sm"
-                    variant="ghost"
-                    className="h-7 text-xs"
-                    onClick={() => { setBpmRange([lo as number, hi as number]); setBpmActive(true); }}
-                  >
-                    {label}
-                  </Button>
-                ))}
-              </div>
-              <div className="flex justify-between">
-                <Button size="sm" variant="ghost" onClick={() => { setBpmActive(false); setBpmRange([60, 200]); }}>Réinitialiser</Button>
-                <Button size="sm" variant="hero" onClick={() => setBpmActive(true)}>Appliquer</Button>
-              </div>
-            </PopoverContent>
-          </Popover>
-
-          <Select value={sort} onValueChange={(v) => setSort(v as SortOption)}>
-            <SelectTrigger className="w-full sm:w-36 bg-secondary border-border"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="newest">Nouveautés</SelectItem>
-              <SelectItem value="popular">Popularité</SelectItem>
-              <SelectItem value="az">A → Z</SelectItem>
-              <SelectItem value="bpm">BPM</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <div className="flex rounded-md border border-border bg-secondary overflow-hidden">
-            <Button variant={view === "list" ? "default" : "ghost"} size="icon" onClick={() => setView("list")} className="rounded-none" title="Liste">
-              <List className="h-4 w-4" />
-            </Button>
-            <Button variant={view === "grid" ? "default" : "ghost"} size="icon" onClick={() => setView("grid")} className="rounded-none" title="Grille">
-              <LayoutGrid className="h-4 w-4" />
-            </Button>
+              <Button variant={view === "grid" ? "default" : "ghost"} size="icon" onClick={() => setView("grid")} className="h-full rounded-none" title="Grille">
+                <LayoutGrid className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </div>
 
@@ -176,11 +195,17 @@ export default function Tracks() {
         )}
 
         {isLoading ? (
-          <p className="text-center text-muted-foreground py-12">Chargement...</p>
+          <p className="text-center text-muted-foreground py-16">Chargement...</p>
         ) : filtered.length === 0 ? (
-          <p className="text-center text-muted-foreground py-12">Aucune track ne correspond à ces filtres.</p>
+          <div className="text-center py-20 rounded-2xl border border-dashed border-border">
+            <p className="text-muted-foreground">Aucune track ne correspond à ces filtres.</p>
+            <Button variant="ghost" size="sm" className="mt-3" onClick={clearFilters}>Réinitialiser les filtres</Button>
+          </div>
         ) : view === "list" ? (
-          <div className="rounded-xl border border-border bg-card/50 overflow-hidden">
+          <div className="rounded-2xl border border-border bg-card/40 backdrop-blur overflow-hidden shadow-lg shadow-primary/5">
+            <div className="hidden md:grid grid-cols-[32px_44px_1fr_auto_112px_56px_48px_48px_auto] gap-3 px-4 py-2.5 border-b border-border/60 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70 bg-secondary/30">
+              <span>#</span><span></span><span>Titre · Remixeur</span><span className="hidden sm:block">Version</span><span className="hidden md:block">Genre</span><span className="hidden lg:block text-center">BPM</span><span className="hidden lg:block text-center">Key</span><span className="text-right">Time</span><span></span>
+            </div>
             {filtered.map((track, i) => <TrackRow key={track.id} track={track} index={i} />)}
           </div>
         ) : (
@@ -197,20 +222,20 @@ export default function Tracks() {
                     <Play className="h-4 w-4 fill-current" />
                   </div>
                   {t.bpm && (
-                    <div className="absolute bottom-2 left-2 px-2 py-0.5 rounded bg-black/60 text-white text-[10px] font-semibold">
+                    <div className="absolute bottom-2 left-2 px-2 py-0.5 rounded bg-black/60 text-white text-[10px] font-semibold font-mono">
                       {t.bpm} BPM{t.musical_key ? ` · ${t.musical_key}` : ""}
                     </div>
                   )}
                 </button>
                 <div className="mt-2 px-1 min-w-0">
-                  <Link to={`/tracks/${t.id}`} className="text-sm font-medium truncate block hover:text-primary">{t.title}</Link>
+                  <Link to={`/tracks/${t.id}`} className="text-sm font-semibold truncate block hover:text-primary">{t.title}</Link>
                   <p className="text-xs text-muted-foreground truncate">{t.artist}</p>
                 </div>
               </div>
             ))}
           </div>
         )}
-        <p className="text-xs text-muted-foreground mt-3">{filtered.length} track{filtered.length > 1 ? "s" : ""}</p>
+        <p className="text-xs text-muted-foreground mt-4 font-mono">{filtered.length} track{filtered.length > 1 ? "s" : ""} · mis à jour quotidiennement</p>
       </div>
     </Layout>
   );
