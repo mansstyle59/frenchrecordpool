@@ -54,7 +54,7 @@ Deno.serve(async (req) => {
 
     const { data: track, error: trackError } = await adminClient
       .from("tracks")
-      .select("id, title, artist, audio_url, download_url")
+      .select("id, title, artist, version, audio_url, download_url")
       .eq("id", track_id)
       .single();
 
@@ -78,11 +78,33 @@ Deno.serve(async (req) => {
     // Record download
     await adminClient.from("downloads").insert({ user_id: user.id, track_id: track.id });
 
+    // Sanitize a filename segment (remove illegal chars, collapse spaces)
+    const sanitize = (s: string) =>
+      String(s || "")
+        .replace(/[\\/:*?"<>|]+/g, "")
+        .replace(/\s+/g, " ")
+        .trim();
+
+    // Detect extension from URL (default mp3)
+    const extFromUrl = (u: string): string => {
+      try {
+        const path = new URL(u).pathname;
+        const m = path.match(/\.([a-zA-Z0-9]{2,5})(?:$|\?)/);
+        if (m) return m[1].toLowerCase();
+      } catch { /* ignore */ }
+      return "mp3";
+    };
+
+    const ext = extFromUrl(resolvedUrl);
+    const versionPart =
+      track.version && track.version !== "Original" ? ` (${sanitize(track.version)})` : "";
+    const baseName = `${sanitize(track.artist)} - ${sanitize(track.title)}${versionPart}`;
+    const filename = `${baseName}.${ext}`;
+
     // Check if it's a storage URL or an external link
     const isStorageUrl = resolvedUrl.includes("/object/public/track-audio/");
 
     if (isStorageUrl) {
-      // Storage file → generate signed URL for direct download
       const urlObj = new URL(resolvedUrl);
       const pathMatch = urlObj.pathname.match(/\/object\/public\/track-audio\/(.+)/);
       if (!pathMatch) {
@@ -95,7 +117,7 @@ Deno.serve(async (req) => {
 
       const { data: signedData, error: signedError } = await adminClient.storage
         .from("track-audio")
-        .createSignedUrl(storagePath, 300, { download: `${track.artist} - ${track.title}` });
+        .createSignedUrl(storagePath, 300, { download: filename });
 
       if (signedError || !signedData?.signedUrl) {
         return new Response(JSON.stringify({ error: "Impossible de générer le lien" }), {
@@ -108,7 +130,7 @@ Deno.serve(async (req) => {
         JSON.stringify({
           type: "file",
           download_url: signedData.signedUrl,
-          filename: `${track.artist} - ${track.title}.mp3`,
+          filename,
         }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
@@ -118,6 +140,7 @@ Deno.serve(async (req) => {
         JSON.stringify({
           type: "link",
           download_url: resolvedUrl,
+          filename,
         }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
