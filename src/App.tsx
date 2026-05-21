@@ -35,6 +35,8 @@ import DjUpload from "./pages/DjUpload";
 import DjEdit from "./pages/DjEdit";
 import Pricing from "./pages/Pricing";
 import Artists from "./pages/Artists";
+import ArtistDetail from "./pages/ArtistDetail";
+import Remixers from "./pages/Remixers";
 import Genres from "./pages/Genres";
 
 import NewReleases from "./pages/NewReleases";
