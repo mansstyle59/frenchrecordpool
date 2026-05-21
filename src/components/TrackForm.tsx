@@ -333,6 +333,7 @@ export default function TrackForm({ initialData, saving, onSubmit, existingGenre
     toast({ title: "Métadonnées appliquées", description: `${r.source} · ${r.artist} — ${r.title}` });
   };
 
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const tagsStr = tagList.join(", ");
     const result = trackSchema.safeParse({
