@@ -211,52 +211,95 @@ export default function AdminTracks() {
     toggleFavorite(id);
   };
 
+  const toggleSelect = (id: string) => {
+    setSelected(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+  const toggleSelectAllPage = () => {
+    const allIds = paginated.map(t => t.id);
+    const allSelected = allIds.every(id => selected.has(id));
+    setSelected(prev => {
+      const next = new Set(prev);
+      if (allSelected) allIds.forEach(id => next.delete(id));
+      else allIds.forEach(id => next.add(id));
+      return next;
+    });
+  };
+  const clearSelection = () => setSelected(new Set());
+
+  const handleBulkDelete = async () => {
+    if (selected.size === 0) return;
+    if (!confirm(`Supprimer ${selected.size} track(s) ? Action irréversible.`)) return;
+    const ids = Array.from(selected);
+    const { error } = await supabase.from("tracks").delete().in("id", ids);
+    if (error) {
+      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      return;
+    }
+    await logAdminAction({
+      actorId: user!.id, action: "track.bulk_delete",
+      entityType: "track", entityId: ids.join(","),
+      entityLabel: `${ids.length} tracks`,
+      details: { ids },
+    });
+    toast({ title: `${ids.length} track(s) supprimée(s)` });
+    clearSelection();
+    queryClient.invalidateQueries({ queryKey: ["tracks"] });
+  };
+
   if (loading) return null;
 
+  const allPageSelected = paginated.length > 0 && paginated.every(t => selected.has(t.id));
+
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b border-border glass sticky top-0 z-30">
-        <div className="container flex items-center justify-between h-14">
-          <div className="flex items-center gap-2">
-            <Disc3 className="h-6 w-6 text-primary" />
-            <span className="font-display font-bold gradient-text">Admin</span>
-          </div>
-          <Link to="/admin" className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1">
-            <ArrowLeft className="h-3 w-3" /> Dashboard
-          </Link>
-        </div>
-      </header>
+    <AdminLayout
+      wide
+      title="Gestion des Tracks"
+      subtitle={`${filtered.length} track${filtered.length > 1 ? "s" : ""} ${hasFilters ? "filtrée(s)" : "au total"}`}
+      actions={
+        <>
+          <Button variant="outline" size="sm" className="gap-1" onClick={() => setBulkOpen(true)}>
+            <UploadCloud className="h-4 w-4" /> Upload par lot
+          </Button>
+          <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) setEditingTrack(null); }}>
+            <DialogTrigger asChild>
+              <Button variant="hero" size="sm" className="gap-1" onClick={openAdd}><Plus className="h-4 w-4" /> Ajouter</Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-5xl max-h-[92vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>{editingTrack ? "Modifier la track" : "Ajouter une track"}</DialogTitle>
+              </DialogHeader>
+              <TrackForm
+                key={editingTrack?.id ?? "new"}
+                initialData={editingTrack}
+                saving={saving}
+                onSubmit={handleSubmit}
+              />
+            </DialogContent>
+          </Dialog>
+        </>
+      }
+    >
+      {user && <BulkUploadDialog open={bulkOpen} onOpenChange={setBulkOpen} userId={user.id} />}
 
-      <div className="container py-8 space-y-6">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h1 className="font-display text-2xl font-bold">Gestion des Tracks</h1>
-            <p className="text-sm text-muted-foreground">{filtered.length} track{filtered.length > 1 ? "s" : ""} {hasFilters ? "filtrée(s)" : "au total"}</p>
-          </div>
+      {selected.size > 0 && (
+        <div className="flex items-center justify-between gap-3 rounded-xl border border-primary/40 bg-primary/5 px-4 py-2.5">
+          <p className="text-sm">
+            <span className="font-semibold text-primary">{selected.size}</span> track(s) sélectionnée(s)
+          </p>
           <div className="flex gap-2">
-            <Button variant="outline" className="gap-1" onClick={() => setBulkOpen(true)}>
-              <UploadCloud className="h-4 w-4" /> Upload par lot
+            <Button variant="ghost" size="sm" onClick={clearSelection}>Désélectionner</Button>
+            <Button variant="destructive" size="sm" className="gap-1" onClick={handleBulkDelete}>
+              <Trash2 className="h-4 w-4" /> Supprimer
             </Button>
-            <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) setEditingTrack(null); }}>
-              <DialogTrigger asChild>
-                <Button variant="hero" className="gap-1" onClick={openAdd}><Plus className="h-4 w-4" /> Ajouter</Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle>{editingTrack ? "Modifier la track" : "Ajouter une track"}</DialogTitle>
-                </DialogHeader>
-                <TrackForm
-                  key={editingTrack?.id ?? "new"}
-                  initialData={editingTrack}
-                  saving={saving}
-                  onSubmit={handleSubmit}
-                />
-              </DialogContent>
-            </Dialog>
           </div>
         </div>
+      )}
 
-        {user && <BulkUploadDialog open={bulkOpen} onOpenChange={setBulkOpen} userId={user.id} />}
+
 
         {/* Filtres */}
         <div className="rounded-xl border border-border bg-card/50 p-4 space-y-3">
