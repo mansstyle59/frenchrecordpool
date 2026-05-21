@@ -86,6 +86,10 @@ export default function TrackForm({ initialData, saving, onSubmit, existingGenre
   const [coverPreview, setCoverPreview] = useState<string | null>(initialData?.cover_url ?? null);
   const [analyzingBpm, setAnalyzingBpm] = useState(false);
 
+  // SoundCloud quick-import
+  const [scUrl, setScUrl] = useState("");
+  const [scImporting, setScImporting] = useState(false);
+
   // Preview auto-generation
   const [previewAuto, setPreviewAuto] = useState(true);
   const [previewStart, setPreviewStart] = useState<PreviewStartMode>("quarter");
