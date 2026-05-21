@@ -22,12 +22,16 @@ import AdminUsers from "./pages/AdminUsers";
 import AdminSubscriptions from "./pages/AdminSubscriptions";
 import AdminBranding from "./pages/AdminBranding";
 import AdminAuditLog from "./pages/AdminAuditLog";
+import AdminPlans from "./pages/AdminPlans";
+import AdminPromoCodes from "./pages/AdminPromoCodes";
+import Pricing from "./pages/Pricing";
 import Artists from "./pages/Artists";
 import Genres from "./pages/Genres";
 import TopTracks from "./pages/TopTracks";
 import NewReleases from "./pages/NewReleases";
 import Stems from "./pages/Stems";
 import NotFound from "./pages/NotFound";
+
 
 const queryClient = new QueryClient();
 
@@ -54,9 +58,13 @@ const App = () => (
               <Route path="/admin/tracks" element={<AdminTracks />} />
               <Route path="/admin/users" element={<AdminUsers />} />
               <Route path="/admin/subscriptions" element={<AdminSubscriptions />} />
+              <Route path="/admin/plans" element={<AdminPlans />} />
+              <Route path="/admin/promo-codes" element={<AdminPromoCodes />} />
               <Route path="/admin/branding" element={<AdminBranding />} />
               <Route path="/admin/audit" element={<AdminAuditLog />} />
+              <Route path="/pricing" element={<Pricing />} />
               <Route path="/artists" element={<Artists />} />
+
               <Route path="/genres" element={<Genres />} />
               <Route path="/top" element={<TopTracks />} />
               <Route path="/new" element={<NewReleases />} />

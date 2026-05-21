@@ -15,6 +15,7 @@ import { useTracks } from "@/hooks/useTracks";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { resolveCover } from "@/lib/trackCover";
+import RedeemPromoCard from "@/components/RedeemPromoCard";
 
 export default function Dashboard() {
   const { user, loading, profile, hasActiveSubscription, signOut, refreshProfile } = useAuth();
@@ -182,21 +183,28 @@ export default function Dashboard() {
           </TabsContent>
 
           <TabsContent value="subscription">
-            <div className="max-w-lg bg-card border border-border rounded-xl p-6 space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-display font-semibold text-lg">Abonnement</p>
-                  <p className="text-sm text-muted-foreground">Accès au téléchargement du catalogue</p>
+            <div className="grid md:grid-cols-2 gap-4 max-w-3xl">
+              <div className="bg-card border border-border rounded-xl p-6 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-display font-semibold text-lg">Abonnement</p>
+                    <p className="text-sm text-muted-foreground">Accès au téléchargement du catalogue</p>
+                  </div>
+                  <Badge className={hasActiveSubscription ? "bg-primary/20 text-primary border-primary/30" : "bg-destructive/20 text-destructive"}>
+                    {hasActiveSubscription ? "Actif" : "Inactif"}
+                  </Badge>
                 </div>
-                <Badge className={hasActiveSubscription ? "bg-primary/20 text-primary border-primary/30" : "bg-destructive/20 text-destructive"}>
-                  {hasActiveSubscription ? "Actif" : "Inactif"}
-                </Badge>
+                {!hasActiveSubscription && (
+                  <div className="space-y-2">
+                    <p className="text-sm text-muted-foreground">Choisis un plan ou utilise un code partenaire.</p>
+                    <Button asChild size="sm" variant="outline"><Link to="/pricing">Voir les plans</Link></Button>
+                  </div>
+                )}
               </div>
-              {!hasActiveSubscription && (
-                <p className="text-sm text-muted-foreground">Contactez l'administrateur pour activer votre abonnement.</p>
-              )}
+              <RedeemPromoCard />
             </div>
           </TabsContent>
+
 
           <TabsContent value="favorites">
             <div className="bg-card border border-border rounded-xl p-4">

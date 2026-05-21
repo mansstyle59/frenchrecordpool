@@ -2,7 +2,7 @@ import { ReactNode, useEffect } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
   Disc3, LayoutDashboard, Music, Users, CreditCard, Palette, ScrollText,
-  ArrowLeft, ExternalLink,
+  ArrowLeft, ExternalLink, Layers, Ticket,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -15,10 +15,13 @@ const items = [
   { to: "/admin", label: "Dashboard", icon: LayoutDashboard, end: true },
   { to: "/admin/tracks", label: "Tracks", icon: Music },
   { to: "/admin/users", label: "Utilisateurs", icon: Users },
+  { to: "/admin/plans", label: "Plans", icon: Layers },
   { to: "/admin/subscriptions", label: "Abonnements", icon: CreditCard },
+  { to: "/admin/promo-codes", label: "Codes promo", icon: Ticket },
   { to: "/admin/branding", label: "Branding", icon: Palette },
   { to: "/admin/audit", label: "Journal", icon: ScrollText },
 ];
+
 
 function AdminSidebar() {
   const { pathname } = useLocation();
