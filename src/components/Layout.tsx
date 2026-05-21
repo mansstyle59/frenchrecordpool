@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import ThemeToggle from "@/components/ThemeToggle";
 import NotificationBell from "@/components/NotificationBell";
 import ViewAsUserBanner from "@/components/ViewAsUserBanner";
+import CmsText from "@/components/cms/CmsText";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePlayer } from "@/contexts/PlayerContext";
