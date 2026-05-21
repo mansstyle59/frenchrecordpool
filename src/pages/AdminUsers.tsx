@@ -103,7 +103,7 @@ export default function AdminUsers() {
     });
   }, [profiles, search, roleFilter, subFilter, statusFilter, rolesByUser, subsByUser]);
 
-  const hasFilters = search || roleFilter !== "all" || subFilter !== "all";
+  const hasFilters = search || roleFilter !== "all" || subFilter !== "all" || statusFilter !== "all";
 
   const handlePasswordReset = async (p: ProfileRow) => {
     if (!p.email) return;
@@ -159,7 +159,49 @@ export default function AdminUsers() {
     queryClient.invalidateQueries({ queryKey: ["admin-all-roles"] });
   };
 
-  const resetFilters = () => { setSearch(""); setRoleFilter("all"); setSubFilter("all"); };
+  const toggleBlock = async (p: ProfileRow) => {
+    if (p.user_id === user?.id) {
+      toast({ title: "Action interdite", description: "Tu ne peux pas te bloquer toi-même.", variant: "destructive" });
+      return;
+    }
+    const next = !p.is_blocked;
+    if (!confirm(next ? `Bloquer ${p.email} ?` : `Débloquer ${p.email} ?`)) return;
+    const { error } = await supabase.rpc("admin_set_user_blocked" as any, { _user_id: p.user_id, _blocked: next });
+    if (error) {
+      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      return;
+    }
+    await logAdminAction({
+      actorId: user!.id, action: next ? "user.block" : "user.unblock",
+      entityType: "user", entityId: p.user_id, entityLabel: p.email ?? p.user_id,
+    });
+    toast({ title: next ? "Utilisateur bloqué" : "Utilisateur débloqué" });
+    queryClient.invalidateQueries({ queryKey: ["admin-profiles"] });
+    queryClient.invalidateQueries({ queryKey: ["admin-all-subs"] });
+  };
+
+  const deleteUser = async (p: ProfileRow) => {
+    setConfirmDelete(null);
+    if (p.user_id === user?.id) {
+      toast({ title: "Action interdite", description: "Tu ne peux pas te supprimer toi-même.", variant: "destructive" });
+      return;
+    }
+    const { error } = await supabase.rpc("admin_delete_user" as any, { _user_id: p.user_id });
+    if (error) {
+      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      return;
+    }
+    await logAdminAction({
+      actorId: user!.id, action: "user.delete",
+      entityType: "user", entityId: p.user_id, entityLabel: p.email ?? p.user_id,
+    });
+    toast({ title: "Utilisateur supprimé" });
+    queryClient.invalidateQueries({ queryKey: ["admin-profiles"] });
+    queryClient.invalidateQueries({ queryKey: ["admin-all-roles"] });
+    queryClient.invalidateQueries({ queryKey: ["admin-all-subs"] });
+  };
+
+  const resetFilters = () => { setSearch(""); setRoleFilter("all"); setSubFilter("all"); setStatusFilter("all"); };
 
   return (
     <AdminLayout
