@@ -159,6 +159,42 @@ export type Database = {
           },
         ]
       }
+      notifications: {
+        Row: {
+          body: string | null
+          created_at: string
+          data: Json | null
+          id: string
+          link: string | null
+          read_at: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          data?: Json | null
+          id?: string
+          link?: string | null
+          read_at?: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          data?: Json | null
+          id?: string
+          link?: string | null
+          read_at?: string | null
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -461,6 +497,45 @@ export type Database = {
           },
         ]
       }
+      track_revisions: {
+        Row: {
+          created_at: string
+          id: string
+          payload: Json
+          rejection_reason: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          submitted_by: string
+          track_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          payload?: Json
+          rejection_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          submitted_by: string
+          track_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          payload?: Json
+          rejection_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          submitted_by?: string
+          track_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       tracks: {
         Row: {
           acapella_url: string | null
@@ -479,7 +554,12 @@ export type Database = {
           label: string | null
           musical_key: string | null
           preview_url: string | null
+          rejection_reason: string | null
           release_date: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          submitted_by: string | null
           tags: string[] | null
           title: string
           updated_at: string
@@ -502,7 +582,12 @@ export type Database = {
           label?: string | null
           musical_key?: string | null
           preview_url?: string | null
+          rejection_reason?: string | null
           release_date?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          submitted_by?: string | null
           tags?: string[] | null
           title: string
           updated_at?: string
@@ -525,7 +610,12 @@ export type Database = {
           label?: string | null
           musical_key?: string | null
           preview_url?: string | null
+          rejection_reason?: string | null
           release_date?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          submitted_by?: string | null
           tags?: string[] | null
           title?: string
           updated_at?: string
@@ -561,6 +651,15 @@ export type Database = {
     Functions: {
       admin_delete_track: { Args: { _id: string }; Returns: undefined }
       admin_delete_user: { Args: { _user_id: string }; Returns: undefined }
+      admin_review_track: {
+        Args: {
+          _decision: string
+          _id: string
+          _patch?: Json
+          _reason?: string
+        }
+        Returns: undefined
+      }
       admin_set_user_access: {
         Args: { _grant: boolean; _user_id: string }
         Returns: undefined
@@ -573,6 +672,11 @@ export type Database = {
         Args: { _id?: string; _track: Json }
         Returns: string
       }
+      dj_submit_track: { Args: { _track: Json }; Returns: string }
+      dj_update_own_track: {
+        Args: { _id: string; _track: Json }
+        Returns: undefined
+      }
       has_active_subscription: { Args: { _user_id: string }; Returns: boolean }
       has_role: {
         Args: {
@@ -581,13 +685,24 @@ export type Database = {
         }
         Returns: boolean
       }
+      notify_user: {
+        Args: {
+          _body: string
+          _data: Json
+          _link: string
+          _title: string
+          _type: string
+          _user_id: string
+        }
+        Returns: undefined
+      }
       redeem_promo_code: {
         Args: { _code: string; _plan_id?: string }
         Returns: Json
       }
     }
     Enums: {
-      app_role: "admin" | "client"
+      app_role: "admin" | "client" | "dj"
       promo_discount_type: "percent" | "fixed" | "free_period" | "full_access"
     }
     CompositeTypes: {
@@ -716,7 +831,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "client"],
+      app_role: ["admin", "client", "dj"],
       promo_discount_type: ["percent", "fixed", "free_period", "full_access"],
     },
   },
