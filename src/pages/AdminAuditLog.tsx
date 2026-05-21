@@ -162,7 +162,6 @@ export default function AdminAuditLog() {
             </table>
           </div>
         </div>
-      </div>
-    </div>
+    </AdminLayout>
   );
 }
