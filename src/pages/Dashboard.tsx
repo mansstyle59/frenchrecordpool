@@ -15,6 +15,7 @@ import { useTracks } from "@/hooks/useTracks";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { resolveCover } from "@/lib/trackCover";
+import RedeemPromoCard from "@/components/RedeemPromoCard";
 
 export default function Dashboard() {
   const { user, loading, profile, hasActiveSubscription, signOut, refreshProfile } = useAuth();
