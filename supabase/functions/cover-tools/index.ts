@@ -59,16 +59,23 @@ async function searchDeezer(q: string) {
   } catch { return []; }
 }
 
-async function fetchSoundCloudThumb(url: string) {
+async function fetchSoundCloudOEmbed(url: string) {
   try {
     const r = await fetch(
       `https://soundcloud.com/oembed?format=json&url=${encodeURIComponent(url)}`,
     );
     if (!r.ok) return null;
     const d = await r.json();
-    return d.thumbnail_url
+    const thumb = d.thumbnail_url
       ? String(d.thumbnail_url).replace(/-large\.(jpg|png)/, "-t500x500.$1")
       : null;
+    return {
+      thumbnail: thumb,
+      title: d.title || null,
+      author_name: d.author_name || null,
+      author_url: d.author_url || null,
+      html: d.html || null,
+    };
   } catch { return null; }
 }
 
