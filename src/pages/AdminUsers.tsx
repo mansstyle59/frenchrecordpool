@@ -96,9 +96,12 @@ export default function AdminUsers() {
         (!sub.current_period_end || new Date(sub.current_period_end) > new Date());
       if (subFilter === "active" && !active) return false;
       if (subFilter === "none" && active) return false;
+
+      if (statusFilter === "blocked" && !p.is_blocked) return false;
+      if (statusFilter === "active" && p.is_blocked) return false;
       return true;
     });
-  }, [profiles, search, roleFilter, subFilter, rolesByUser, subsByUser]);
+  }, [profiles, search, roleFilter, subFilter, statusFilter, rolesByUser, subsByUser]);
 
   const hasFilters = search || roleFilter !== "all" || subFilter !== "all";
 
