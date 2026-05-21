@@ -1,10 +1,13 @@
 import { useState, useMemo } from "react";
-import { Link } from "react-router-dom";
-import { KeyRound, Search, Shield, ShieldOff, UserCheck, X } from "lucide-react";
+import { KeyRound, Search, Shield, ShieldOff, UserCheck, X, Ban, CheckCircle2, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,6 +21,7 @@ interface ProfileRow {
   dj_name: string | null;
   email: string | null;
   avatar_url: string | null;
+  is_blocked: boolean | null;
   created_at: string;
 }
 
