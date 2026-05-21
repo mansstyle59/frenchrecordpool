@@ -69,7 +69,7 @@ export default function Index() {
             transition={{ duration: 0.6 }}
             className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.3em] text-primary/90 mb-4 px-3 py-1 rounded-full border border-primary/30 bg-primary/5"
           >
-            <Sparkles className="h-3 w-3" /> Pool exclusif · DJs francophones
+            <Sparkles className="h-3 w-3" /> <CmsText editKey="home.hero.badge">Pool exclusif · DJs francophones</CmsText>
           </motion.span>
 
           <motion.h1
@@ -78,7 +78,7 @@ export default function Index() {
             transition={{ duration: 0.8, ease: "easeOut" }}
             className="font-display text-5xl md:text-8xl font-bold mb-4 leading-[1.05] tracking-tight"
           >
-            <span className="gradient-text">French Record Pool</span>
+            <CmsText editKey="home.hero.title" as="span" className="gradient-text">French Record Pool</CmsText>
           </motion.h1>
 
           <motion.p
@@ -87,7 +87,7 @@ export default function Index() {
             transition={{ duration: 0.7, delay: 0.2 }}
             className="text-lg md:text-2xl text-muted-foreground max-w-2xl mx-auto mb-10"
           >
-            Edits, remixes & exclusivités. Mis à jour chaque semaine pour vos sets.
+            <CmsText editKey="home.hero.subtitle">Edits, remixes & exclusivités. Mis à jour chaque semaine pour vos sets.</CmsText>
           </motion.p>
 
           <motion.form
