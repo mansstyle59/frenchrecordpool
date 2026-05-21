@@ -88,6 +88,15 @@ export default function TrackForm({ initialData, saving, onSubmit, existingGenre
   const [label, setLabel] = useState(initialData?.label ?? "");
   const [duration, setDuration] = useState(initialData?.duration ?? "");
   const [tagList, setTagList] = useState<string[]>(initialData?.tags ?? []);
+  const [featuredArtists, setFeaturedArtists] = useState<string[]>((initialData as any)?.featured_artists ?? []);
+  const [remixers, setRemixers] = useState<string[]>([]);
+  const [producer, setProducer] = useState<string>((initialData as any)?.producer ?? "");
+  const [releaseYear, setReleaseYear] = useState<string>(
+    (initialData as any)?.release_year ? String((initialData as any).release_year) : ""
+  );
+  const [isrc, setIsrc] = useState<string>((initialData as any)?.isrc ?? "");
+  const [subgenre, setSubgenre] = useState<string>((initialData as any)?.subgenre ?? "");
+  const [mood, setMood] = useState<string>((initialData as any)?.mood ?? "");
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [audioUrl, setAudioUrl] = useState("");
   const [previewFile, setPreviewFile] = useState<File | null>(null);
@@ -103,6 +112,15 @@ export default function TrackForm({ initialData, saving, onSubmit, existingGenre
   const [extracting, setExtracting] = useState(false);
   const [coverPreview, setCoverPreview] = useState<string | null>(initialData?.cover_url ?? null);
   const [analyzingBpm, setAnalyzingBpm] = useState(false);
+
+  // Load remixer names from initialData remixer_ids
+  useEffect(() => {
+    const ids = (initialData as any)?.remixer_ids as string[] | undefined;
+    if (!ids || ids.length === 0) return;
+    supabase.from("artists").select("name").in("id", ids).then(({ data }) => {
+      if (data) setRemixers(data.map((d: any) => d.name).filter(Boolean));
+    });
+  }, [initialData]);
 
   // SoundCloud quick-import
   const [scUrl, setScUrl] = useState("");
