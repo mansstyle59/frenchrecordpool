@@ -358,6 +358,13 @@ export default function AdminTracks() {
             <table className="w-full text-sm">
               <thead className="bg-secondary/50">
                 <tr className="text-left text-xs text-muted-foreground">
+                  <th className="px-3 py-3 w-8">
+                    <Checkbox
+                      checked={allPageSelected}
+                      onCheckedChange={toggleSelectAllPage}
+                      aria-label="Tout sélectionner"
+                    />
+                  </th>
                   <th className="px-4 py-3">Cover</th>
                   <th className="px-4 py-3">Titre</th>
                   <th className="px-4 py-3">Artiste</th>
@@ -372,18 +379,25 @@ export default function AdminTracks() {
               </thead>
               <tbody className="divide-y divide-border">
                 {isLoading ? (
-                  <tr><td colSpan={10} className="px-4 py-8 text-center text-muted-foreground">Chargement...</td></tr>
+                  <tr><td colSpan={11} className="px-4 py-8 text-center text-muted-foreground">Chargement...</td></tr>
                 ) : paginated.length === 0 ? (
-                  <tr><td colSpan={10} className="px-4 py-8 text-center text-muted-foreground">
+                  <tr><td colSpan={11} className="px-4 py-8 text-center text-muted-foreground">
                     {hasFilters ? "Aucun résultat pour ces filtres." : "Aucune track. Cliquez sur \"Ajouter\" pour commencer."}
                   </td></tr>
                 ) : paginated.map((track) => (
-                  <tr key={track.id} className="hover:bg-secondary/30">
+                  <tr key={track.id} className={`hover:bg-secondary/30 ${selected.has(track.id) ? "bg-primary/5" : ""}`}>
+                    <td className="px-3 py-3">
+                      <Checkbox
+                        checked={selected.has(track.id)}
+                        onCheckedChange={() => toggleSelect(track.id)}
+                        aria-label={`Sélectionner ${track.title}`}
+                      />
+                    </td>
                     <td className="px-4 py-3">
                       <img src={resolveCover(track)} alt="" className="h-8 w-8 rounded object-cover" />
                     </td>
-                    <td className="px-4 py-3 font-medium max-w-[200px] truncate">{track.title}</td>
-                    <td className="px-4 py-3 text-muted-foreground max-w-[160px] truncate">{track.artist}</td>
+                    <td className="px-4 py-3 font-medium max-w-[220px] truncate">{track.title}</td>
+                    <td className="px-4 py-3 text-muted-foreground max-w-[180px] truncate">{track.artist}</td>
                     <td className="px-4 py-3"><Badge variant="outline" className="text-xs">{track.genre}</Badge></td>
                     <td className="px-4 py-3 text-muted-foreground max-w-[140px] truncate">{track.label || "-"}</td>
                     <td className="px-4 py-3 text-muted-foreground">{track.bpm || "-"}</td>
@@ -434,7 +448,6 @@ export default function AdminTracks() {
             </div>
           </div>
         )}
-      </div>
-    </div>
+    </AdminLayout>
   );
 }
