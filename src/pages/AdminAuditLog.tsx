@@ -1,18 +1,21 @@
-import { useEffect, useState, useMemo } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, Disc3, Search, ScrollText, FileMusic, User, CreditCard, KeyRound } from "lucide-react";
+import { useState, useMemo } from "react";
+import { Search, FileMusic, User, CreditCard, KeyRound, Shield } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import AdminLayout from "@/components/admin/AdminLayout";
 
 const ACTION_LABELS: Record<string, string> = {
   "track.create": "Création de track",
   "track.update": "Modification de track",
   "track.delete": "Suppression de track",
+  "track.bulk_delete": "Suppression en masse",
   "user.password_reset": "Réinitialisation de mot de passe",
+  "user.role_promote": "Promotion admin",
+  "user.role_demote": "Retrait admin",
   "subscription.create": "Création d'abonnement",
   "subscription.update": "Modification d'abonnement",
   "subscription.delete": "Suppression d'abonnement",
