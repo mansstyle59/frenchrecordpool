@@ -1,18 +1,21 @@
-import { useEffect, useState, useMemo } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, Disc3, Search, ScrollText, FileMusic, User, CreditCard, KeyRound } from "lucide-react";
+import { useState, useMemo } from "react";
+import { Search, FileMusic, User, CreditCard, KeyRound, Shield } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import AdminLayout from "@/components/admin/AdminLayout";
 
 const ACTION_LABELS: Record<string, string> = {
   "track.create": "Création de track",
   "track.update": "Modification de track",
   "track.delete": "Suppression de track",
+  "track.bulk_delete": "Suppression en masse",
   "user.password_reset": "Réinitialisation de mot de passe",
+  "user.role_promote": "Promotion admin",
+  "user.role_demote": "Retrait admin",
   "subscription.create": "Création d'abonnement",
   "subscription.update": "Modification d'abonnement",
   "subscription.delete": "Suppression d'abonnement",
@@ -21,6 +24,7 @@ const ACTION_LABELS: Record<string, string> = {
 function actionIcon(action: string) {
   if (action.startsWith("track.")) return <FileMusic className="h-3.5 w-3.5" />;
   if (action.startsWith("subscription.")) return <CreditCard className="h-3.5 w-3.5" />;
+  if (action.startsWith("user.role_")) return <Shield className="h-3.5 w-3.5" />;
   if (action === "user.password_reset") return <KeyRound className="h-3.5 w-3.5" />;
   return <User className="h-3.5 w-3.5" />;
 }
@@ -32,14 +36,9 @@ function actionVariant(action: string): "default" | "secondary" | "destructive" 
 }
 
 export default function AdminAuditLog() {
-  const { user, loading, isAdmin } = useAuth();
-  const navigate = useNavigate();
+  const { isAdmin } = useAuth();
   const [search, setSearch] = useState("");
   const [entity, setEntity] = useState("all");
-
-  useEffect(() => {
-    if (!loading && (!user || !isAdmin)) navigate("/login");
-  }, [user, loading, isAdmin, navigate]);
 
   const { data: logs = [], isLoading } = useQuery({
     queryKey: ["admin-audit-logs"],
@@ -55,7 +54,6 @@ export default function AdminAuditLog() {
     },
   });
 
-  // Récupère les emails des acteurs
   const actorIds = useMemo(() => Array.from(new Set(logs.map((l: any) => l.actor_id))), [logs]);
   const { data: actors = {} } = useQuery({
     queryKey: ["audit-actors", actorIds.join(",")],
@@ -82,33 +80,15 @@ export default function AdminAuditLog() {
     return res;
   }, [logs, entity, search, actors]);
 
-  if (loading) return null;
-
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b border-border glass sticky top-0 z-30">
-        <div className="container flex items-center justify-between h-14">
-          <div className="flex items-center gap-2">
-            <Disc3 className="h-6 w-6 text-primary" />
-            <span className="font-display font-bold gradient-text">Admin</span>
-          </div>
-          <Link to="/admin" className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1">
-            <ArrowLeft className="h-3 w-3" /> Dashboard
-          </Link>
-        </div>
-      </header>
-
-      <div className="container py-8 space-y-6">
-        <div className="flex items-center gap-3">
-          <ScrollText className="h-6 w-6 text-primary" />
-          <div>
-            <h1 className="font-display text-2xl font-bold">Journal d'audit</h1>
-            <p className="text-sm text-muted-foreground">{filtered.length} action{filtered.length > 1 ? "s" : ""} enregistrée{filtered.length > 1 ? "s" : ""} (max 500 récentes)</p>
-          </div>
-        </div>
-
+    <AdminLayout
+      wide
+      title="Journal d'audit"
+      subtitle={`${filtered.length} action${filtered.length > 1 ? "s" : ""} enregistrée${filtered.length > 1 ? "s" : ""} (max 500 récentes)`}
+    >
         <div className="rounded-xl border border-border bg-card/50 p-4 flex flex-col sm:flex-row gap-3">
           <div className="relative flex-1">
+
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Rechercher (action, cible, acteur)..."
@@ -182,7 +162,6 @@ export default function AdminAuditLog() {
             </table>
           </div>
         </div>
-      </div>
-    </div>
+    </AdminLayout>
   );
 }

@@ -145,7 +145,7 @@ export default function TrackForm({ initialData, saving, onSubmit }: TrackFormPr
   );
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-3">
+    <form onSubmit={handleSubmit} className="space-y-4">
       {extracting && (
         <div className="text-xs text-primary flex items-center gap-1.5 bg-primary/5 border border-primary/20 rounded px-2 py-1.5">
           <Sparkles className="h-3 w-3 animate-pulse" /> Extraction des métadonnées audio...
@@ -160,135 +160,138 @@ export default function TrackForm({ initialData, saving, onSubmit }: TrackFormPr
           </div>
         </div>
       )}
-      <div className="grid grid-cols-2 gap-3">
-        <div className="space-y-1">
-          <Label>Titre *</Label>
-          <Input value={title} onChange={(e) => setTitle(e.target.value)} required className="bg-secondary border-border" />
-        </div>
-        <div className="space-y-1">
-          <Label>Artiste *</Label>
-          <Input value={artist} onChange={(e) => setArtist(e.target.value)} required className="bg-secondary border-border" />
-        </div>
-      </div>
-      <div className="grid grid-cols-3 gap-3">
-        <div className="space-y-1">
-          <Label>Genre</Label>
-          <Input value={genre} onChange={(e) => setGenre(e.target.value)} placeholder="House, Hip-Hop..." className="bg-secondary border-border" />
-        </div>
-        <div className="space-y-1">
-          <Label>BPM</Label>
-          <Input type="number" min={40} max={220} value={bpm} onChange={(e) => setBpm(e.target.value)} className="bg-secondary border-border" />
-        </div>
-        <div className="space-y-1">
-          <Label>Tonalité</Label>
-          <Input value={musicalKey} onChange={(e) => setMusicalKey(e.target.value)} placeholder="Am" className="bg-secondary border-border" />
-        </div>
-      </div>
-      <div className="grid grid-cols-3 gap-3">
-        <div className="space-y-1">
-          <Label>Version</Label>
-          <Select value={version} onValueChange={setVersion}>
-            <SelectTrigger className="bg-secondary border-border"><SelectValue /></SelectTrigger>
-            <SelectContent>{VERSIONS.map((v) => <SelectItem key={v} value={v}>{v}</SelectItem>)}</SelectContent>
-          </Select>
-        </div>
-        <div className="space-y-1">
-          <Label>Label</Label>
-          <Input value={label} onChange={(e) => setLabel(e.target.value)} className="bg-secondary border-border" />
-        </div>
-        <div className="space-y-1">
-          <Label>Durée</Label>
-          <Input value={duration} onChange={(e) => setDuration(e.target.value)} placeholder="4:30" className="bg-secondary border-border" />
-        </div>
-      </div>
-      <div className="space-y-1">
-        <Label>Tags (séparés par des virgules)</Label>
-        <Input value={tags} onChange={(e) => setTags(e.target.value)} placeholder="house, melodic, summer" className="bg-secondary border-border" />
+
+      <div className="grid lg:grid-cols-2 gap-6">
+        {/* Colonne métadonnées */}
+        <section className="space-y-3">
+          <h3 className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Métadonnées</h3>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <Label>Titre *</Label>
+              <Input value={title} onChange={(e) => setTitle(e.target.value)} required className="bg-secondary border-border" />
+            </div>
+            <div className="space-y-1">
+              <Label>Artiste *</Label>
+              <Input value={artist} onChange={(e) => setArtist(e.target.value)} required className="bg-secondary border-border" />
+            </div>
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            <div className="space-y-1">
+              <Label>Genre</Label>
+              <Input value={genre} onChange={(e) => setGenre(e.target.value)} placeholder="House..." className="bg-secondary border-border" />
+            </div>
+            <div className="space-y-1">
+              <Label>BPM</Label>
+              <Input type="number" min={40} max={220} value={bpm} onChange={(e) => setBpm(e.target.value)} className="bg-secondary border-border" />
+            </div>
+            <div className="space-y-1">
+              <Label>Tonalité</Label>
+              <Input value={musicalKey} onChange={(e) => setMusicalKey(e.target.value)} placeholder="Am" className="bg-secondary border-border" />
+            </div>
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            <div className="space-y-1">
+              <Label>Version</Label>
+              <Select value={version} onValueChange={setVersion}>
+                <SelectTrigger className="bg-secondary border-border"><SelectValue /></SelectTrigger>
+                <SelectContent>{VERSIONS.map((v) => <SelectItem key={v} value={v}>{v}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1">
+              <Label>Label</Label>
+              <Input value={label} onChange={(e) => setLabel(e.target.value)} className="bg-secondary border-border" />
+            </div>
+            <div className="space-y-1">
+              <Label>Durée</Label>
+              <Input value={duration} onChange={(e) => setDuration(e.target.value)} placeholder="4:30" className="bg-secondary border-border" />
+            </div>
+          </div>
+          <div className="space-y-1">
+            <Label>Tags (séparés par des virgules)</Label>
+            <Input value={tags} onChange={(e) => setTags(e.target.value)} placeholder="house, melodic, summer" className="bg-secondary border-border" />
+          </div>
+
+          <div className="pt-3 border-t border-border space-y-3">
+            <h3 className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Liens additionnels</h3>
+            <div className="space-y-1">
+              <Label className="flex items-center gap-1">
+                Lien de téléchargement
+                {(initialData as any)?.download_url && <span className="text-xs text-muted-foreground ml-1">(actuel conservé si vide)</span>}
+              </Label>
+              <Input type="url" value={downloadUrl} onChange={(e) => setDownloadUrl(e.target.value)} placeholder="https://example.com/download" className="bg-secondary border-border" />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label className="text-xs">🎤 URL Acapella</Label>
+                <Input type="url" value={acapellaUrl} onChange={(e) => setAcapellaUrl(e.target.value)} placeholder="https://..." className="bg-secondary border-border" />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">🎹 URL Instrumentale</Label>
+                <Input type="url" value={instrumentalUrl} onChange={(e) => setInstrumentalUrl(e.target.value)} placeholder="https://..." className="bg-secondary border-border" />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Colonne médias */}
+        <section className="space-y-3">
+          <h3 className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Médias</h3>
+          <div className="space-y-1">
+            <Label className="flex items-center gap-1">
+              Fichier audio (MP3/WAV)
+              {initialData?.audio_url && <span className="text-xs text-muted-foreground ml-1">(actuel conservé si vide)</span>}
+              <ModeToggle mode={audioMode} setMode={setAudioMode} />
+            </Label>
+            {audioMode === "file" ? (
+              <FileDropzone
+                accept="*/*" file={audioFile} onFile={setAudioFile} validate={validateAudioFile}
+                helper="Tout format · métadonnées auto-détectées"
+              />
+            ) : (
+              <Input type="url" value={audioUrl} onChange={(e) => setAudioUrl(e.target.value)} placeholder="https://example.com/track.mp3" className="bg-secondary border-border" />
+            )}
+          </div>
+
+          <div className="space-y-1">
+            <Label className="flex items-center gap-1">
+              Extrait/Preview
+              {initialData?.preview_url && <span className="text-xs text-muted-foreground ml-1">(actuel conservé si vide)</span>}
+              <ModeToggle mode={previewMode} setMode={setPreviewMode} />
+            </Label>
+            {previewMode === "file" ? (
+              <FileDropzone
+                accept="*/*" file={previewFile} onFile={setPreviewFile} validate={validateAudioFile}
+                helper="Tout format · aucune limite"
+              />
+            ) : (
+              <Input type="url" value={previewUrl} onChange={(e) => setPreviewUrl(e.target.value)} placeholder="https://example.com/preview.mp3" className="bg-secondary border-border" />
+            )}
+          </div>
+
+          <div className="space-y-1">
+            <Label className="flex items-center gap-1">
+              Cover (image)
+              {initialData?.cover_url && <span className="text-xs text-muted-foreground ml-1">(actuelle conservée si vide)</span>}
+              <ModeToggle mode={coverMode} setMode={setCoverMode} />
+            </Label>
+            {coverMode === "file" ? (
+              <FileDropzone
+                accept="*/*" file={coverFile} onFile={setCoverFile} validate={validateImageFile}
+                preview={coverFile ? coverPreview ?? undefined : undefined}
+                helper="Tout type d'image · aucune limite"
+              />
+            ) : (
+              <Input type="url" value={coverUrl} onChange={(e) => setCoverUrl(e.target.value)} placeholder="https://example.com/cover.jpg" className="bg-secondary border-border" />
+            )}
+          </div>
+        </section>
       </div>
 
-      {/* Audio */}
-      <div className="space-y-1">
-        <Label className="flex items-center gap-1">
-          Fichier audio (MP3/WAV)
-          {initialData?.audio_url && <span className="text-xs text-muted-foreground ml-1">(actuel conservé si vide)</span>}
-          <ModeToggle mode={audioMode} setMode={setAudioMode} />
-        </Label>
-        {audioMode === "file" ? (
-          <FileDropzone
-            accept="*/*"
-            file={audioFile}
-            onFile={setAudioFile}
-            validate={validateAudioFile}
-            helper="Tout format accepté · aucune limite de taille · métadonnées auto-détectées"
-          />
-        ) : (
-          <Input type="url" value={audioUrl} onChange={(e) => setAudioUrl(e.target.value)} placeholder="https://example.com/track.mp3" className="bg-secondary border-border" />
-        )}
+      <div className="flex justify-end pt-2 border-t border-border">
+        <Button variant="hero" type="submit" disabled={saving} className="min-w-[200px]">
+          {saving ? "Enregistrement..." : initialData ? "Modifier la track" : "Ajouter la track"}
+        </Button>
       </div>
-
-      {/* Preview */}
-      <div className="space-y-1">
-        <Label className="flex items-center gap-1">
-          Extrait/Preview
-          {initialData?.preview_url && <span className="text-xs text-muted-foreground ml-1">(actuel conservé si vide)</span>}
-          <ModeToggle mode={previewMode} setMode={setPreviewMode} />
-        </Label>
-        {previewMode === "file" ? (
-          <FileDropzone
-            accept="*/*"
-            file={previewFile}
-            onFile={setPreviewFile}
-            validate={validateAudioFile}
-            helper="Tout format accepté · aucune limite"
-          />
-        ) : (
-          <Input type="url" value={previewUrl} onChange={(e) => setPreviewUrl(e.target.value)} placeholder="https://example.com/preview.mp3" className="bg-secondary border-border" />
-        )}
-      </div>
-
-      {/* Cover */}
-      <div className="space-y-1">
-        <Label className="flex items-center gap-1">
-          Cover (image)
-          {initialData?.cover_url && <span className="text-xs text-muted-foreground ml-1">(actuelle conservée si vide)</span>}
-          <ModeToggle mode={coverMode} setMode={setCoverMode} />
-        </Label>
-        {coverMode === "file" ? (
-          <FileDropzone
-            accept="*/*"
-            file={coverFile}
-            onFile={setCoverFile}
-            validate={validateImageFile}
-            preview={coverFile ? coverPreview ?? undefined : undefined}
-            helper="Tout type d'image accepté · aucune limite"
-          />
-        ) : (
-          <Input type="url" value={coverUrl} onChange={(e) => setCoverUrl(e.target.value)} placeholder="https://example.com/cover.jpg" className="bg-secondary border-border" />
-        )}
-      </div>
-
-      <div className="space-y-1">
-        <Label className="flex items-center gap-1">
-          Lien de téléchargement
-          {(initialData as any)?.download_url && <span className="text-xs text-muted-foreground ml-1">(actuel conservé si vide)</span>}
-        </Label>
-        <Input type="url" value={downloadUrl} onChange={(e) => setDownloadUrl(e.target.value)} placeholder="https://example.com/download-link" className="bg-secondary border-border" />
-      </div>
-
-      <div className="grid grid-cols-2 gap-3 pt-2 border-t border-border">
-        <div className="space-y-1">
-          <Label className="text-xs">🎤 URL Acapella</Label>
-          <Input type="url" value={acapellaUrl} onChange={(e) => setAcapellaUrl(e.target.value)} placeholder="https://..." className="bg-secondary border-border" />
-        </div>
-        <div className="space-y-1">
-          <Label className="text-xs">🎹 URL Instrumentale</Label>
-          <Input type="url" value={instrumentalUrl} onChange={(e) => setInstrumentalUrl(e.target.value)} placeholder="https://..." className="bg-secondary border-border" />
-        </div>
-      </div>
-
-      <Button variant="hero" type="submit" disabled={saving} className="w-full">
-        {saving ? "Enregistrement..." : initialData ? "Modifier la track" : "Ajouter la track"}
-      </Button>
     </form>
   );
 }

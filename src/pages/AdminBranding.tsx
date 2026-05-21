@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, Disc3, Save, RotateCcw, Upload, Palette, Type, Image as ImageIcon, Layout, Eye, Loader2, Sun, Moon } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Save, RotateCcw, Upload, Palette, Type, Image as ImageIcon, Layout, Eye, Loader2, Sun, Moon } from "lucide-react";
+import AdminLayout from "@/components/admin/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -65,17 +66,13 @@ const PRESETS: Array<{ name: string; patch: Partial<Branding> }> = [
 ];
 
 export default function AdminBranding() {
-  const { user, loading, isAdmin } = useAuth();
-  const navigate = useNavigate();
+  const { user, isAdmin } = useAuth();
   const { branding, applyPreview, refresh } = useBranding();
   const { theme, setTheme } = useTheme();
   const [draft, setDraft] = useState<Branding | null>(null);
   const [saving, setSaving] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
 
-  useEffect(() => {
-    if (!loading && (!user || !isAdmin)) navigate("/login");
-  }, [user, loading, isAdmin, navigate]);
 
   useEffect(() => {
     if (branding && !draft) setDraft(branding);
@@ -133,7 +130,7 @@ export default function AdminBranding() {
     setUploadingLogo(false);
   };
 
-  if (loading || !draft) return null;
+  if (!draft) return null;
 
   const ColorRow = ({ label, field }: { label: string; field: keyof Branding }) => (
     <div className="flex items-center gap-3">
@@ -155,32 +152,27 @@ export default function AdminBranding() {
   );
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b border-border glass sticky top-0 z-30">
-        <div className="container flex items-center justify-between h-14">
-          <div className="flex items-center gap-2">
-            <Disc3 className="h-6 w-6 text-primary" />
-            <span className="font-display font-bold gradient-text">Branding Studio</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>
-              {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-            </Button>
-            <Button variant="outline" size="sm" onClick={reset} disabled={!dirty || saving}>
-              <RotateCcw className="h-3 w-3 mr-1" /> Annuler
-            </Button>
-            <Button variant="hero" size="sm" onClick={save} disabled={!dirty || saving}>
-              {saving ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Save className="h-3 w-3 mr-1" />}
-              Publier
-            </Button>
-            <Link to="/admin" className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1 ml-2">
-              <ArrowLeft className="h-3 w-3" /> Admin
-            </Link>
-          </div>
-        </div>
-      </header>
+    <AdminLayout
+      wide
+      title="Branding Studio"
+      subtitle="Couleurs, logo, typographie et copies du site."
+      actions={
+        <>
+          <Button variant="ghost" size="sm" onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>
+            {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          </Button>
+          <Button variant="outline" size="sm" onClick={reset} disabled={!dirty || saving}>
+            <RotateCcw className="h-3 w-3 mr-1" /> Annuler
+          </Button>
+          <Button variant="hero" size="sm" onClick={save} disabled={!dirty || saving}>
+            {saving ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Save className="h-3 w-3 mr-1" />}
+            Publier
+          </Button>
+        </>
+      }
+    >
+      <div className="grid lg:grid-cols-[400px_1fr] gap-6">
 
-      <div className="container py-6 grid lg:grid-cols-[400px_1fr] gap-6">
         {/* PANNEAU D'ÉDITION */}
         <div className="space-y-4">
           <div className="bg-card border border-border rounded-xl p-4">
@@ -367,6 +359,6 @@ export default function AdminBranding() {
           </Link>
         </div>
       </div>
-    </div>
+    </AdminLayout>
   );
 }
