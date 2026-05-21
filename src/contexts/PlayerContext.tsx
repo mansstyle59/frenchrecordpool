@@ -61,7 +61,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const setVolume = useCallback((v: number) => {
-    const clamped = Math.min(1, Math.max(1, v));
+    const clamped = Math.min(1, Math.max(0, v));
     setVolumeState(clamped);
     if (muted) setMuted(false);
     if (audioRef.current) audioRef.current.volume = clamped;
