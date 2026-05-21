@@ -1,4 +1,5 @@
-import { Play, Heart, Download, ExternalLink } from "lucide-react";
+import { Play, Heart, Download, ExternalLink, Headphones } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
@@ -21,8 +22,54 @@ export default function TrackRow({ track, index }: TrackRowProps) {
   const { user, hasActiveSubscription } = useAuth();
   const { isFavorite, toggleFavorite } = useFavorites();
   const isCurrentTrack = currentTrack?.id === track.id;
+  const previewRef = useRef<HTMLAudioElement | null>(null);
+  const hoverTimer = useRef<number | null>(null);
+  const [previewing, setPreviewing] = useState(false);
+  const previewSrc = track.preview_url || track.audio_url;
+
+  useEffect(() => {
+    return () => {
+      if (hoverTimer.current) window.clearTimeout(hoverTimer.current);
+      previewRef.current?.pause();
+      previewRef.current = null;
+    };
+  }, []);
+
+  const startPreview = () => {
+    if (isCurrentTrack && isPlaying) return;
+    if (!previewSrc) return;
+    if (hoverTimer.current) window.clearTimeout(hoverTimer.current);
+    hoverTimer.current = window.setTimeout(() => {
+      try {
+        const audio = previewRef.current ?? new Audio(previewSrc);
+        audio.src = previewSrc;
+        audio.volume = 0;
+        audio.currentTime = 0;
+        previewRef.current = audio;
+        const fadeIn = () => {
+          let v = 0;
+          const id = window.setInterval(() => {
+            v = Math.min(0.45, v + 0.05);
+            if (previewRef.current) previewRef.current.volume = v;
+            if (v >= 0.45) window.clearInterval(id);
+          }, 40);
+        };
+        audio.play().then(() => { setPreviewing(true); fadeIn(); }).catch(() => {});
+      } catch {}
+    }, 450);
+  };
+
+  const stopPreview = () => {
+    if (hoverTimer.current) { window.clearTimeout(hoverTimer.current); hoverTimer.current = null; }
+    const audio = previewRef.current;
+    if (audio) {
+      try { audio.pause(); audio.currentTime = 0; } catch {}
+    }
+    setPreviewing(false);
+  };
 
   const handlePlay = () => {
+    stopPreview();
     if (isCurrentTrack) {
       toggle();
     } else {
@@ -31,7 +78,7 @@ export default function TrackRow({ track, index }: TrackRowProps) {
         title: track.title,
         artist: track.artist,
         coverUrl: resolveCover(track),
-        previewUrl: track.preview_url || track.audio_url,
+        previewUrl: previewSrc,
       });
     }
   };
@@ -62,13 +109,23 @@ export default function TrackRow({ track, index }: TrackRowProps) {
         </Button>
       </div>
 
-      <div className="relative h-11 w-11 shrink-0 rounded-md overflow-hidden ring-1 ring-border/60 shadow-sm">
+      <div
+        className="relative h-14 w-14 shrink-0 rounded-lg overflow-hidden ring-1 ring-border/60 shadow-md shadow-black/20 group-hover:ring-primary/50 group-hover:shadow-primary/20 transition-all"
+        onMouseEnter={startPreview}
+        onMouseLeave={stopPreview}
+      >
         <img
           src={resolveCover(track)}
           alt={track.title}
-          className="h-full w-full object-cover"
+          className={`h-full w-full object-cover transition-transform duration-500 ${previewing || (isCurrentTrack && isPlaying) ? "scale-110" : "group-hover:scale-105"}`}
           loading="lazy"
         />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent opacity-70 pointer-events-none" />
+        {previewing && !(isCurrentTrack && isPlaying) && (
+          <div className="absolute top-1 right-1 flex items-center gap-0.5 px-1 py-0.5 rounded-sm bg-primary/90 backdrop-blur-sm">
+            <Headphones className="h-2.5 w-2.5 text-primary-foreground" />
+          </div>
+        )}
         <button
           onClick={handlePlay}
           onDoubleClick={(e) => e.stopPropagation()}
@@ -82,7 +139,7 @@ export default function TrackRow({ track, index }: TrackRowProps) {
               <span className="w-0.5 h-4 bg-white animate-pulse [animation-delay:240ms]" />
             </span>
           ) : (
-            <Play className="h-4 w-4 fill-white text-white" />
+            <Play className="h-5 w-5 fill-white text-white drop-shadow" />
           )}
         </button>
       </div>
