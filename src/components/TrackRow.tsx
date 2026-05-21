@@ -82,18 +82,6 @@ export default function TrackRow({ track, index }: TrackRowProps) {
       });
     }
   };
-    if (isCurrentTrack) {
-      toggle();
-    } else {
-      play({
-        id: track.id,
-        title: track.title,
-        artist: track.artist,
-        coverUrl: resolveCover(track),
-        previewUrl: track.preview_url || track.audio_url,
-      });
-    }
-  };
 
   const handleDownload = () => downloadTrack(track.id, user, hasActiveSubscription);
   const resolvedUrl = (track as any).download_url || track.audio_url;
