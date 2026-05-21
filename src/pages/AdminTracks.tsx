@@ -208,7 +208,7 @@ export default function AdminTracks() {
   const handleDelete = async (id: string) => {
     const track = tracks.find(t => t.id === id);
     if (!confirm("Supprimer cette track ?")) return;
-    const { error } = await supabase.from("tracks").delete().eq("id", id);
+    const { error } = await supabase.rpc("admin_delete_track", { _id: id });
     if (error) toast({ title: "Erreur", description: error.message, variant: "destructive" });
     else {
       await logAdminAction({
@@ -220,6 +220,7 @@ export default function AdminTracks() {
       queryClient.invalidateQueries({ queryKey: ["tracks"] });
     }
   };
+
 
   const handleFavorite = (id: string) => {
     if (!user) { sonnerToast.error("Connectez-vous pour ajouter aux favoris"); return; }
