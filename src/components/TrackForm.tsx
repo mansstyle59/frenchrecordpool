@@ -1068,7 +1068,7 @@ function TagsInput({ value, onChange, placeholder }: { value: string[]; onChange
             commit(text);
           }
         }}
-        placeholder={value.length === 0 ? "Tape un tag puis Entrée…" : ""}
+        placeholder={value.length === 0 ? (placeholder ?? "Tape un tag puis Entrée…") : ""}
         className="flex-1 min-w-[120px] bg-transparent outline-none text-sm py-0.5"
       />
     </div>
