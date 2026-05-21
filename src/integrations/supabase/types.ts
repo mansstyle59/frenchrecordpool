@@ -47,6 +47,60 @@ export type Database = {
         }
         Relationships: []
       }
+      artists: {
+        Row: {
+          bio: string | null
+          country: string | null
+          created_at: string
+          created_by: string | null
+          featured: boolean
+          genre: string | null
+          id: string
+          instagram_url: string | null
+          name: string
+          photo_url: string | null
+          slug: string
+          sort_order: number
+          soundcloud_url: string | null
+          updated_at: string
+          website_url: string | null
+        }
+        Insert: {
+          bio?: string | null
+          country?: string | null
+          created_at?: string
+          created_by?: string | null
+          featured?: boolean
+          genre?: string | null
+          id?: string
+          instagram_url?: string | null
+          name: string
+          photo_url?: string | null
+          slug: string
+          sort_order?: number
+          soundcloud_url?: string | null
+          updated_at?: string
+          website_url?: string | null
+        }
+        Update: {
+          bio?: string | null
+          country?: string | null
+          created_at?: string
+          created_by?: string | null
+          featured?: boolean
+          genre?: string | null
+          id?: string
+          instagram_url?: string | null
+          name?: string
+          photo_url?: string | null
+          slug?: string
+          sort_order?: number
+          soundcloud_url?: string | null
+          updated_at?: string
+          website_url?: string | null
+        }
+        Relationships: []
+      }
       downloads: {
         Row: {
           downloaded_at: string

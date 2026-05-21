@@ -25,6 +25,7 @@ import AdminBranding from "./pages/AdminBranding";
 import AdminAuditLog from "./pages/AdminAuditLog";
 import AdminPlans from "./pages/AdminPlans";
 import AdminPromoCodes from "./pages/AdminPromoCodes";
+import AdminArtists from "./pages/AdminArtists";
 import Pricing from "./pages/Pricing";
 import Artists from "./pages/Artists";
 import Genres from "./pages/Genres";
@@ -58,6 +59,7 @@ const App = () => (
               <Route path="/admin" element={<Admin />} />
               <Route path="/admin/tracks" element={<AdminTracks />} />
               <Route path="/admin/users" element={<AdminUsers />} />
+              <Route path="/admin/artists" element={<AdminArtists />} />
               <Route path="/admin/subscriptions" element={<AdminSubscriptions />} />
               <Route path="/admin/plans" element={<AdminPlans />} />
               <Route path="/admin/promo-codes" element={<AdminPromoCodes />} />

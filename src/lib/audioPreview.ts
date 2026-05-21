@@ -55,19 +55,53 @@ export interface PreviewOptions {
   startMode?: PreviewStartMode;
 }
 
-export async function generateAudioPreview(file: File, opts: PreviewOptions | number = {}): Promise<Blob | null> {
+export async function generateAudioPreview(
+  source: File | Blob | string,
+  opts: PreviewOptions | number = {},
+): Promise<Blob> {
   // Rétrocompat: ancien appel generateAudioPreview(file, 30)
   const options: PreviewOptions = typeof opts === "number" ? { seconds: opts } : opts;
   const seconds = options.seconds ?? PREVIEW_SECONDS;
   const startMode: PreviewStartMode = options.startMode ?? "quarter";
 
+  const Ctx: typeof AudioContext = (window.AudioContext || (window as any).webkitAudioContext);
+  if (!Ctx) throw new Error("Web Audio API non supportée par ce navigateur.");
+
+  // 1) Récupère un ArrayBuffer depuis fichier, blob ou URL
+  let arrayBuf: ArrayBuffer;
   try {
-    const arrayBuf = await file.arrayBuffer();
-    const Ctx: typeof AudioContext = (window.AudioContext || (window as any).webkitAudioContext);
-    const ctx = new Ctx();
-    const audioBuf = await ctx.decodeAudioData(arrayBuf.slice(0));
+    if (typeof source === "string") {
+      const res = await fetch(source, { mode: "cors" });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      arrayBuf = await res.arrayBuffer();
+    } else {
+      arrayBuf = await source.arrayBuffer();
+    }
+  } catch (e: any) {
+    throw new Error(
+      typeof source === "string"
+        ? `Téléchargement impossible (${e?.message ?? "réseau"}). Le serveur distant doit autoriser CORS.`
+        : `Lecture du fichier impossible (${e?.message ?? "I/O"}).`,
+    );
+  }
+  if (!arrayBuf.byteLength) throw new Error("Fichier audio vide.");
+
+  // 2) Décode
+  const ctx = new Ctx();
+  let audioBuf: AudioBuffer;
+  try {
+    audioBuf = await ctx.decodeAudioData(arrayBuf.slice(0));
+  } catch (e: any) {
+    ctx.close?.();
+    throw new Error(
+      "Format audio non supporté par le navigateur. Essaie un MP3, WAV ou OGG standard.",
+    );
+  }
+
+  try {
     const sampleRate = audioBuf.sampleRate;
     const totalSec = audioBuf.duration;
+    if (!isFinite(totalSec) || totalSec <= 0) throw new Error("Durée audio invalide.");
 
     let startFrac = 0;
     switch (startMode) {
@@ -76,9 +110,10 @@ export async function generateAudioPreview(file: File, opts: PreviewOptions | nu
       case "middle": startFrac = 0.45; break;
       case "drop": startFrac = 0.6; break;
     }
+    const effSeconds = Math.min(seconds, totalSec);
     let startSec = totalSec * startFrac;
-    if (startSec + seconds > totalSec) startSec = Math.max(0, totalSec - seconds);
-    const endSec = Math.min(startSec + seconds, totalSec);
+    if (startSec + effSeconds > totalSec) startSec = Math.max(0, totalSec - effSeconds);
+    const endSec = Math.min(startSec + effSeconds, totalSec);
     const startSample = Math.floor(startSec * sampleRate);
     const endSample = Math.floor(endSec * sampleRate);
 
@@ -100,10 +135,8 @@ export async function generateAudioPreview(file: File, opts: PreviewOptions | nu
       down[down.length - 1 - i] *= i / fade;
     }
 
-    ctx.close();
     return encodeWav(down, TARGET_SAMPLE_RATE);
-  } catch (e) {
-    console.warn("Preview generation failed:", e);
-    return null;
+  } finally {
+    ctx.close?.();
   }
 }
