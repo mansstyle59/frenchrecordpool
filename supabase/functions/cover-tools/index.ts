@@ -133,6 +133,54 @@ Deno.serve(async (req) => {
       return json({ results: [...a, ...b] });
     }
 
+    if (action === "meta_search") {
+      if (!query) return json({ error: "query manquant" }, 400);
+      const results: any[] = [];
+      try {
+        const r = await fetch(
+          `https://itunes.apple.com/search?term=${encodeURIComponent(query)}&entity=song&limit=8`,
+        );
+        if (r.ok) {
+          const d = await r.json();
+          for (const x of d.results || []) {
+            results.push({
+              source: "iTunes",
+              artist: x.artistName,
+              title: x.trackName,
+              album: x.collectionName,
+              genre: x.primaryGenreName,
+              releaseDate: x.releaseDate,
+              durationMs: x.trackTimeMillis,
+              coverUrl: upscaleItunes(x.artworkUrl100 || ""),
+              thumb: x.artworkUrl100,
+            });
+          }
+        }
+      } catch { /* ignore */ }
+      try {
+        const r = await fetch(
+          `https://api.deezer.com/search?q=${encodeURIComponent(query)}&limit=8`,
+        );
+        if (r.ok) {
+          const d = await r.json();
+          for (const x of d.data || []) {
+            results.push({
+              source: "Deezer",
+              artist: x.artist?.name,
+              title: x.title,
+              album: x.album?.title,
+              genre: null,
+              releaseDate: null,
+              durationMs: x.duration ? x.duration * 1000 : null,
+              coverUrl: x.album?.cover_xl || x.album?.cover_big,
+              thumb: x.album?.cover_medium,
+            });
+          }
+        }
+      } catch { /* ignore */ }
+      return json({ results });
+    }
+
     if (action === "youtube") {
       if (!url) return json({ error: "url manquant" }, 400);
       const id = extractYouTubeId(url);
