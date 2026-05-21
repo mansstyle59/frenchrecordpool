@@ -57,6 +57,7 @@ export type Database = {
           genre: string | null
           id: string
           instagram_url: string | null
+          kind: string
           name: string
           photo_url: string | null
           slug: string
@@ -74,6 +75,7 @@ export type Database = {
           genre?: string | null
           id?: string
           instagram_url?: string | null
+          kind?: string
           name: string
           photo_url?: string | null
           slug: string
@@ -91,6 +93,7 @@ export type Database = {
           genre?: string | null
           id?: string
           instagram_url?: string | null
+          kind?: string
           name?: string
           photo_url?: string | null
           slug?: string
@@ -603,6 +606,7 @@ export type Database = {
         Row: {
           acapella_url: string | null
           artist: string
+          artist_id: string | null
           audio_url: string | null
           bpm: number | null
           cover_url: string | null
@@ -611,17 +615,24 @@ export type Database = {
           download_url: string | null
           downloads: number | null
           duration: string | null
+          featured_artists: string[] | null
           genre: string
           id: string
           instrumental_url: string | null
+          isrc: string | null
           label: string | null
+          mood: string | null
           musical_key: string | null
           preview_url: string | null
+          producer: string | null
           rejection_reason: string | null
           release_date: string | null
+          release_year: number | null
+          remixer_ids: string[] | null
           reviewed_at: string | null
           reviewed_by: string | null
           status: string
+          subgenre: string | null
           submitted_by: string | null
           tags: string[] | null
           title: string
@@ -631,6 +642,7 @@ export type Database = {
         Insert: {
           acapella_url?: string | null
           artist: string
+          artist_id?: string | null
           audio_url?: string | null
           bpm?: number | null
           cover_url?: string | null
@@ -639,17 +651,24 @@ export type Database = {
           download_url?: string | null
           downloads?: number | null
           duration?: string | null
+          featured_artists?: string[] | null
           genre: string
           id?: string
           instrumental_url?: string | null
+          isrc?: string | null
           label?: string | null
+          mood?: string | null
           musical_key?: string | null
           preview_url?: string | null
+          producer?: string | null
           rejection_reason?: string | null
           release_date?: string | null
+          release_year?: number | null
+          remixer_ids?: string[] | null
           reviewed_at?: string | null
           reviewed_by?: string | null
           status?: string
+          subgenre?: string | null
           submitted_by?: string | null
           tags?: string[] | null
           title: string
@@ -659,6 +678,7 @@ export type Database = {
         Update: {
           acapella_url?: string | null
           artist?: string
+          artist_id?: string | null
           audio_url?: string | null
           bpm?: number | null
           cover_url?: string | null
@@ -667,24 +687,39 @@ export type Database = {
           download_url?: string | null
           downloads?: number | null
           duration?: string | null
+          featured_artists?: string[] | null
           genre?: string
           id?: string
           instrumental_url?: string | null
+          isrc?: string | null
           label?: string | null
+          mood?: string | null
           musical_key?: string | null
           preview_url?: string | null
+          producer?: string | null
           rejection_reason?: string | null
           release_date?: string | null
+          release_year?: number | null
+          remixer_ids?: string[] | null
           reviewed_at?: string | null
           reviewed_by?: string | null
           status?: string
+          subgenre?: string | null
           submitted_by?: string | null
           tags?: string[] | null
           title?: string
           updated_at?: string
           version?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "tracks_artist_id_fkey"
+            columns: ["artist_id"]
+            isOneToOne: false
+            referencedRelation: "artists"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
@@ -790,6 +825,11 @@ export type Database = {
         Args: { _code: string; _plan_id?: string }
         Returns: Json
       }
+      resolve_or_create_artist: {
+        Args: { _kind?: string; _name: string }
+        Returns: string
+      }
+      slugify: { Args: { _v: string }; Returns: string }
     }
     Enums: {
       app_role: "admin" | "client" | "dj"
