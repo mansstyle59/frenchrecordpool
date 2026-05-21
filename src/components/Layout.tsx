@@ -175,6 +175,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         )}
       </header>
 
+      <ViewAsUserBanner />
+
       <main className={`flex-1 ${currentTrack ? "pb-16" : ""}`}>{children}</main>
 
       <footer className={`border-t border-border py-8 mt-12 ${currentTrack ? "mb-16" : ""}`}>
