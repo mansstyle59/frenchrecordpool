@@ -7,6 +7,9 @@ interface AuthContextType {
   session: Session | null;
   loading: boolean;
   isAdmin: boolean;
+  realIsAdmin: boolean;
+  viewAsUser: boolean;
+  setViewAsUser: (v: boolean) => void;
   hasActiveSubscription: boolean;
   profile: { dj_name: string | null; email: string | null; avatar_url: string | null } | null;
   signOut: () => Promise<void>;
@@ -14,30 +17,44 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType>({
-  user: null, session: null, loading: true, isAdmin: false,
+  user: null, session: null, loading: true, isAdmin: false, realIsAdmin: false,
+  viewAsUser: false, setViewAsUser: () => {},
   hasActiveSubscription: false, profile: null, signOut: async () => {}, refreshProfile: async () => {},
 });
 
 export const useAuth = () => useContext(AuthContext);
 
+const VIEW_AS_USER_KEY = "frp:viewAsUser";
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [hasActiveSubscription, setHasActiveSubscription] = useState(false);
+  const [realIsAdmin, setRealIsAdmin] = useState(false);
+  const [realHasSub, setRealHasSub] = useState(false);
   const [profile, setProfile] = useState<AuthContextType["profile"]>(null);
+  const [viewAsUser, setViewAsUserState] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem(VIEW_AS_USER_KEY) === "1";
+  });
+
+  const setViewAsUser = (v: boolean) => {
+    setViewAsUserState(v);
+    if (typeof window !== "undefined") {
+      if (v) localStorage.setItem(VIEW_AS_USER_KEY, "1");
+      else localStorage.removeItem(VIEW_AS_USER_KEY);
+    }
+  };
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
-        // Defer fetching to avoid deadlock
         setTimeout(() => fetchUserData(session.user.id), 0);
       } else {
-        setIsAdmin(false);
-        setHasActiveSubscription(false);
+        setRealIsAdmin(false);
+        setRealHasSub(false);
         setProfile(null);
         setLoading(false);
       }
@@ -66,25 +83,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       const admin = rolesRes.data?.some((r: any) => r.role === "admin") ?? false;
 
-      // Compte bloqué : on déconnecte immédiatement (sauf admin)
       if ((profileRes.data as any)?.is_blocked && !admin) {
         await supabase.auth.signOut();
         if (typeof window !== "undefined") {
           alert("Votre compte a été bloqué. Contactez un administrateur.");
         }
-        setIsAdmin(false);
-        setHasActiveSubscription(false);
+        setRealIsAdmin(false);
+        setRealHasSub(false);
         setProfile(null);
         return;
       }
 
-      setIsAdmin(admin);
+      setRealIsAdmin(admin);
       setProfile(profileRes.data ?? null);
       const activeSub = subRes.data?.some((s: any) =>
         s.status === "active" && (!s.current_period_end || new Date(s.current_period_end) > new Date())
-      );
-      // Les admins ont accès à tout
-      setHasActiveSubscription(admin || (activeSub ?? false));
+      ) ?? false;
+      setRealHasSub(activeSub);
     } catch (err) {
       console.error("Error fetching user data:", err);
     } finally {
@@ -93,6 +108,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const signOut = async () => {
+    setViewAsUser(false);
     await supabase.auth.signOut();
   };
 
@@ -100,8 +116,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (user) await fetchUserData(user.id);
   };
 
+  // Apply "view as user" override: hide admin powers and auto-sub
+  const effectiveAdmin = realIsAdmin && !viewAsUser;
+  const effectiveHasSub = effectiveAdmin ? true : realHasSub;
+
   return (
-    <AuthContext.Provider value={{ user, session, loading, isAdmin, hasActiveSubscription, profile, signOut, refreshProfile }}>
+    <AuthContext.Provider value={{
+      user, session, loading,
+      isAdmin: effectiveAdmin,
+      realIsAdmin,
+      viewAsUser: viewAsUser && realIsAdmin,
+      setViewAsUser,
+      hasActiveSubscription: effectiveHasSub,
+      profile, signOut, refreshProfile,
+    }}>
       {children}
     </AuthContext.Provider>
   );

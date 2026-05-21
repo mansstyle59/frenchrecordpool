@@ -1,9 +1,10 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Search, Menu, X, Disc3, LogIn, LogOut, Shield, Mic2 } from "lucide-react";
+import { Search, Menu, X, Disc3, LogIn, LogOut, Shield, Mic2, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import ThemeToggle from "@/components/ThemeToggle";
 import NotificationBell from "@/components/NotificationBell";
+import ViewAsUserBanner from "@/components/ViewAsUserBanner";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePlayer } from "@/contexts/PlayerContext";
@@ -20,7 +21,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
-  const { user, isAdmin, profile, signOut } = useAuth();
+  const { user, isAdmin, realIsAdmin, viewAsUser, setViewAsUser, profile, signOut } = useAuth();
   const { currentTrack } = usePlayer();
 
   const handleSignOut = async () => {
@@ -73,6 +74,18 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             {user ? (
               <>
                 <NotificationBell />
+                {realIsAdmin && (
+                  <Button
+                    variant={viewAsUser ? "default" : "ghost"}
+                    size="sm"
+                    className="gap-1"
+                    onClick={() => setViewAsUser(!viewAsUser)}
+                    title={viewAsUser ? "Quitter le mode aperçu utilisateur" : "Voir le site comme un utilisateur"}
+                  >
+                    {viewAsUser ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    <span className="hidden lg:inline">{viewAsUser ? "Aperçu" : "Voir comme user"}</span>
+                  </Button>
+                )}
                 {isAdmin && (
                   <Link to="/admin">
                     <Button variant="ghost" size="sm" className="gap-1">
@@ -161,6 +174,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           </nav>
         )}
       </header>
+
+      <ViewAsUserBanner />
 
       <main className={`flex-1 ${currentTrack ? "pb-16" : ""}`}>{children}</main>
 
