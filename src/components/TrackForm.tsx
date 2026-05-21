@@ -90,6 +90,12 @@ export default function TrackForm({ initialData, saving, onSubmit, existingGenre
   const [scUrl, setScUrl] = useState("");
   const [scImporting, setScImporting] = useState(false);
 
+  // Wizard step + meta search
+  const [step, setStep] = useState(0);
+  const [metaQuery, setMetaQuery] = useState("");
+  const [metaSearching, setMetaSearching] = useState(false);
+  const [metaResults, setMetaResults] = useState<any[]>([]);
+
   // Preview auto-generation
   const [previewAuto, setPreviewAuto] = useState(true);
   const [previewStart, setPreviewStart] = useState<PreviewStartMode>("quarter");
