@@ -107,7 +107,11 @@ export default function TrackForm({ initialData, saving, onSubmit, existingGenre
         setDuration((v) => v || meta.duration || "");
         if (meta.bpm) setBpm((v) => v || String(meta.bpm));
         if (meta.key) setMusicalKey((v) => v || meta.key!);
-        if (meta.version) setVersion((v) => (v && v !== "Original" ? v : meta.version!));
+        if (meta.version) {
+          const matched = VERSIONS.find((v) => meta.version!.toLowerCase().includes(v.toLowerCase()))
+            || (meta.version.toLowerCase().includes("remix") ? "Extended" : null);
+          if (matched) setVersion((cur) => (cur && cur !== "Original" ? cur : matched));
+        }
         // Auto-set cover from embedded artwork if none provided
         if (meta.pictureFile && !coverFile && !coverUrl && !initialData?.cover_url) {
           setCoverFile(meta.pictureFile);
