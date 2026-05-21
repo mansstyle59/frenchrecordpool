@@ -109,13 +109,23 @@ export default function TrackRow({ track, index }: TrackRowProps) {
         </Button>
       </div>
 
-      <div className="relative h-11 w-11 shrink-0 rounded-md overflow-hidden ring-1 ring-border/60 shadow-sm">
+      <div
+        className="relative h-14 w-14 shrink-0 rounded-lg overflow-hidden ring-1 ring-border/60 shadow-md shadow-black/20 group-hover:ring-primary/50 group-hover:shadow-primary/20 transition-all"
+        onMouseEnter={startPreview}
+        onMouseLeave={stopPreview}
+      >
         <img
           src={resolveCover(track)}
           alt={track.title}
-          className="h-full w-full object-cover"
+          className={`h-full w-full object-cover transition-transform duration-500 ${previewing || (isCurrentTrack && isPlaying) ? "scale-110" : "group-hover:scale-105"}`}
           loading="lazy"
         />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent opacity-70 pointer-events-none" />
+        {previewing && !(isCurrentTrack && isPlaying) && (
+          <div className="absolute top-1 right-1 flex items-center gap-0.5 px-1 py-0.5 rounded-sm bg-primary/90 backdrop-blur-sm">
+            <Headphones className="h-2.5 w-2.5 text-primary-foreground" />
+          </div>
+        )}
         <button
           onClick={handlePlay}
           onDoubleClick={(e) => e.stopPropagation()}
@@ -129,7 +139,7 @@ export default function TrackRow({ track, index }: TrackRowProps) {
               <span className="w-0.5 h-4 bg-white animate-pulse [animation-delay:240ms]" />
             </span>
           ) : (
-            <Play className="h-4 w-4 fill-white text-white" />
+            <Play className="h-5 w-5 fill-white text-white drop-shadow" />
           )}
         </button>
       </div>
