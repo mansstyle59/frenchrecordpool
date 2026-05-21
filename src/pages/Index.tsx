@@ -11,7 +11,7 @@ import CmsImage from "@/components/cms/CmsImage";
 import { useTracks } from "@/hooks/useTracks";
 import { usePlayer } from "@/contexts/PlayerContext";
 import { resolveCover } from "@/lib/trackCover";
-import { useCmsValue } from "@/contexts/CmsContext";
+import { useCmsValue, useCms } from "@/contexts/CmsContext";
 
 import heroBg from "@/assets/hero-bg.jpg";
 
