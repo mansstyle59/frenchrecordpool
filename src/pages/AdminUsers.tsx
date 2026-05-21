@@ -180,6 +180,21 @@ export default function AdminUsers() {
     queryClient.invalidateQueries({ queryKey: ["admin-all-subs"] });
   };
 
+  const toggleAccess = async (p: ProfileRow, grant: boolean) => {
+    if (!confirm(grant ? `Donner l'accès complet au site à ${p.email} ?` : `Retirer l'accès au site de ${p.email} ?`)) return;
+    const { error } = await supabase.rpc("admin_set_user_access" as any, { _user_id: p.user_id, _grant: grant });
+    if (error) {
+      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      return;
+    }
+    await logAdminAction({
+      actorId: user!.id, action: grant ? "user.access_grant" : "user.access_revoke",
+      entityType: "user", entityId: p.user_id, entityLabel: p.email ?? p.user_id,
+    });
+    toast({ title: grant ? "Accès accordé" : "Accès retiré" });
+    queryClient.invalidateQueries({ queryKey: ["admin-all-subs"] });
+  };
+
   const deleteUser = async (p: ProfileRow) => {
     setConfirmDelete(null);
     if (p.user_id === user?.id) {
