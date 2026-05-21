@@ -42,7 +42,11 @@ export default function TrackRow({ track, index }: TrackRowProps) {
   const DownloadIcon = isExternalLink ? ExternalLink : Download;
 
   return (
-    <div className="group flex items-center gap-3 px-4 py-3 border-b border-border/40 last:border-0 hover:bg-secondary/40 transition-colors">
+    <div
+      className="group flex items-center gap-3 px-4 py-3 border-b border-border/40 last:border-0 hover:bg-secondary/40 transition-colors cursor-pointer"
+      onDoubleClick={handlePlay}
+      title="Double-cliquez pour lire"
+    >
       <div className="w-8 text-center shrink-0 font-mono">
         <span className="group-hover:hidden text-xs text-muted-foreground">
           {index !== undefined ? String(index + 1).padStart(2, "0") : ""}
