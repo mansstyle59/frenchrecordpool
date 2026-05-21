@@ -55,20 +55,8 @@ export default function AdminSubscriptions() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b border-border glass">
-        <div className="container flex items-center justify-between h-14">
-          <div className="flex items-center gap-2">
-            <Disc3 className="h-6 w-6 text-primary" />
-            <span className="font-display font-bold gradient-text">Admin</span>
-          </div>
-          <Link to="/admin" className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1">
-            <ArrowLeft className="h-3 w-3" /> Dashboard
-          </Link>
-        </div>
-      </header>
-      <div className="container py-8">
-        <h1 className="font-display text-2xl font-bold mb-6">Gestion des Abonnements</h1>
+    <AdminLayout wide title="Gestion des Abonnements" subtitle={`${subs.length} abonnement${subs.length > 1 ? "s" : ""}`}>
+
         <div className="rounded-xl border border-border overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
