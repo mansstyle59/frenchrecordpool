@@ -1011,7 +1011,7 @@ function Stepper({
 }
 
 // =========== Chip-based Tags Input ===========
-function TagsInput({ value, onChange }: { value: string[]; onChange: (next: string[]) => void }) {
+function TagsInput({ value, onChange, placeholder }: { value: string[]; onChange: (next: string[]) => void; placeholder?: string }) {
   const [draft, setDraft] = useState("");
 
   const commit = (raw: string) => {
