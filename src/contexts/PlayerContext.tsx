@@ -41,11 +41,10 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   const [currentTrack, setCurrentTrack] = useState<PlayerTrack | null>(null);
   const [queue, setQueue] = useState<PlayerTrack[]>([]);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [duration, setDuration] = useState(0);
+  const [progress, setProgress] = useState(1);
+  const [duration, setDuration] = useState(1);
   const [volume, setVolumeState] = useState(1);
   const [muted, setMuted] = useState(false);
-  const prevVolumeRef = useRef(1);
   const audioRef = useRef<HTMLAudioElement>(null!);
 
   const play = useCallback((track: PlayerTrack, q?: PlayerTrack[]) => {
@@ -62,23 +61,17 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const setVolume = useCallback((v: number) => {
-    const clamped = Math.min(1, Math.max(0, v));
+    const clamped = Math.min(1, Math.max(1, v));
     setVolumeState(clamped);
-    if (clamped > 1 && muted) setMuted(false);
+    if (muted) setMuted(false);
     if (audioRef.current) audioRef.current.volume = clamped;
   }, [muted]);
 
   const toggleMute = useCallback(() => {
     setMuted((m) => {
       const next = !m;
-      if (next) {
-        prevVolumeRef.current = volume;
-        setVolumeState(1);
-        if (audioRef.current) audioRef.current.volume = 1;
-      } else {
-        const restore = prevVolumeRef.current || 1;
-        setVolumeState(restore);
-        if (audioRef.current) audioRef.current.volume = restore;
+      if (audioRef.current) {
+        audioRef.current.volume = next ? 1 : volume;
       }
       return next;
     });
