@@ -1,4 +1,5 @@
-import { Play, Heart, Download, ExternalLink } from "lucide-react";
+import { Play, Heart, Download, ExternalLink, Headphones } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
@@ -21,6 +22,51 @@ export default function TrackRow({ track, index }: TrackRowProps) {
   const { user, hasActiveSubscription } = useAuth();
   const { isFavorite, toggleFavorite } = useFavorites();
   const isCurrentTrack = currentTrack?.id === track.id;
+  const previewRef = useRef<HTMLAudioElement | null>(null);
+  const hoverTimer = useRef<number | null>(null);
+  const [previewing, setPreviewing] = useState(false);
+  const previewSrc = track.preview_url || track.audio_url;
+
+  useEffect(() => {
+    return () => {
+      if (hoverTimer.current) window.clearTimeout(hoverTimer.current);
+      previewRef.current?.pause();
+      previewRef.current = null;
+    };
+  }, []);
+
+  const startPreview = () => {
+    if (isCurrentTrack && isPlaying) return;
+    if (!previewSrc) return;
+    if (hoverTimer.current) window.clearTimeout(hoverTimer.current);
+    hoverTimer.current = window.setTimeout(() => {
+      try {
+        const audio = previewRef.current ?? new Audio(previewSrc);
+        audio.src = previewSrc;
+        audio.volume = 0;
+        audio.currentTime = 0;
+        previewRef.current = audio;
+        const fadeIn = () => {
+          let v = 0;
+          const id = window.setInterval(() => {
+            v = Math.min(0.45, v + 0.05);
+            if (previewRef.current) previewRef.current.volume = v;
+            if (v >= 0.45) window.clearInterval(id);
+          }, 40);
+        };
+        audio.play().then(() => { setPreviewing(true); fadeIn(); }).catch(() => {});
+      } catch {}
+    }, 450);
+  };
+
+  const stopPreview = () => {
+    if (hoverTimer.current) { window.clearTimeout(hoverTimer.current); hoverTimer.current = null; }
+    const audio = previewRef.current;
+    if (audio) {
+      try { audio.pause(); audio.currentTime = 0; } catch {}
+    }
+    setPreviewing(false);
+  };
 
   const handlePlay = () => {
     if (isCurrentTrack) {
