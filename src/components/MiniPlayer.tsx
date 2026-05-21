@@ -24,7 +24,7 @@ function buildBars(seed: string, count = 64): number[] {
 }
 
 export default function MiniPlayer() {
-  const { currentTrack, queue, isPlaying, volume, toggle, next, prev, play, setVolume, audioRef } = usePlayer();
+  const { currentTrack, queue, isPlaying, volume, muted, toggle, next, prev, play, setVolume, toggleMute, clear, audioRef } = usePlayer();
   const progressRef = useRef<HTMLInputElement>(null);
   const playedRef = useRef<HTMLDivElement>(null);
   const timeRef = useRef<HTMLSpanElement>(null);
@@ -36,10 +36,10 @@ export default function MiniPlayer() {
       audio.src = currentTrack.previewUrl;
       audio.load();
     }
-    audio.volume = volume;
+    audio.volume = muted ? 0 : volume;
     if (isPlaying) audio.play().catch(() => {});
     else audio.pause();
-  }, [currentTrack, isPlaying, audioRef, volume]);
+  }, [currentTrack, isPlaying, audioRef, volume, muted]);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -64,14 +64,13 @@ export default function MiniPlayer() {
   }, [audioRef, next]);
 
   const bars = useMemo(() => buildBars(currentTrack?.id ?? "default"), [currentTrack?.id]);
-  const currentIdx = currentTrack ? queue.findIndex((t) => t.id === currentTrack.id) : -1;
 
   if (!currentTrack) return null;
 
   return (
     <>
       <audio ref={audioRef} preload="auto" />
-      <div className="fixed bottom-0 left-0 right-0 z-50 glass border-t border-border">
+      <div className="fixed bottom-0 left-1 right-1 z-50 glass border-t border-border">
         <div className="container flex items-center gap-3 h-16">
           <img
             src={currentTrack.coverUrl || ""}
@@ -83,7 +82,7 @@ export default function MiniPlayer() {
             <p className="text-xs text-muted-foreground truncate">{currentTrack.artist}</p>
           </div>
 
-          <Button variant="ghost" size="icon" className="shrink-0 hidden sm:inline-flex" onClick={prev} title="Précédent">
+          <Button variant="ghost" size="icon" className="shrink-0 hidden sm:inline-flex" onClick={prev} title="Pr&eacute;c&eacute;dent">
             <SkipBack className="h-4 w-4" />
           </Button>
           <Button variant="ghost" size="icon" className="shrink-0" onClick={toggle}>
@@ -135,15 +134,15 @@ export default function MiniPlayer() {
             0:00 / 0:00
           </span>
 
-          {/* Volume */}
+          {/* Volume + Mute */}
           <div className="hidden md:flex items-center gap-2 w-28 shrink-0">
             <button
               type="button"
-              onClick={() => setVolume(volume > 0 ? 0 : 1)}
+              onClick={toggleMute}
               className="text-muted-foreground hover:text-foreground transition-colors"
-              title={volume > 0 ? "Couper" : "Activer"}
+              title={muted ? "R&eacute;activer le son" : "Couper le son"}
             >
-              {volume > 0 ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
+              {muted ? <VolumeX className="h-4 w-4 text-destructive" /> : <Volume2 className="h-4 w-4" />}
             </button>
             <input
               type="range"
@@ -186,7 +185,7 @@ export default function MiniPlayer() {
                             className={`w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-secondary/60 transition-colors ${isCurr ? "bg-primary/10" : ""}`}
                           >
                             <span className={`text-xs w-5 text-center ${isCurr ? "text-primary" : "text-muted-foreground"}`}>
-                              {isCurr && isPlaying ? "▶" : i + 1}
+                              {isCurr && isPlaying ? "&#9654;" : i + 1}
                             </span>
                             <img src={t.coverUrl || ""} alt="" className="h-8 w-8 rounded object-cover" />
                             <div className="min-w-0 flex-1">
@@ -202,6 +201,11 @@ export default function MiniPlayer() {
               </ScrollArea>
             </PopoverContent>
           </Popover>
+
+          {/* Close player */}
+          <Button variant="ghost" size="icon" className="shrink-0 text-muted-foreground hover:text-destructive" onClick={clear} title="Fermer le lecteur">
+            <X className="h-4 w-4" />
+          </Button>
         </div>
       </div>
     </>

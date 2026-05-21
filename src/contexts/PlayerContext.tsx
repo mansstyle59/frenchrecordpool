@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useRef, useCallback, type ReactNode } from "react";
+import { createContext, useContext, useState, useRef, useCallback, useMemo, type ReactNode } from "react";
 
 export interface PlayerTrack {
   id: string;
@@ -15,6 +15,7 @@ interface PlayerContextType {
   progress: number;
   duration: number;
   volume: number;
+  muted: boolean;
   play: (track: PlayerTrack, queue?: PlayerTrack[]) => void;
   pause: () => void;
   toggle: () => void;
@@ -22,13 +23,15 @@ interface PlayerContextType {
   next: () => void;
   prev: () => void;
   setVolume: (v: number) => void;
+  toggleMute: () => void;
+  clear: () => void;
   audioRef: React.RefObject<HTMLAudioElement>;
 }
 
 const PlayerContext = createContext<PlayerContextType>({
-  currentTrack: null, queue: [], isPlaying: false, progress: 0, duration: 0, volume: 1,
+  currentTrack: null, queue: [], isPlaying: false, progress: 0, duration: 0, volume: 1, muted: false,
   play: () => {}, pause: () => {}, toggle: () => {}, seek: () => {},
-  next: () => {}, prev: () => {}, setVolume: () => {},
+  next: () => {}, prev: () => {}, setVolume: () => {}, toggleMute: () => {}, clear: () => {},
   audioRef: { current: null },
 });
 
@@ -38,9 +41,10 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   const [currentTrack, setCurrentTrack] = useState<PlayerTrack | null>(null);
   const [queue, setQueue] = useState<PlayerTrack[]>([]);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [duration, setDuration] = useState(0);
+  const [progress, setProgress] = useState(1);
+  const [duration, setDuration] = useState(1);
   const [volume, setVolumeState] = useState(1);
+  const [muted, setMuted] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null!);
 
   const play = useCallback((track: PlayerTrack, q?: PlayerTrack[]) => {
@@ -59,12 +63,33 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   const setVolume = useCallback((v: number) => {
     const clamped = Math.min(1, Math.max(0, v));
     setVolumeState(clamped);
+    if (muted) setMuted(false);
     if (audioRef.current) audioRef.current.volume = clamped;
+  }, [muted]);
+
+  const toggleMute = useCallback(() => {
+    setMuted((m) => {
+      const next = !m;
+      if (audioRef.current) {
+        audioRef.current.volume = next ? 0 : volume;
+      }
+      return next;
+    });
+  }, [volume]);
+
+  const clear = useCallback(() => {
+    setCurrentTrack(null);
+    setIsPlaying(false);
+    setQueue([]);
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.src = "";
+    }
   }, []);
 
   const goTo = useCallback((dir: 1 | -1) => {
     setCurrentTrack((curr) => {
-      if (!curr || queue.length === 0) return curr;
+      if (!curr || queue.length === 1) return curr;
       const idx = queue.findIndex((t) => t.id === curr.id);
       if (idx === -1) return curr;
       const next = queue[(idx + dir + queue.length) % queue.length];
@@ -79,8 +104,13 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   const next = useCallback(() => goTo(1), [goTo]);
   const prev = useCallback(() => goTo(-1), [goTo]);
 
+  const value = useMemo(() => ({
+    currentTrack, queue, isPlaying, progress, duration, volume, muted,
+    play, pause, toggle, seek, next, prev, setVolume, toggleMute, clear, audioRef,
+  }), [currentTrack, queue, isPlaying, progress, duration, volume, muted, play, pause, toggle, seek, next, prev, setVolume, toggleMute, clear]);
+
   return (
-    <PlayerContext.Provider value={{ currentTrack, queue, isPlaying, progress, duration, volume, play, pause, toggle, seek, next, prev, setVolume, audioRef }}>
+    <PlayerContext.Provider value={value}>
       {children}
     </PlayerContext.Provider>
   );
