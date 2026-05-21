@@ -25,7 +25,11 @@ export default function TrackRow({ track, index }: TrackRowProps) {
   const previewRef = useRef<HTMLAudioElement | null>(null);
   const hoverTimer = useRef<number | null>(null);
   const [previewing, setPreviewing] = useState(false);
-  const previewSrc = track.preview_url || track.audio_url;
+  // For audio playback: subscribers get the full audio_url, others get the short preview_url
+  const fullSrc = track.audio_url || null;
+  const shortSrc = track.preview_url || null;
+  const playbackSrc = hasActiveSubscription ? (fullSrc || shortSrc) : (shortSrc || fullSrc);
+  const previewSrc = shortSrc || fullSrc;
 
   useEffect(() => {
     return () => {
@@ -72,15 +76,22 @@ export default function TrackRow({ track, index }: TrackRowProps) {
     stopPreview();
     if (isCurrentTrack) {
       toggle();
-    } else {
-      play({
-        id: track.id,
-        title: track.title,
-        artist: track.artist,
-        coverUrl: resolveCover(track),
-        previewUrl: previewSrc,
-      });
+      return;
     }
+    if (!playbackSrc) {
+      toast.error("Aucun extrait audio disponible pour ce titre.");
+      return;
+    }
+    if (!hasActiveSubscription && !shortSrc && fullSrc) {
+      toast.info("Lecture de l'extrait. Abonnez-vous pour le titre complet.");
+    }
+    play({
+      id: track.id,
+      title: track.title,
+      artist: track.artist,
+      coverUrl: resolveCover(track),
+      previewUrl: playbackSrc,
+    });
   };
 
   const handleDownload = () => downloadTrack(track.id, user, hasActiveSubscription);
@@ -95,18 +106,9 @@ export default function TrackRow({ track, index }: TrackRowProps) {
       title="Double-cliquez pour lire"
     >
       <div className="w-8 text-center shrink-0 font-mono">
-        <span className="group-hover:hidden text-xs text-muted-foreground">
+        <span className="text-xs text-muted-foreground">
           {index !== undefined ? String(index + 1).padStart(2, "0") : ""}
         </span>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="hidden group-hover:inline-flex h-8 w-8 text-primary"
-          onClick={handlePlay}
-          onDoubleClick={(e) => e.stopPropagation()}
-        >
-          <Play className="h-4 w-4 fill-current" />
-        </Button>
       </div>
 
       <div
