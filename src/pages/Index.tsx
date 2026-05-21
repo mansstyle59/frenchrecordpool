@@ -18,6 +18,7 @@ import heroBg from "@/assets/hero-bg.jpg";
 export default function Index() {
   const { data: tracks = [], isLoading } = useTracks();
   const { play } = usePlayer();
+  const heroBgUrl = useCmsValue<string>("home.hero.bg", heroBg);
   const topTracks = [...tracks].sort((a, b) => (b.downloads ?? 0) - (a.downloads ?? 0)).slice(0, 5);
   const newTracks = [...tracks].sort((a, b) => (b.release_date ?? "").localeCompare(a.release_date ?? "")).slice(0, 8);
   const featured = newTracks.slice(0, 6);
