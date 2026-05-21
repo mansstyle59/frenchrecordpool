@@ -51,6 +51,13 @@ interface TrackFormProps {
 export interface TrackFormData {
   title: string;
   artist: string;
+  featuredArtists: string[];
+  remixers: string[];
+  producer: string;
+  releaseYear: string;
+  isrc: string;
+  subgenre: string;
+  mood: string;
   genre: string;
   bpm: string;
   musicalKey: string;
