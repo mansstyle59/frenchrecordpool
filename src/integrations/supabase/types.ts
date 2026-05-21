@@ -507,6 +507,10 @@ export type Database = {
     Functions: {
       admin_delete_track: { Args: { _id: string }; Returns: undefined }
       admin_delete_user: { Args: { _user_id: string }; Returns: undefined }
+      admin_set_user_access: {
+        Args: { _grant: boolean; _user_id: string }
+        Returns: undefined
+      }
       admin_set_user_blocked: {
         Args: { _blocked: boolean; _user_id: string }
         Returns: undefined

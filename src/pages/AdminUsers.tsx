@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { KeyRound, Search, Shield, ShieldOff, UserCheck, X, Ban, CheckCircle2, Trash2 } from "lucide-react";
+import { KeyRound, Search, Shield, ShieldOff, UserCheck, X, Ban, CheckCircle2, Trash2, Unlock, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -180,6 +180,21 @@ export default function AdminUsers() {
     queryClient.invalidateQueries({ queryKey: ["admin-all-subs"] });
   };
 
+  const toggleAccess = async (p: ProfileRow, grant: boolean) => {
+    if (!confirm(grant ? `Donner l'accès complet au site à ${p.email} ?` : `Retirer l'accès au site de ${p.email} ?`)) return;
+    const { error } = await supabase.rpc("admin_set_user_access" as any, { _user_id: p.user_id, _grant: grant });
+    if (error) {
+      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      return;
+    }
+    await logAdminAction({
+      actorId: user!.id, action: grant ? "user.access_grant" : "user.access_revoke",
+      entityType: "user", entityId: p.user_id, entityLabel: p.email ?? p.user_id,
+    });
+    toast({ title: grant ? "Accès accordé" : "Accès retiré" });
+    queryClient.invalidateQueries({ queryKey: ["admin-all-subs"] });
+  };
+
   const deleteUser = async (p: ProfileRow) => {
     setConfirmDelete(null);
     if (p.user_id === user?.id) {
@@ -328,6 +343,18 @@ export default function AdminUsers() {
                           {p.is_blocked ? <CheckCircle2 className="h-3 w-3" /> : <Ban className="h-3 w-3" />}
                           {p.is_blocked ? "Débloquer" : "Bloquer"}
                         </Button>
+                        {!isAdminRole && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className={`gap-1 ${active ? "text-amber-500 hover:text-amber-600" : "text-primary"}`}
+                            onClick={() => toggleAccess(p, !active)}
+                            title={active ? "Retirer l'accès" : "Donner l'accès"}
+                          >
+                            {active ? <Lock className="h-3 w-3" /> : <Unlock className="h-3 w-3" />}
+                            {active ? "Retirer accès" : "Donner accès"}
+                          </Button>
+                        )}
                         <Button
                           variant="ghost"
                           size="sm"
