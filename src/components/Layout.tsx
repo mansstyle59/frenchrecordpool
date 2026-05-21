@@ -178,9 +178,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
       <ViewAsUserBanner />
 
-      <main className={`flex-1 ${currentTrack ? "pb-16" : ""}`}>{children}</main>
+      <main className={`flex-1 ${currentTrack ? "pb-20 sm:pb-16" : ""}`}>{children}</main>
 
-      <footer className={`border-t border-border py-8 mt-12 ${currentTrack ? "mb-16" : ""}`}>
+      <footer className={`border-t border-border py-8 mt-12 ${currentTrack ? "mb-20 sm:mb-16" : ""}`}>
         <div className="container">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="flex items-center gap-2">
