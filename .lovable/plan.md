@@ -1,48 +1,109 @@
-## Objectif
-1. Rendre le bouton **Admin** visible sur mobile (tu es en 393px, le bouton actuel est masqué `hidden sm:inline-flex`).
-2. Confirmer l'accès admin de `dewulf.denis@gmail.com` (déjà vérifié → rôle `admin` ✅, toutes les pages `/admin/*` lui sont déjà accessibles).
-3. Publier la palette **French Pool (bleu/rouge)** + polices **Space Grotesk / DM Sans** dans `site_branding` pour que le site adopte ces tokens partout (Realtime push instantané).
+# Plateforme DJ : soumissions + validation admin
 
-## Connexion / accès
-Je ne peux pas me connecter à ta place. Une fois ces changements appliqués :
-- Va sur `/login`, connecte-toi avec `dewulf.denis@gmail.com`.
-- Le bouton **Admin** (icône bouclier) apparaîtra dans la navbar (desktop ET mobile).
-- Pages accessibles : `/admin`, `/admin/tracks`, `/admin/users`, `/admin/subscriptions`, `/admin/branding`.
+## Vue d'ensemble
 
-## Changements code
+Chaque utilisateur peut devenir « DJ » et soumettre des morceaux depuis son dashboard. Toute soumission ou modification entre en file d'attente et doit être validée par l'admin avant publication publique. L'admin peut corriger les métadonnées avant d'approuver. Notifications in-app temps réel.
 
-### `src/components/Layout.tsx`
-- Retirer `hidden sm:inline-flex` du bouton Admin desktop → toujours visible quand `isAdmin`.
-- Ajouter un lien **Admin** en haut du menu mobile (`mobileOpen`) avec l'icône `Shield`, visible uniquement si `isAdmin`.
+## 1. Base de données
 
-## Changement base de données (migration)
+### Modifs sur `tracks`
+- `status` : `pending` | `approved` | `rejected` (par défaut `pending`, sauf imports admin → `approved`)
+- `submitted_by` : uuid du DJ propriétaire
+- `rejection_reason` : texte (motif de refus)
+- `reviewed_by`, `reviewed_at`
+- Affichage public filtré sur `status = 'approved'`
 
-Mettre à jour la ligne `site_branding` (id = `global`) avec la palette French Pool et les polices choisies :
+### Nouvelle table `track_revisions`
+Stocke les modifications proposées par un DJ sur un morceau déjà approuvé (pour ne pas écraser le live tant que non validé).
+- `track_id`, `submitted_by`, `payload` (jsonb avec champs modifiés + cover/audio temporaires)
+- `status` (pending/approved/rejected), `rejection_reason`
+- À l'approbation : merge dans `tracks` + suppression de la revision
 
-```sql
-UPDATE public.site_branding SET
-  light_primary    = '220 75% 45%',
-  light_accent     = '0 72% 51%',
-  light_background = '0 0% 98%',
-  light_foreground = '222 47% 11%',
-  light_card       = '0 0% 100%',
-  dark_primary     = '220 80% 58%',
-  dark_accent      = '0 72% 55%',
-  dark_background  = '222 47% 6%',
-  dark_foreground  = '210 20% 95%',
-  dark_card        = '222 28% 12%',
-  font_display     = 'Space Grotesk',
-  font_body        = 'DM Sans',
-  hero_title       = 'Le pool des DJs francophones',
-  hero_subtitle    = 'Téléchargements illimités, exclus & remixes — mis à jour chaque semaine.',
-  footer_text      = '© French Record Pool — La référence des DJs francophones',
-  updated_at       = now()
-WHERE id = 'global';
+### Nouvelle table `notifications`
+- `user_id`, `type` (`submission_received`, `submission_approved`, `submission_rejected`, `new_pending_submission`)
+- `title`, `body`, `link`, `read_at`, `data` jsonb
+- Realtime activé
+
+### Rôle `dj`
+Ajout à l'enum `app_role`. Attribué automatiquement à la 1ʳᵉ soumission. Helper `has_role(uid, 'dj')`.
+
+### RLS clés
+- `tracks` public : `SELECT WHERE status = 'approved' OR submitted_by = auth.uid() OR is_admin`
+- DJs : `INSERT WHERE submitted_by = auth.uid()` + `UPDATE/DELETE WHERE submitted_by = auth.uid() AND status = 'pending'`
+- Admins : tous droits
+- `track_revisions` : DJ voit/insère les siennes, admin tout
+- `notifications` : utilisateur voit/marque les siennes ; admin insère pour autrui via fonction security definer
+
+### Triggers
+- À l'insert d'un track avec `status=pending` → notifier tous les admins (`new_pending_submission`)
+- À l'update de `status` → notifier le DJ propriétaire (`submission_approved` / `submission_rejected`)
+
+## 2. Espace DJ (`/dj/*`)
+
+- `/dj` Dashboard : compteurs (en attente, approuvés, refusés, total téléchargements de mes tracks), liste des notifications récentes
+- `/dj/tracks` Mes soumissions : table avec statut, recherche, filtre par statut
+- `/dj/upload` Nouveau morceau (réutilise `TrackForm` existant)
+- `/dj/edit/:id` Modifier (création de revision si déjà approuvé, édition directe si pending)
+- Bouton « Supprimer » disponible uniquement sur pending/rejected
+
+## 3. Admin — modération
+
+- Nouvelle page `/admin/queue` : file d'attente unifiée (nouveaux + revisions), tri par date, filtres par DJ/statut/type
+- Détail soumission : preview audio + cover + toutes métadonnées **éditables** (titre, artiste, genre, BPM, key, version, label, tags, cover, date)
+- Actions : **Approuver** (avec corrections appliquées), **Refuser** (motif obligatoire), **Modifier et renvoyer** au DJ
+- Badge compteur dans la sidebar admin avec le nombre de pending (realtime)
+- Historique : `/admin/audit` affiche déjà ça → ajout des events `track_approved` / `track_rejected`
+
+## 4. Notifications
+
+- Cloche dans le header (`NotificationBell.tsx`) avec compteur non-lus + dropdown des 10 dernières
+- Subscription realtime via Supabase channel sur `notifications WHERE user_id = me`
+- Marquage `read_at` au clic
+- Toast Sonner sur nouvelle notification reçue en live
+
+## 5. Workflow
+
+```text
+DJ upload                          Admin
+    │                                │
+    ├─ INSERT track (pending) ──────▶│
+    │                                ├─ notif "new_pending"
+    │  notif "submission_received"   │
+    │◀── (auto via trigger)          │
+    │                                ├─ corrige métas si besoin
+    │                                ├─ Approve → status=approved
+    │  notif "approved" ◀────────────┤   (visible publiquement)
+    │                                │
+    │                                └─ Reject → status=rejected
+    │  notif "rejected" + motif ◀────┘
+    │
+    └─ Modifier track approuvé
+       → crée track_revision (pending)
+       → admin l'approuve → merge dans tracks
 ```
 
-> J'utilise une migration (rôle service) car la policy `Admins can update branding` exige `auth.uid()`, indisponible côté outil. Une fois publié, le `BrandingContext` réactif applique les variables CSS et charge les Google Fonts en live pour tous les visiteurs.
+## 6. Détails techniques
 
-## Hors-scope (à demander si tu veux)
-- Upload d'un vrai logo PNG/SVG (tu n'as pas fourni d'URL).
-- Édition de textes Hero personnalisés (j'ai mis des valeurs par défaut cohérentes).
-- Tu pourras de toute façon ajuster finement dans `/admin/branding` après connexion.
+- `tracks` public listing (`useTracks`, NewReleases, Index) filtré sur `status = 'approved'`
+- `AdminTracks` montre **tous** les tracks (avec badge statut)
+- `admin_upsert_track` RPC ajustée pour pouvoir setter `status` (admin) ; nouveau RPC `dj_submit_track` qui force status=pending et submitted_by=auth.uid()
+- Nouveau RPC `admin_review_track(_id, _decision, _reason, _patch jsonb)` qui applique le patch + change le statut + écrit l'audit
+- Sidebar : 2 nouveaux items (`/dj`, `/admin/queue`)
+- Routes protégées : `/dj/*` exige user connecté ; `/admin/queue` exige admin
+
+## 7. Hors scope (peut venir après)
+
+- Notifications email (pour plus tard, Lovable Email)
+- Système de versions/historique complet de chaque track
+- Commentaires de revue (chat admin↔DJ)
+- Stats publiques sur les profils DJ
+
+## 8. Livraison
+
+À cause de la taille, je propose de livrer en **2 vagues** :
+
+**Vague 1 (cette demande)** : schéma + RLS + status tracks + dashboard DJ + page admin de modération + notifications in-app + filtrage public des tracks approuvés.
+
+**Vague 2 (à demander ensuite)** : revisions séparées (modifs de tracks approuvés), notifications email, historique enrichi.
+
+Confirme « ok » et je lance la vague 1.

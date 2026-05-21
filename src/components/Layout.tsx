@@ -1,8 +1,9 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Search, Menu, X, Disc3, LogIn, LogOut, Shield } from "lucide-react";
+import { Search, Menu, X, Disc3, LogIn, LogOut, Shield, Mic2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import ThemeToggle from "@/components/ThemeToggle";
+import NotificationBell from "@/components/NotificationBell";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePlayer } from "@/contexts/PlayerContext";
@@ -71,6 +72,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
             {user ? (
               <>
+                <NotificationBell />
                 {isAdmin && (
                   <Link to="/admin">
                     <Button variant="ghost" size="sm" className="gap-1">
@@ -78,6 +80,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     </Button>
                   </Link>
                 )}
+                <Link to="/dj">
+                  <Button variant="ghost" size="sm" className="gap-1 hidden sm:inline-flex">
+                    <Mic2 className="h-4 w-4" /> Espace DJ
+                  </Button>
+                </Link>
                 <Link to="/dashboard">
                   <Button variant="ghost" size="sm" className="hidden sm:inline-flex">
                     {profile?.dj_name || "Mon compte"}
