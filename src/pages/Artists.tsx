@@ -161,7 +161,7 @@ export default function Artists() {
                 variants={{ hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0 } }}
               >
                 <Link
-                  to={`/new?q=${encodeURIComponent(artist.name)}`}
+                  to={`/artists/${slugify(artist.name)}`}
                   className="group block text-center"
                 >
                   <div className="relative mx-auto w-36 h-36 sm:w-40 sm:h-40 rounded-full overflow-hidden bg-gradient-to-br from-primary/80 to-accent/80 ring-2 ring-border group-hover:ring-primary group-hover:shadow-2xl group-hover:shadow-primary/30 transition-all">
