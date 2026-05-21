@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, Disc3, Save, RotateCcw, Upload, Palette, Type, Image as ImageIcon, Layout, Eye, Loader2, Sun, Moon } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Save, RotateCcw, Upload, Palette, Type, Image as ImageIcon, Layout, Eye, Loader2, Sun, Moon } from "lucide-react";
+import AdminLayout from "@/components/admin/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
