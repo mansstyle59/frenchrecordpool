@@ -6,16 +6,19 @@ import ThemeToggle from "@/components/ThemeToggle";
 import NotificationBell from "@/components/NotificationBell";
 import ViewAsUserBanner from "@/components/ViewAsUserBanner";
 import CmsText from "@/components/cms/CmsText";
+import CmsLink from "@/components/cms/CmsLink";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePlayer } from "@/contexts/PlayerContext";
 
-const navLinks = [
-  { to: "/new", label: "Nouveautés" },
-  { to: "/genres", label: "Genres" },
-  { to: "/artists", label: "Remixeurs" },
-  { to: "/stems", label: "Stems" },
+
+const NAV_DEFAULTS = [
+  { key: "nav.new", to: "/new", label: "Nouveautés" },
+  { key: "nav.genres", to: "/genres", label: "Genres" },
+  { key: "nav.artists", to: "/artists", label: "Remixeurs" },
+  { key: "nav.stems", to: "/stems", label: "Stems" },
 ];
+
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
@@ -43,7 +46,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           </Link>
 
           <nav className="hidden md:flex items-center gap-1">
-            {navLinks.map((link) => (
+            {NAV_DEFAULTS.map((link) => (
               <Link
                 key={link.to}
                 to={link.to}
@@ -53,10 +56,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     : "text-muted-foreground hover:text-foreground hover:bg-secondary"
                 }`}
               >
-                {link.label}
+                <CmsText editKey={link.key}>{link.label}</CmsText>
               </Link>
             ))}
           </nav>
+
 
           <div className="flex items-center gap-2">
             {searchOpen && (
@@ -130,7 +134,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
         {mobileOpen && (
           <nav className="md:hidden border-t border-border px-4 pb-4 pt-2 space-y-1">
-            {navLinks.map((link) => (
+            {NAV_DEFAULTS.map((link) => (
               <Link
                 key={link.to}
                 to={link.to}
@@ -141,9 +145,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
-                {link.label}
+                <CmsText editKey={link.key}>{link.label}</CmsText>
               </Link>
             ))}
+
             <div className="flex flex-col gap-2 pt-2">
               {user ? (
                 <>
@@ -188,10 +193,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               <span className="font-display font-semibold gradient-text">French Record Pool</span>
             </div>
             <div className="flex gap-6 text-sm text-muted-foreground">
-              <Link to="/new" className="hover:text-foreground transition-colors">Nouveautés</Link>
-              <Link to="/genres" className="hover:text-foreground transition-colors">Genres</Link>
-              <Link to="/artists" className="hover:text-foreground transition-colors">Remixeurs</Link>
+              <CmsLink editKey="footer.link.new" defaultLabel="Nouveautés" defaultUrl="/new" className="hover:text-foreground transition-colors" />
+              <CmsLink editKey="footer.link.genres" defaultLabel="Genres" defaultUrl="/genres" className="hover:text-foreground transition-colors" />
+              <CmsLink editKey="footer.link.artists" defaultLabel="Remixeurs" defaultUrl="/artists" className="hover:text-foreground transition-colors" />
             </div>
+
             <p className="text-xs text-muted-foreground"><CmsText editKey="footer.copyright">© 2026 French Record Pool. Tous droits réservés.</CmsText></p>
           </div>
         </div>

@@ -1,118 +1,183 @@
-# CMS visuel inline — édition par crayon (admin)
+# Full Edit Mode Admin — Plan en 3 vagues
 
-Objectif : permettre à l'admin de modifier textes, images, couleurs secondaires et l'ordre des sections directement depuis le site public via une icône crayon, **sans toucher au branding actuel** (logo, palette principale, typo, glassmorphism restent intacts).
+Objectif : transformer l'édition inline existante (CmsText / CmsImage / icône crayon) en un véritable mode builder visuel, **sans toucher au branding** ni casser la perf.
 
-Livré en **3 vagues** pour shipper utile vite. Validation explicite avant chaque vague.
+L'infra CMS actuelle (table `cms_content`, RPC `cms_save_draft`/`cms_publish`/`cms_revert_draft`/`cms_restore_version`, table `cms_content_versions`, contexte `CmsContext`, composants `<CmsText>` et `<CmsImage>`) est conservée et étendue, pas remplacée.
 
 ---
 
-## Vague 1 — Édition inline de contenu (texte + images)
+## Vague 1 — Édition étendue (contenu + style local)
 
-### 1.1 Base de données
-Nouvelle table `cms_content` :
-- `key` (text, unique) — ex: `home.hero.title`, `footer.copyright`, `page.about.body`
-- `type` — `text` | `richtext` | `image` | `url` | `color`
-- `value_draft` (jsonb) — version en cours d'édition
-- `value_published` (jsonb) — version visible publiquement
-- `updated_at`, `updated_by`, `published_at`, `published_by`
+### Nouveaux composants d'édition inline (côté front)
 
-Table `cms_content_versions` (historique automatique via trigger) :
-- `content_key`, `value`, `created_at`, `created_by`, `action` (`save`|`publish`|`revert`)
+- `<CmsRichText>` : éditeur WYSIWYG léger (gras, italique, lien, liste). Stocké en JSON via type `richtext` déjà supporté par `cms_save_draft`.
+- `<CmsButton>` : édite label + URL + variante (primary/secondary/ghost/outline).
+- `<CmsLink>` : édite label + URL d'un lien isolé (menu, footer).
+- `<CmsColor>` : color picker pour overrides de couleur ponctuels (type `color` déjà supporté).
+- `<CmsStyle>` : composant wrapper avec icône crayon → panneau latéral pour ajuster **uniquement** ce qui ne touche pas au branding global : padding (0-128px slider), margin, radius (token-based : sm/md/lg/full), shadow (none/sm/md/lg), opacité (0-100%), alignement texte (left/center/right), tailles responsive (sm/md/lg).
+- Toutes les valeurs sortent en classes Tailwind compatibles avec les tokens existants (`p-4`, `rounded-lg`, `shadow-md`…) — jamais en CSS arbitraire.
 
-RLS :
-- Public : lecture de `value_published` uniquement (via vue `cms_content_public`).
-- Admin : tout droits via `has_role(admin)`.
+### Panneau d'édition latéral (sidebar droite)
 
-RPC : `cms_save_draft(key, value)`, `cms_publish(key)`, `cms_revert(version_id)`.
+- Quand `editMode` actif + clic sur un élément éditable → panneau slide-in 320px à droite (Sheet shadcn).
+- Onglets : `Contenu` | `Style` | `Visibilité` | `Historique`.
+- `Visibilité` : 3 toggles (mobile/tablet/desktop) → ajoute classes `hidden md:block` etc.
+- `Historique` : liste des versions depuis `cms_content_versions`, bouton Restaurer (utilise `cms_restore_version` existant).
+- Double-clic = édition rapide texte inline (déjà presque OK).
+- Single-clic en mode édition = ouvre panneau.
 
-### 1.2 Couche front
-- `CmsProvider` : charge tous les `value_published` au mount (1 requête), expose `useCmsValue(key, fallback)`.
-- Mode admin : en plus, charge les `value_draft`, écoute realtime sur `cms_content`.
-- Hook `useEditMode()` : toggle global via bouton "Édition" dans le header admin (sticky).
+### Barre d'édition flottante (bas écran)
 
-### 1.3 Composants inline
-- `<CmsText editKey="home.hero.title" as="h1" className="..." >Fallback</CmsText>`
-  - Hors mode édition → rendu normal.
-  - Mode édition → wrapper avec hover crayon ; click → `contentEditable` (text) ou modal Tiptap (richtext) ; debounced save (800 ms) → toast "Brouillon enregistré".
-- `<CmsImage editKey="home.hero.bg" src={fallback} alt="…" />`
-  - Crayon → modal avec upload (réutilise le pipeline covers V1) ou URL ; preview avant save.
-- `<CmsLink editKey="home.cta.url" />` pour les CTA.
+- Toggle Édition (déjà existant).
+- Compteur brouillons en attente.
+- Boutons Annuler (revert key) / Tout publier / Prévisualisation (toggle valeur `value_draft` vs `value_published` en preview locale).
+- Indicateur "Sauvegarde auto" (debounce 800ms après chaque save_draft).
+- Undo/Redo **session-only** (stack en mémoire, pas en DB).
 
-### 1.4 Migration douce
-Remplacer dans **Index.tsx, Layout (footer), pages statiques** les textes hardcodés par `<CmsText>` avec leur valeur actuelle comme `fallback`. Aucun reload : si la clé n'existe pas en base, on rend le fallback → rien ne casse.
+### Schéma DB
 
-### 1.5 Barre d'édition flottante (admins seulement)
-En bas à droite quand `editMode=on` :
-- Compteur "X brouillons non publiés"
-- Bouton **Prévisualiser** (toggle entre `draft` et `published`)
-- Bouton **Publier tout** / **Publier sélection**
-- Bouton **Annuler** (revert au dernier publié)
-- Lien "Historique" → drawer listant `cms_content_versions` avec restore.
+Pas de migration nécessaire pour la vague 1 — on étend `cms_content` via deux nouveaux types tolérés par `cms_save_draft` : ajout dans la fonction du CHECK pour accepter `button`, `link`, `style`, `visibility`.
+
+```text
+ALTER FONCTION cms_save_draft :
+  IF _type NOT IN ('text','richtext','image','url','color',
+                   'button','link','style','visibility')
+```
+
+### Pages couvertes Vague 1
+
+- Homepage : tous les `<CmsText>` existants + ajout sur "À la une", titres de section, sous-titres, CTA boutons.
+- Footer : lien par lien éditable, copyright, ordre des liens.
+- Header : libellés des items de menu (mais pas l'ordre encore — vague 2).
+- Page Pricing : titres, descriptions des plans (les prix restent en DB `subscription_plans`).
+- Page About / Genres intro / NewReleases intro : zones de texte ajoutées si manquantes.
 
 ---
 
 ## Vague 2 — Sections dynamiques (drag & drop, add/remove)
 
-### 2.1 Modèle
-Table `cms_sections` :
-- `page` (text, ex: `home`, `about`)
-- `position` (int)
-- `type` (`hero` | `tracks_grid` | `genres_strip` | `featured_djs` | `rich_block` | `cta_band`)
-- `props` (jsonb) — config spécifique du composant
-- `is_visible` (bool)
-- `status` (`draft` | `published`)
+### Nouvelles tables
 
-### 2.2 Front
-- `<DynamicPage page="home" fallbackSections={[...]} />` : charge `cms_sections` triées, rend chaque type via registry.
-- Mode édition : chaque section gagne une barre d'outils (↑↓ position, œil masquer, crayon édition props, poubelle).
-- Drag & drop via `@dnd-kit/sortable` (déjà compatible RSC-free).
-- Bouton "+ Ajouter une section" → menu des types disponibles avec preview miniature.
+```text
+cms_pages
+  - slug (text PK)            ex: 'home', 'about'
+  - title (text)
+  - status (draft|published)
+  - meta (jsonb)              SEO title/desc/og_image
 
-### 2.3 Homepage migrée en sections
-La page d'accueil actuelle devient un assemblage par défaut de sections dont l'admin peut changer l'ordre/visibilité sans toucher au code.
+cms_sections
+  - id (uuid PK)
+  - page_slug (fk cms_pages)
+  - position (int)
+  - type (text)               'hero' | 'tracks_grid' | 'genres_strip'
+                              | 'featured_djs' | 'rich_block' | 'cta_band'
+                              | 'image_band' | 'video_embed'
+  - props (jsonb)             config typée selon le type
+  - visibility (jsonb)        { mobile: true, tablet: true, desktop: true }
+  - status (draft|published)
+```
 
----
+RLS : public lit `published` uniquement, admin tout. RPC : `cms_section_upsert`, `cms_section_delete`, `cms_section_reorder(page, ids[])`, `cms_section_publish_page(slug)`.
 
-## Vague 3 — Branding secondaire + polish
+### Front
 
-- Édition des **couleurs secondaires uniquement** (accent, muted, border) via color picker dans `AdminBranding` existant. Couleurs primaires + logo restent verrouillées par défaut, avec un cadenas explicite "Modifier le branding principal" pour éviter les accidents.
-- Édition du menu de navigation (labels, ordre, visibilité — pas les routes).
-- Édition du footer (colonnes, liens).
-- Undo/Redo niveau session (Ctrl+Z / Ctrl+Shift+Z) sur la dernière édition.
-- Logs d'édition dans `admin_audit_logs` (déjà en place).
+- `<DynamicPage slug="home">` : charge `cms_sections` triées par `position`, rend chaque section via un registry `{ hero: HeroSection, tracks_grid: TracksGridSection, ... }`.
+- En mode édition :
+  - bordure pointillée autour de chaque section au hover
+  - barre d'outils flottante par section : ↑ ↓ déplacer, ⧉ dupliquer, 👁 toggle visibilité, ✏️ éditer props, 🗑 supprimer
+  - drag & drop via `@dnd-kit/sortable`
+  - bouton "+ Ajouter une section" entre chaque bloc → picker des types disponibles avec preview thumbnail
+- Migration douce : la Homepage actuelle reste codée en dur ; on crée la version "dynamique" en parallèle sur la même route avec fallback. Quand l'admin clique "Convertir en page éditable", on snapshot la version actuelle en `cms_sections` (1 ligne par bloc du JSX actuel).
 
----
+### Section types V1
 
-## Hors-scope explicite
-- Pas de page builder libre style Wix : on reste sur un système de **sections typées** maintenables.
-- Pas de rate limiting backend (limitation connue de la plateforme — throttle côté client uniquement si nécessaire).
-- Pas de multilingue dans cette première itération.
-- Branding principal (logo, primary, typo) reste géré dans `AdminBranding` actuel, pas via crayon inline.
-
----
-
-## Détails techniques
-
-**Performance**
-- Une seule requête initiale pour tous les `cms_content` (cache React Query 5 min, invalidation realtime).
-- `<CmsText>` ne re-render que sa propre branche grâce à un sélecteur ciblé sur la clé.
-- Mode édition désactivé par défaut → zéro coût pour les visiteurs.
-
-**Sécurité**
-- RLS strict : seuls les admins lisent les `draft` et écrivent.
-- Trigger automatique versionnant chaque save dans `cms_content_versions`.
-- Mode édition côté front protégé par `realIsAdmin` (pas par `isAdmin` qui peut être bypass par "view as user").
-- Validation côté RPC : longueurs max, type matching `cms_content.type`.
-
-**SEO**
-- Rendu HTML inchangé pour le public (toujours `value_published`).
-- Pas d'hydratation supplémentaire visible — le wrapper crayon n'existe que si `editMode && realIsAdmin`.
-
-**Compatibilité**
-- Aucune classe Tailwind ni token de design touché.
-- Composants existants (`TrackCard`, `MiniPlayer`, etc.) inchangés.
-- Migration progressive page par page.
+| Type | Props éditables |
+|---|---|
+| `hero` | titre, sous-titre, badge, bg_image, cta_label, cta_url, search_visible |
+| `tracks_grid` | titre, source (latest/top/by_genre), limit, layout (grid/list) |
+| `genres_strip` | titre, mode (marquee/grid), limit |
+| `featured_djs` | titre, dj_ids[], layout |
+| `rich_block` | richtext, alignment, max_width |
+| `cta_band` | titre, sous-titre, cta_label, cta_url, bg_variant |
+| `image_band` | image_url, alt, ratio, overlay_opacity |
+| `video_embed` | url (youtube/vimeo), aspect |
 
 ---
 
-Tu valides la **Vague 1** telle quelle, ou tu veux ajuster le scope (par exemple commencer uniquement par la homepage, ou inclure tout de suite les sections dynamiques) ?
+## Vague 3 — Builder avancé + théming
+
+### Theme editor étendu
+
+La page `AdminBranding` existante reçoit :
+- Section "Couleurs primaires" → verrouillée par défaut (toggle "Modifier le branding principal" avec warning rouge).
+- Section "Couleurs secondaires" → accent-2, muted-2, surface, surface-elevated. Color picker HSL avec preview live.
+- Section "Tokens d'espacement" → échelle (compact/normal/spacious) qui remap les variables `--spacing-*`.
+- Section "Rayons" : presets (sharp/soft/rounded/pill) qui mettent à jour `--radius`.
+- Section "Ombres" : 4 sliders pour shadow-sm/md/lg/xl.
+- Toutes les valeurs persistées dans `site_branding` (table existante, ajouter colonnes).
+
+### Responsive overrides par section
+
+`cms_sections.props` reçoit un sous-champ `responsive`:
+```json
+{ "props": {...}, "responsive": {
+    "mobile":  { "padding": "sm", "hidden": false },
+    "tablet":  { "padding": "md" },
+    "desktop": { "padding": "lg" }
+}}
+```
+Bouton bascule mobile/tablet/desktop dans la topbar d'édition → preview change le breakpoint actif.
+
+### Templates & duplication
+
+- Table `cms_templates(id, name, kind, data jsonb)` — snapshot d'une section ou page complète.
+- Bouton "Enregistrer comme template" sur une section / page.
+- Picker "+ Ajouter" gagne un onglet "Mes templates".
+- Duplication de page : `cms_duplicate_page(slug, new_slug)` RPC.
+
+### Historique & versions
+
+- `cms_page_versions` (snapshot complet des sections par page, à chaque publish).
+- Page `/admin/cms/history` : timeline avec aperçu et bouton Restaurer.
+- Diff visuel : avant / après côte à côte (champs texte uniquement, V3 simple).
+
+### Logs & sécurité
+
+- Toute action (save_draft, publish, revert, section_upsert, template_save, page_duplicate) est tracée dans `admin_audit_logs` existant via les RPC.
+- Confirmation modale obligatoire pour suppression de section / page / template.
+- RLS : seuls les admins accèdent à toute la surface builder. Les DJs gardent leur scope `dj_*` actuel (aucune extension de leurs droits).
+
+---
+
+## Performance
+
+- **Pas d'impact runtime user** : la page publique charge `cms_sections.status='published'` en une seule requête (déjà dans `CmsContext`), zéro JS builder côté visiteur.
+- Le bundle builder (`@dnd-kit`, panneaux d'édition, color pickers) est **lazy-loadé** via `React.lazy` uniquement si `editMode === true` et `isAdmin`.
+- Sauvegarde auto debouncée 800 ms.
+- Cache React Query 30 s sur `cms_content` et `cms_sections`, invalidation ciblée par `key` ou `section_id` à chaque save.
+- Pas de reload : tous les saves sont des `mutation.onSuccess` → update local + revalidate.
+
+---
+
+## Hors-scope explicite (volontairement non couvert)
+
+- Pas de page builder libre type Webflow (pas de positionnement absolu pixel-perfect). On reste sur des sections typées avec des props bornées — c'est ce qui garantit que le branding ne casse pas.
+- Pas de multilingue.
+- Pas de A/B testing.
+- Pas d'édition côté DJ (le scope DJ reste : ses morceaux + son profil + son avatar via `Dashboard` existant).
+- Pas de Vidéo upload : seulement embed YouTube/Vimeo.
+- Pas de redirections custom (resterait à faire en routing React).
+- Snapping pixel et guides : non — incompatible avec une grille Tailwind responsive saine. Remplacé par presets d'espacement et alignements bornés.
+
+---
+
+## Ce que je propose de livrer en premier
+
+**Vague 1 uniquement**, avec :
+1. Migration `cms_save_draft` (ajout types `button`/`link`/`style`/`visibility`).
+2. Composants `<CmsRichText>`, `<CmsButton>`, `<CmsLink>`, `<CmsColor>`, `<CmsStyle>`.
+3. Panneau latéral d'édition (Sheet shadcn) avec onglets Contenu/Style/Visibilité/Historique.
+4. Barre flottante enrichie (compteur, undo/redo session, autosave indicator).
+5. Couverture Homepage + Footer + Header (libellés) + Pricing.
+
+Tu valides la Vague 1 telle quelle, ou tu veux ajuster le scope (par exemple, ne couvrir que la Homepage pour commencer, ou intégrer tout de suite les sections drag & drop de la Vague 2) ?
