@@ -599,10 +599,44 @@ export default function TrackForm({ initialData, saving, onSubmit, existingGenre
               <Input value={title} onChange={(e) => setTitle(e.target.value)} required placeholder="Ma Philosophie" className="bg-secondary border-border" />
             </div>
             <div className="space-y-1">
-              <Label>Remixeur *</Label>
+              <Label>Artiste principal *</Label>
               <Input value={artist} onChange={(e) => setArtist(e.target.value)} required placeholder="DJ Yass" className="bg-secondary border-border" />
+              <p className="text-[10px] text-muted-foreground">Sa page artiste sera créée automatiquement si elle n'existe pas.</p>
             </div>
           </div>
+
+          {/* ===== Crédits étendus ===== */}
+          <div className="rounded-lg border border-border bg-card/40 p-3 space-y-3">
+            <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              <Users2Icon /> Crédits
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label className="text-xs">Featuring (artistes secondaires)</Label>
+                <TagsInput value={featuredArtists} onChange={setFeaturedArtists} placeholder="Nom puis Entrée…" />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Remixers</Label>
+                <TagsInput value={remixers} onChange={setRemixers} placeholder="Nom puis Entrée…" />
+                <p className="text-[10px] text-muted-foreground">Chaque remixer aura sa page dédiée /remixers/...</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="space-y-1">
+                <Label className="text-xs">Producteur</Label>
+                <Input value={producer} onChange={(e) => setProducer(e.target.value)} placeholder="Producteur" className="bg-secondary border-border" />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Année</Label>
+                <Input type="number" min={1900} max={2100} value={releaseYear} onChange={(e) => setReleaseYear(e.target.value)} placeholder="2025" className="bg-secondary border-border font-mono" />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">ISRC</Label>
+                <Input value={isrc} onChange={(e) => setIsrc(e.target.value)} placeholder="FRXXX2500001" className="bg-secondary border-border font-mono uppercase" />
+              </div>
+            </div>
+          </div>
+
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div className="space-y-1">
