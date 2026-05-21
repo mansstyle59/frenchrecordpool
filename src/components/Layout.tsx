@@ -21,7 +21,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
-  const { user, isAdmin, profile, signOut } = useAuth();
+  const { user, isAdmin, realIsAdmin, viewAsUser, setViewAsUser, profile, signOut } = useAuth();
   const { currentTrack } = usePlayer();
 
   const handleSignOut = async () => {
