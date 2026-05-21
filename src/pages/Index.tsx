@@ -6,9 +6,12 @@ import { Input } from "@/components/ui/input";
 import Layout from "@/components/Layout";
 import TrackRow from "@/components/TrackRow";
 import GenreCard from "@/components/GenreCard";
+import CmsText from "@/components/cms/CmsText";
+import CmsImage from "@/components/cms/CmsImage";
 import { useTracks } from "@/hooks/useTracks";
 import { usePlayer } from "@/contexts/PlayerContext";
 import { resolveCover } from "@/lib/trackCover";
+import { useCmsValue } from "@/contexts/CmsContext";
 
 import heroBg from "@/assets/hero-bg.jpg";
 
