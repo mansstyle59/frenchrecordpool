@@ -161,26 +161,32 @@ export default function TrackForm({ initialData, saving, onSubmit, existingGenre
     return () => { cancelled = true; };
   }, [audioFile]);
 
-  // Auto-generate preview when full audio is set and no manual preview provided
-  const generatePreview = async (file: File, mode: PreviewStartMode, seconds: number) => {
+  // Génère l'extrait depuis un File OU une URL audio
+  const generatePreview = async (
+    source: File | string,
+    mode: PreviewStartMode,
+    seconds: number,
+  ) => {
     setPreviewGenerating(true);
     try {
-      const blob = await generateAudioPreview(file, { startMode: mode, seconds });
-      if (!blob) {
-        toast({ title: "Génération impossible", description: "Impossible de décoder le fichier audio.", variant: "destructive" });
-        return;
-      }
+      const blob = await generateAudioPreview(source, { startMode: mode, seconds });
       const generated = new File([blob], `preview-${Date.now()}.wav`, { type: "audio/wav" });
       setPreviewFile(generated);
       const url = URL.createObjectURL(blob);
       setPreviewBlobUrl((old) => { if (old) URL.revokeObjectURL(old); return url; });
       toast({ title: "Extrait généré", description: `${seconds}s · ${(blob.size / 1024).toFixed(0)} Ko` });
+    } catch (e: any) {
+      toast({
+        title: "Génération impossible",
+        description: e?.message || "Erreur inconnue lors de la génération de l'extrait.",
+        variant: "destructive",
+      });
     } finally {
       setPreviewGenerating(false);
     }
   };
 
-  // Trigger auto-generation when audio file changes (only if no manual preview)
+  // Auto-génération à la sélection du fichier audio
   useEffect(() => {
     if (!audioFile || !previewAuto) return;
     if (previewFile || previewUrl) return;
@@ -217,11 +223,17 @@ export default function TrackForm({ initialData, saving, onSubmit, existingGenre
   };
 
   const regeneratePreview = () => {
-    if (!audioFile) {
-      toast({ title: "Fichier audio requis", description: "Charge d'abord un fichier audio complet.", variant: "destructive" });
+    // Priorité au fichier local ; sinon tente depuis l'URL audio si fournie
+    const source: File | string | null = audioFile || (audioUrl.trim() ? audioUrl.trim() : null);
+    if (!source) {
+      toast({
+        title: "Source audio requise",
+        description: "Charge un fichier audio ou colle une URL audio (mp3/wav/ogg) directe.",
+        variant: "destructive",
+      });
       return;
     }
-    generatePreview(audioFile, previewStart, previewSeconds);
+    generatePreview(source, previewStart, previewSeconds);
   };
 
   const importFromSoundCloud = async () => {
