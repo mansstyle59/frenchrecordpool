@@ -10,6 +10,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useTracks } from "@/hooks/useTracks";
+import { groupTracks } from "@/lib/groupTracks";
+import TrackGroupRow from "@/components/TrackGroupRow";
 
 type SortOption = "newest" | "popular" | "az" | "bpm";
 
