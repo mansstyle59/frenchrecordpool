@@ -107,6 +107,12 @@ export default function TrackForm({ initialData, saving, onSubmit, existingGenre
         setDuration((v) => v || meta.duration || "");
         if (meta.bpm) setBpm((v) => v || String(meta.bpm));
         if (meta.key) setMusicalKey((v) => v || meta.key!);
+        if (meta.version) setVersion((v) => (v && v !== "Original" ? v : meta.version!));
+        // Auto-set cover from embedded artwork if none provided
+        if (meta.pictureFile && !coverFile && !coverUrl && !initialData?.cover_url) {
+          setCoverFile(meta.pictureFile);
+          toast({ title: "Pochette détectée", description: "Image intégrée extraite du fichier." });
+        }
         if (meta.title || meta.artist || meta.bpm) {
           toast({ title: "Métadonnées détectées", description: "Champs pré-remplis depuis le fichier." });
         }
