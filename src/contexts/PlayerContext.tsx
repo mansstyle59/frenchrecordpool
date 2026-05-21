@@ -71,7 +71,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     setMuted((m) => {
       const next = !m;
       if (audioRef.current) {
-        audioRef.current.volume = next ? 1 : volume;
+        audioRef.current.volume = next ? 0 : volume;
       }
       return next;
     });
