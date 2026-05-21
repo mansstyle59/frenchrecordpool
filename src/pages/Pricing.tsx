@@ -7,6 +7,7 @@ import PageHero from "@/components/PageHero";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import CmsText from "@/components/cms/CmsText";
 import RedeemPromoCard from "@/components/RedeemPromoCard";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -33,10 +34,10 @@ export default function Pricing() {
   return (
     <Layout>
       <PageHero
-        eyebrow="Sans engagement"
-        title="Choisis ton"
-        highlight="abonnement"
-        description="Accède aux exclus, edits et remixes du pool. Annule à tout moment, en un clic."
+        eyebrow={<CmsText editKey="pricing.eyebrow">Sans engagement</CmsText> as any}
+        title={<CmsText editKey="pricing.title">Choisis ton</CmsText> as any}
+        highlight={<CmsText editKey="pricing.highlight">abonnement</CmsText> as any}
+        description={<CmsText editKey="pricing.description">Accède aux exclus, edits et remixes du pool. Annule à tout moment, en un clic.</CmsText> as any}
         stats={[
           { icon: <CreditCard className="h-3.5 w-3.5 text-primary" />, label: `${plans.length} formules` },
           { icon: <Shield className="h-3.5 w-3.5 text-accent" />, label: "Paiement sécurisé" },
