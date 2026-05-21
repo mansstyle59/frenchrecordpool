@@ -22,12 +22,16 @@ import AdminUsers from "./pages/AdminUsers";
 import AdminSubscriptions from "./pages/AdminSubscriptions";
 import AdminBranding from "./pages/AdminBranding";
 import AdminAuditLog from "./pages/AdminAuditLog";
+import AdminPlans from "./pages/AdminPlans";
+import AdminPromoCodes from "./pages/AdminPromoCodes";
+import Pricing from "./pages/Pricing";
 import Artists from "./pages/Artists";
 import Genres from "./pages/Genres";
 import TopTracks from "./pages/TopTracks";
 import NewReleases from "./pages/NewReleases";
 import Stems from "./pages/Stems";
 import NotFound from "./pages/NotFound";
+
 
 const queryClient = new QueryClient();
 
