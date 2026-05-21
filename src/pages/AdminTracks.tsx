@@ -1,12 +1,13 @@
 import { useState, useMemo, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
-  Plus, Pencil, Trash2, ArrowLeft, Disc3, UploadCloud,
+  Plus, Pencil, Trash2, UploadCloud,
   Search, Heart, Eye, ChevronLeft, ChevronRight, X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useAuth } from "@/contexts/AuthContext";
@@ -22,6 +23,7 @@ import type { TrackFormData } from "@/components/TrackForm";
 import BulkUploadDialog from "@/components/BulkUploadDialog";
 import { logAdminAction } from "@/lib/auditLog";
 import { resolveCover } from "@/lib/trackCover";
+import AdminLayout from "@/components/admin/AdminLayout";
 
 type SortKey = "newest" | "oldest" | "az" | "za" | "bpm_asc" | "bpm_desc" | "downloads";
 const PAGE_SIZE = 25;
