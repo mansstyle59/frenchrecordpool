@@ -51,6 +51,13 @@ interface TrackFormProps {
 export interface TrackFormData {
   title: string;
   artist: string;
+  featuredArtists: string[];
+  remixers: string[];
+  producer: string;
+  releaseYear: string;
+  isrc: string;
+  subgenre: string;
+  mood: string;
   genre: string;
   bpm: string;
   musicalKey: string;
@@ -81,6 +88,15 @@ export default function TrackForm({ initialData, saving, onSubmit, existingGenre
   const [label, setLabel] = useState(initialData?.label ?? "");
   const [duration, setDuration] = useState(initialData?.duration ?? "");
   const [tagList, setTagList] = useState<string[]>(initialData?.tags ?? []);
+  const [featuredArtists, setFeaturedArtists] = useState<string[]>((initialData as any)?.featured_artists ?? []);
+  const [remixers, setRemixers] = useState<string[]>([]);
+  const [producer, setProducer] = useState<string>((initialData as any)?.producer ?? "");
+  const [releaseYear, setReleaseYear] = useState<string>(
+    (initialData as any)?.release_year ? String((initialData as any).release_year) : ""
+  );
+  const [isrc, setIsrc] = useState<string>((initialData as any)?.isrc ?? "");
+  const [subgenre, setSubgenre] = useState<string>((initialData as any)?.subgenre ?? "");
+  const [mood, setMood] = useState<string>((initialData as any)?.mood ?? "");
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [audioUrl, setAudioUrl] = useState("");
   const [previewFile, setPreviewFile] = useState<File | null>(null);
@@ -96,6 +112,15 @@ export default function TrackForm({ initialData, saving, onSubmit, existingGenre
   const [extracting, setExtracting] = useState(false);
   const [coverPreview, setCoverPreview] = useState<string | null>(initialData?.cover_url ?? null);
   const [analyzingBpm, setAnalyzingBpm] = useState(false);
+
+  // Load remixer names from initialData remixer_ids
+  useEffect(() => {
+    const ids = (initialData as any)?.remixer_ids as string[] | undefined;
+    if (!ids || ids.length === 0) return;
+    supabase.from("artists").select("name").in("id", ids).then(({ data }) => {
+      if (data) setRemixers(data.map((d: any) => d.name).filter(Boolean));
+    });
+  }, [initialData]);
 
   // SoundCloud quick-import
   const [scUrl, setScUrl] = useState("");
@@ -375,6 +400,7 @@ export default function TrackForm({ initialData, saving, onSubmit, existingGenre
     onSubmit({
       title, artist, genre, bpm, musicalKey, version, label, duration,
       tags: tagsStr,
+      featuredArtists, remixers, producer, releaseYear, isrc, subgenre, mood,
       audioFile, audioUrl, previewFile, previewUrl, coverFile, coverUrl,
       downloadUrl, acapellaUrl, instrumentalUrl,
     });
@@ -573,10 +599,44 @@ export default function TrackForm({ initialData, saving, onSubmit, existingGenre
               <Input value={title} onChange={(e) => setTitle(e.target.value)} required placeholder="Ma Philosophie" className="bg-secondary border-border" />
             </div>
             <div className="space-y-1">
-              <Label>Remixeur *</Label>
+              <Label>Artiste principal *</Label>
               <Input value={artist} onChange={(e) => setArtist(e.target.value)} required placeholder="DJ Yass" className="bg-secondary border-border" />
+              <p className="text-[10px] text-muted-foreground">Sa page artiste sera créée automatiquement si elle n'existe pas.</p>
             </div>
           </div>
+
+          {/* ===== Crédits étendus ===== */}
+          <div className="rounded-lg border border-border bg-card/40 p-3 space-y-3">
+            <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              <Disc3 className="h-3.5 w-3.5" /> Crédits
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label className="text-xs">Featuring (artistes secondaires)</Label>
+                <TagsInput value={featuredArtists} onChange={setFeaturedArtists} placeholder="Nom puis Entrée…" />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Remixers</Label>
+                <TagsInput value={remixers} onChange={setRemixers} placeholder="Nom puis Entrée…" />
+                <p className="text-[10px] text-muted-foreground">Chaque remixer aura sa page dédiée /remixers/...</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="space-y-1">
+                <Label className="text-xs">Producteur</Label>
+                <Input value={producer} onChange={(e) => setProducer(e.target.value)} placeholder="Producteur" className="bg-secondary border-border" />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Année</Label>
+                <Input type="number" min={1900} max={2100} value={releaseYear} onChange={(e) => setReleaseYear(e.target.value)} placeholder="2025" className="bg-secondary border-border font-mono" />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">ISRC</Label>
+                <Input value={isrc} onChange={(e) => setIsrc(e.target.value)} placeholder="FRXXX2500001" className="bg-secondary border-border font-mono uppercase" />
+              </div>
+            </div>
+          </div>
+
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div className="space-y-1">
@@ -652,6 +712,18 @@ export default function TrackForm({ initialData, saving, onSubmit, existingGenre
               <Input value={duration} onChange={(e) => setDuration(e.target.value)} placeholder="4:30" className="bg-secondary border-border font-mono" />
             </div>
           </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <Label className="text-xs">Sous-genre</Label>
+              <Input value={subgenre} onChange={(e) => setSubgenre(e.target.value)} placeholder="Deep House, Afro Tech…" className="bg-secondary border-border" />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Mood / Ambiance</Label>
+              <Input value={mood} onChange={(e) => setMood(e.target.value)} placeholder="Energetic, Chill, Dark…" className="bg-secondary border-border" />
+            </div>
+          </div>
+
 
           {/* Tags chip input */}
           <div className="space-y-2">
@@ -951,7 +1023,7 @@ function Stepper({
 }
 
 // =========== Chip-based Tags Input ===========
-function TagsInput({ value, onChange }: { value: string[]; onChange: (next: string[]) => void }) {
+function TagsInput({ value, onChange, placeholder }: { value: string[]; onChange: (next: string[]) => void; placeholder?: string }) {
   const [draft, setDraft] = useState("");
 
   const commit = (raw: string) => {
@@ -1008,7 +1080,7 @@ function TagsInput({ value, onChange }: { value: string[]; onChange: (next: stri
             commit(text);
           }
         }}
-        placeholder={value.length === 0 ? "Tape un tag puis Entrée…" : ""}
+        placeholder={value.length === 0 ? (placeholder ?? "Tape un tag puis Entrée…") : ""}
         className="flex-1 min-w-[120px] bg-transparent outline-none text-sm py-0.5"
       />
     </div>

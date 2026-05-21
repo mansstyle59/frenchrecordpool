@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useTracks } from "@/hooks/useTracks";
 import { generateTrackCover } from "@/lib/trackCover";
+import { slugify } from "@/lib/slug";
 
 type Artist = {
   name: string;
@@ -75,12 +76,12 @@ export default function Artists() {
   return (
     <Layout>
       <PageHero
-        eyebrow="Remixeurs en vedette"
+        eyebrow="Artistes du pool"
         title="Les"
-        highlight="Remixeurs"
-        description="Découvrez les producteurs et DJs derrière les exclusivités du pool."
+        highlight="Artistes"
+        description="Tous les artistes dont les titres sont publiés sur la plateforme."
         stats={[
-          { icon: <Users className="h-3.5 w-3.5 text-primary" />, label: `${artists.length} remixeurs` },
+          { icon: <Users className="h-3.5 w-3.5 text-primary" />, label: `${artists.length} artistes` },
           { icon: <Disc3 className="h-3.5 w-3.5 text-accent" />, label: `${totalTracks} titres` },
         ]}
       />
@@ -160,7 +161,7 @@ export default function Artists() {
                 variants={{ hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0 } }}
               >
                 <Link
-                  to={`/new?q=${encodeURIComponent(artist.name)}`}
+                  to={`/artists/${slugify(artist.name)}`}
                   className="group block text-center"
                 >
                   <div className="relative mx-auto w-36 h-36 sm:w-40 sm:h-40 rounded-full overflow-hidden bg-gradient-to-br from-primary/80 to-accent/80 ring-2 ring-border group-hover:ring-primary group-hover:shadow-2xl group-hover:shadow-primary/30 transition-all">
