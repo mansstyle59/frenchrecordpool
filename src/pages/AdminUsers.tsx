@@ -343,6 +343,18 @@ export default function AdminUsers() {
                           {p.is_blocked ? <CheckCircle2 className="h-3 w-3" /> : <Ban className="h-3 w-3" />}
                           {p.is_blocked ? "Débloquer" : "Bloquer"}
                         </Button>
+                        {!isAdminRole && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className={`gap-1 ${active ? "text-amber-500 hover:text-amber-600" : "text-primary"}`}
+                            onClick={() => toggleAccess(p, !active)}
+                            title={active ? "Retirer l'accès" : "Donner l'accès"}
+                          >
+                            {active ? <Lock className="h-3 w-3" /> : <Unlock className="h-3 w-3" />}
+                            {active ? "Retirer accès" : "Donner accès"}
+                          </Button>
+                        )}
                         <Button
                           variant="ghost"
                           size="sm"
