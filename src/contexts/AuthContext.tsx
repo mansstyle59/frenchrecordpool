@@ -60,16 +60,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const [rolesRes, profileRes, subRes] = await Promise.all([
         supabase.from("user_roles").select("role").eq("user_id", userId),
-        supabase.from("profiles").select("dj_name, email, avatar_url").eq("user_id", userId).single(),
+        supabase.from("profiles").select("dj_name, email, avatar_url, is_blocked").eq("user_id", userId).single(),
         supabase.from("subscriptions").select("status, current_period_end").eq("user_id", userId).eq("status", "active"),
       ]);
 
-      setIsAdmin(rolesRes.data?.some((r: any) => r.role === "admin") ?? false);
+      const admin = rolesRes.data?.some((r: any) => r.role === "admin") ?? false;
+
+      // Compte bloqué : on déconnecte immédiatement (sauf admin)
+      if ((profileRes.data as any)?.is_blocked && !admin) {
+        await supabase.auth.signOut();
+        if (typeof window !== "undefined") {
+          alert("Votre compte a été bloqué. Contactez un administrateur.");
+        }
+        setIsAdmin(false);
+        setHasActiveSubscription(false);
+        setProfile(null);
+        return;
+      }
+
+      setIsAdmin(admin);
       setProfile(profileRes.data ?? null);
       const activeSub = subRes.data?.some((s: any) =>
         s.status === "active" && (!s.current_period_end || new Date(s.current_period_end) > new Date())
       );
-      setHasActiveSubscription(activeSub ?? false);
+      // Les admins ont accès à tout
+      setHasActiveSubscription(admin || (activeSub ?? false));
     } catch (err) {
       console.error("Error fetching user data:", err);
     } finally {
