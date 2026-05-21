@@ -1,6 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { Save, RotateCcw, Upload, Palette, Type, Image as ImageIcon, Layout, Eye, Loader2, Sun, Moon } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Save, RotateCcw, Upload, Palette, Type, Image as ImageIcon, Layout, Eye,
+  Loader2, Sun, Moon, Monitor, Tablet, Smartphone, Sparkles, Check, Copy,
+  Trash2, ExternalLink, Wand2, ShieldCheck, AlertTriangle,
+} from "lucide-react";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,17 +13,29 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBranding, applyBrandingToDom, type Branding } from "@/contexts/BrandingContext";
 import { hexToHsl, hslToHex } from "@/lib/colorUtils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { useTheme } from "next-themes";
+import { cn } from "@/lib/utils";
 
+/* ----------------------------- DATA ----------------------------- */
 const FONTS = [
   "Space Grotesk", "DM Sans", "Inter", "Poppins", "Roboto", "Montserrat",
   "Playfair Display", "Bebas Neue", "Oswald", "Raleway", "Outfit", "Manrope",
   "Sora", "Syne", "Archivo", "Urbanist", "Lora", "Cormorant", "Work Sans", "JetBrains Mono",
+];
+
+const FONT_PAIRS: Array<{ label: string; display: string; body: string; vibe: string }> = [
+  { label: "Tech moderne", display: "Space Grotesk", body: "DM Sans", vibe: "Net, technologique" },
+  { label: "Éditorial", display: "Playfair Display", body: "Inter", vibe: "Élégant, magazine" },
+  { label: "Brutaliste", display: "Bebas Neue", body: "Work Sans", vibe: "Impact, sport" },
+  { label: "Boutique", display: "Cormorant", body: "Manrope", vibe: "Luxe, raffiné" },
+  { label: "Indie", display: "Syne", body: "DM Sans", vibe: "Créatif, jeune" },
+  { label: "Studio", display: "Sora", body: "Outfit", vibe: "Doux, pro" },
 ];
 
 const RADII = [
@@ -30,72 +47,160 @@ const RADII = [
   { v: "1.5rem", label: "Très arrondi" },
 ];
 
-const PRESETS: Array<{ name: string; patch: Partial<Branding> }> = [
+type Preset = { name: string; tag: string; swatch: string[]; patch: Partial<Branding> };
+
+const PRESETS: Preset[] = [
   {
-    name: "French Pool (défaut)",
+    name: "French Pool", tag: "Signature",
+    swatch: ["#1f4ed8", "#dc2626", "#0f1729", "#fafafa"],
     patch: {
       light_primary: "220 75% 45%", light_accent: "0 72% 51%",
       dark_primary: "220 80% 58%", dark_accent: "0 72% 55%",
       light_background: "0 0% 98%", dark_background: "222 30% 8%",
+      light_foreground: "222 47% 11%", dark_foreground: "210 20% 95%",
     },
   },
   {
-    name: "Néon Mint",
+    name: "Midnight Indigo", tag: "Tech sombre",
+    swatch: ["#4f46e5", "#1e1e5a", "#0a0a1a", "#fafbfc"],
     patch: {
-      light_primary: "165 80% 35%", light_accent: "150 100% 45%",
-      dark_primary: "165 80% 50%", dark_accent: "150 100% 55%",
-      light_background: "0 0% 99%", dark_background: "180 30% 6%",
+      light_primary: "239 84% 60%", light_accent: "265 84% 65%",
+      dark_primary: "239 84% 67%", dark_accent: "265 84% 70%",
+      light_background: "0 0% 99%", dark_background: "240 33% 7%",
     },
   },
   {
-    name: "Or & Noir",
+    name: "Noir & Or", tag: "Luxe",
+    swatch: ["#c9a84c", "#f0d78c", "#0d0d0d", "#fafafa"],
     patch: {
-      light_primary: "42 65% 45%", light_accent: "42 80% 55%",
-      dark_primary: "42 80% 60%", dark_accent: "42 90% 65%",
+      light_primary: "42 65% 45%", light_accent: "42 80% 70%",
+      dark_primary: "42 80% 60%", dark_accent: "42 90% 75%",
       light_background: "40 20% 96%", dark_background: "0 0% 5%",
     },
   },
   {
-    name: "Coral Sunset",
+    name: "Néon Mint", tag: "Énergie",
+    swatch: ["#2dd4a8", "#73ffb8", "#0d1b2a", "#f5f7f5"],
+    patch: {
+      light_primary: "165 80% 35%", light_accent: "150 100% 45%",
+      dark_primary: "165 80% 50%", dark_accent: "150 100% 55%",
+      light_background: "0 0% 99%", dark_background: "210 50% 8%",
+    },
+  },
+  {
+    name: "Coral Sunset", tag: "Vibrant",
+    swatch: ["#ff6b35", "#e84393", "#1a0a14", "#fff5f0"],
     patch: {
       light_primary: "12 85% 55%", light_accent: "330 75% 55%",
       dark_primary: "12 85% 60%", dark_accent: "330 80% 65%",
       light_background: "30 30% 97%", dark_background: "340 30% 8%",
     },
   },
+  {
+    name: "Ocean Deep", tag: "Confiance",
+    swatch: ["#2d8a9e", "#5cbdb9", "#0c2340", "#eef6fa"],
+    patch: {
+      light_primary: "192 56% 40%", light_accent: "178 38% 55%",
+      dark_primary: "192 56% 55%", dark_accent: "178 45% 65%",
+      light_background: "200 30% 98%", dark_background: "215 50% 12%",
+    },
+  },
+  {
+    name: "Forêt", tag: "Naturel",
+    swatch: ["#2d5a3d", "#a0c49d", "#0d1f15", "#f4f7f3"],
+    patch: {
+      light_primary: "145 35% 28%", light_accent: "115 30% 70%",
+      dark_primary: "145 35% 50%", dark_accent: "115 30% 60%",
+      light_background: "90 15% 97%", dark_background: "140 30% 8%",
+    },
+  },
+  {
+    name: "Brutalist Pop", tag: "Audacieux",
+    swatch: ["#ff5722", "#ffeb3b", "#000000", "#ffffff"],
+    patch: {
+      light_primary: "14 100% 56%", light_accent: "54 100% 62%",
+      dark_primary: "14 100% 60%", dark_accent: "54 100% 65%",
+      light_background: "0 0% 100%", dark_background: "0 0% 5%",
+    },
+  },
 ];
 
+const TOPBAR_HEIGHT = 56;
+
+/* --------------------------- HELPERS --------------------------- */
+function loadGoogleFont(family: string) {
+  if (!family || typeof document === "undefined") return;
+  const id = `gf-${family.replace(/\s+/g, "-")}`;
+  if (document.getElementById(id)) return;
+  const link = document.createElement("link");
+  link.id = id;
+  link.rel = "stylesheet";
+  link.href = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(family)}:wght@400;500;600;700&display=swap`;
+  document.head.appendChild(link);
+}
+
+function hslLuminance(hsl: string): number {
+  // Approx luminance from "H S% L%"
+  const m = hsl.trim().match(/^(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)%\s+(\d+(?:\.\d+)?)%$/);
+  if (!m) return 0;
+  const l = parseFloat(m[3]) / 100;
+  return l;
+}
+
+function contrastRatio(a: string, b: string) {
+  const L1 = hslLuminance(a) + 0.05;
+  const L2 = hslLuminance(b) + 0.05;
+  return L1 > L2 ? L1 / L2 : L2 / L1;
+}
+
+/* --------------------------- PAGE --------------------------- */
 export default function AdminBranding() {
-  const { user, isAdmin } = useAuth();
+  const { user } = useAuth();
   const { branding, applyPreview, refresh } = useBranding();
   const { theme, setTheme } = useTheme();
   const [draft, setDraft] = useState<Branding | null>(null);
   const [saving, setSaving] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
-
+  const [uploadingFav, setUploadingFav] = useState(false);
+  const [device, setDevice] = useState<"desktop" | "tablet" | "mobile">("desktop");
+  const initialRef = useRef<Branding | null>(null);
 
   useEffect(() => {
-    if (branding && !draft) setDraft(branding);
+    if (branding && !draft) {
+      setDraft(branding);
+      initialRef.current = branding;
+    }
   }, [branding, draft]);
 
+  // Preload preset fonts so the preview reacts instantly
+  useEffect(() => {
+    FONT_PAIRS.forEach((p) => {
+      loadGoogleFont(p.display);
+      loadGoogleFont(p.body);
+    });
+  }, []);
+
   const dirty = useMemo(() => {
-    if (!branding || !draft) return false;
-    return JSON.stringify(branding) !== JSON.stringify(draft);
-  }, [branding, draft]);
+    if (!initialRef.current || !draft) return false;
+    return JSON.stringify(initialRef.current) !== JSON.stringify(draft);
+  }, [draft]);
 
   const update = (patch: Partial<Branding>) => {
     if (!draft) return;
     const next = { ...draft, ...patch };
     setDraft(next);
-    applyPreview(next); // live preview
+    applyPreview(next);
   };
 
-  const applyPreset = (patch: Partial<Branding>) => update(patch);
+  const applyPreset = (p: Preset) => {
+    update(p.patch);
+    toast({ title: `Palette « ${p.name} » appliquée`, description: "Visible en direct dans l'aperçu →" });
+  };
 
   const reset = () => {
-    if (!branding) return;
-    setDraft(branding);
-    applyBrandingToDom(branding);
+    if (!initialRef.current) return;
+    setDraft(initialRef.current);
+    applyBrandingToDom(initialRef.current);
   };
 
   const save = async () => {
@@ -111,254 +216,581 @@ export default function AdminBranding() {
       toast({ title: "Erreur", description: "Impossible d'enregistrer.", variant: "destructive" });
       return;
     }
-    toast({ title: "Branding enregistré", description: "Les changements sont visibles partout." });
+    initialRef.current = draft;
+    toast({ title: "Branding publié ✨", description: "Les changements sont en ligne." });
     await refresh();
   };
 
-  const uploadLogo = async (file: File, field: "logo_url" | "favicon_url") => {
-    setUploadingLogo(true);
+  const uploadAsset = async (file: File, field: "logo_url" | "favicon_url") => {
+    const setU = field === "logo_url" ? setUploadingLogo : setUploadingFav;
+    setU(true);
     const ext = file.name.split(".").pop() || "png";
     const path = `branding/${field}-${Date.now()}.${ext}`;
     const { error } = await supabase.storage.from("track-covers").upload(path, file, { upsert: true });
     if (error) {
       toast({ title: "Erreur upload", description: error.message, variant: "destructive" });
-      setUploadingLogo(false);
+      setU(false);
       return;
     }
     const { data } = supabase.storage.from("track-covers").getPublicUrl(path);
     update({ [field]: data.publicUrl } as any);
-    setUploadingLogo(false);
+    setU(false);
+  };
+
+  const copyTokensCss = () => {
+    if (!draft) return;
+    const css = `:root{
+  --primary:${draft.light_primary};
+  --accent:${draft.light_accent};
+  --background:${draft.light_background};
+  --foreground:${draft.light_foreground};
+  --radius:${draft.radius};
+}
+.dark{
+  --primary:${draft.dark_primary};
+  --accent:${draft.dark_accent};
+  --background:${draft.dark_background};
+  --foreground:${draft.dark_foreground};
+}`;
+    navigator.clipboard.writeText(css);
+    toast({ title: "Tokens CSS copiés" });
   };
 
   if (!draft) return null;
-
-  const ColorRow = ({ label, field }: { label: string; field: keyof Branding }) => (
-    <div className="flex items-center gap-3">
-      <input
-        type="color"
-        value={hslToHex(String(draft[field]))}
-        onChange={(e) => update({ [field]: hexToHsl(e.target.value) } as any)}
-        className="h-10 w-14 rounded-md border border-border cursor-pointer bg-transparent"
-      />
-      <div className="flex-1">
-        <Label className="text-xs text-muted-foreground">{label}</Label>
-        <Input
-          value={String(draft[field])}
-          onChange={(e) => update({ [field]: e.target.value } as any)}
-          className="h-7 text-xs font-mono bg-secondary border-border mt-0.5"
-        />
-      </div>
-    </div>
-  );
 
   return (
     <AdminLayout
       wide
       title="Branding Studio"
-      subtitle="Couleurs, logo, typographie et copies du site."
+      subtitle="Identité visuelle, palette, typographie, contenu — modifiez tout en direct."
       actions={
         <>
-          <Button variant="ghost" size="sm" onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>
+          <Button variant="ghost" size="sm" onClick={() => setTheme(theme === "dark" ? "light" : "dark")} title="Basculer thème">
             {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </Button>
-          <Button variant="outline" size="sm" onClick={reset} disabled={!dirty || saving}>
-            <RotateCcw className="h-3 w-3 mr-1" /> Annuler
+          <Button variant="ghost" size="sm" onClick={copyTokensCss} title="Copier tokens CSS">
+            <Copy className="h-4 w-4" />
           </Button>
-          <Button variant="hero" size="sm" onClick={save} disabled={!dirty || saving}>
-            {saving ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Save className="h-3 w-3 mr-1" />}
-            Publier
-          </Button>
+          <Link to="/" target="_blank" rel="noopener">
+            <Button variant="ghost" size="sm" title="Ouvrir le site">
+              <ExternalLink className="h-4 w-4" />
+            </Button>
+          </Link>
         </>
       }
     >
-      <div className="grid lg:grid-cols-[400px_1fr] gap-6">
-
-        {/* PANNEAU D'ÉDITION */}
+      <div className="grid lg:grid-cols-[440px_1fr] gap-6 pb-32">
+        {/* ===================== EDITOR ===================== */}
         <div className="space-y-4">
-          <div className="bg-card border border-border rounded-xl p-4">
-            <h2 className="font-display font-bold mb-3 flex items-center gap-2">
-              <Palette className="h-4 w-4 text-primary" /> Préréglages
-            </h2>
-            <div className="grid grid-cols-2 gap-2">
-              {PRESETS.map((p) => (
-                <button
-                  key={p.name}
-                  onClick={() => applyPreset(p.patch)}
-                  className="text-xs px-3 py-2 rounded-md border border-border hover:border-primary hover:bg-primary/5 transition-all text-left"
-                >
-                  {p.name}
-                </button>
-              ))}
+          {/* PRESETS GALLERY */}
+          <motion.section
+            initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+            className="rounded-2xl border border-border bg-card/60 backdrop-blur p-4 shadow-sm"
+          >
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="font-display font-bold flex items-center gap-2 text-sm">
+                <Sparkles className="h-4 w-4 text-primary" /> Palettes signature
+              </h2>
+              <Badge variant="outline" className="text-[10px]">{PRESETS.length} thèmes</Badge>
             </div>
-          </div>
+            <div className="grid grid-cols-2 gap-2">
+              {PRESETS.map((p) => {
+                const active = draft.light_primary === p.patch.light_primary;
+                return (
+                  <button
+                    key={p.name}
+                    onClick={() => applyPreset(p)}
+                    className={cn(
+                      "group relative text-left rounded-xl border p-2.5 transition-all overflow-hidden",
+                      active
+                        ? "border-primary bg-primary/5 ring-2 ring-primary/30"
+                        : "border-border hover:border-primary/50 hover:bg-secondary/50"
+                    )}
+                  >
+                    <div className="flex h-7 rounded-md overflow-hidden mb-2 ring-1 ring-black/5">
+                      {p.swatch.map((c, i) => (
+                        <div key={i} style={{ background: c }} className="flex-1" />
+                      ))}
+                    </div>
+                    <div className="flex items-start justify-between gap-1">
+                      <div className="min-w-0">
+                        <p className="text-xs font-semibold truncate">{p.name}</p>
+                        <p className="text-[10px] text-muted-foreground truncate">{p.tag}</p>
+                      </div>
+                      {active && <Check className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" />}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </motion.section>
 
-          <Tabs defaultValue="identity" className="bg-card border border-border rounded-xl p-4">
-            <TabsList className="grid grid-cols-4 w-full">
+          {/* TABS */}
+          <Tabs defaultValue="identity" className="rounded-2xl border border-border bg-card/60 backdrop-blur p-4 shadow-sm">
+            <TabsList className="grid grid-cols-4 w-full bg-secondary/50">
               <TabsTrigger value="identity" className="text-xs"><ImageIcon className="h-3 w-3 mr-1" />Identité</TabsTrigger>
               <TabsTrigger value="colors" className="text-xs"><Palette className="h-3 w-3 mr-1" />Couleurs</TabsTrigger>
               <TabsTrigger value="typo" className="text-xs"><Type className="h-3 w-3 mr-1" />Typo</TabsTrigger>
               <TabsTrigger value="content" className="text-xs"><Layout className="h-3 w-3 mr-1" />Contenu</TabsTrigger>
             </TabsList>
 
-            <TabsContent value="identity" className="space-y-3 mt-4">
-              <div>
-                <Label>Nom du site</Label>
+            {/* ---------- Identity ---------- */}
+            <TabsContent value="identity" className="space-y-4 mt-5">
+              <Field label="Nom du site">
                 <Input value={draft.site_name} onChange={(e) => update({ site_name: e.target.value })} className="bg-secondary border-border" />
-              </div>
-              <div>
-                <Label>Slogan</Label>
-                <Input value={draft.tagline ?? ""} onChange={(e) => update({ tagline: e.target.value })} className="bg-secondary border-border" />
-              </div>
-              <div>
-                <Label className="flex items-center justify-between">Logo
-                  {draft.logo_url && <img src={draft.logo_url} alt="logo" className="h-6 w-6 rounded object-contain bg-white/10" />}
-                </Label>
-                <div className="flex gap-2 mt-1">
-                  <Input value={draft.logo_url ?? ""} onChange={(e) => update({ logo_url: e.target.value })} placeholder="https://..." className="bg-secondary border-border" />
-                  <label className="cursor-pointer">
-                    <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && uploadLogo(e.target.files[0], "logo_url")} />
-                    <Button type="button" size="sm" variant="outline" disabled={uploadingLogo} asChild>
-                      <span>{uploadingLogo ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />}</span>
-                    </Button>
-                  </label>
-                </div>
-              </div>
-              <div>
-                <Label>Favicon</Label>
-                <div className="flex gap-2 mt-1">
-                  <Input value={draft.favicon_url ?? ""} onChange={(e) => update({ favicon_url: e.target.value })} placeholder="https://..." className="bg-secondary border-border" />
-                  <label className="cursor-pointer">
-                    <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && uploadLogo(e.target.files[0], "favicon_url")} />
-                    <Button type="button" size="sm" variant="outline" disabled={uploadingLogo} asChild>
-                      <span><Upload className="h-3 w-3" /></span>
-                    </Button>
-                  </label>
-                </div>
-              </div>
-              <div>
-                <Label>Bordures arrondies</Label>
+              </Field>
+              <Field label="Slogan" hint={`${(draft.tagline ?? "").length}/80`}>
+                <Input value={draft.tagline ?? ""} maxLength={80} onChange={(e) => update({ tagline: e.target.value })} className="bg-secondary border-border" />
+              </Field>
+
+              <AssetDropzone
+                label="Logo"
+                url={draft.logo_url}
+                onPick={(f) => uploadAsset(f, "logo_url")}
+                onUrl={(v) => update({ logo_url: v })}
+                onClear={() => update({ logo_url: null })}
+                loading={uploadingLogo}
+                shape="rect"
+              />
+              <AssetDropzone
+                label="Favicon"
+                url={draft.favicon_url}
+                onPick={(f) => uploadAsset(f, "favicon_url")}
+                onUrl={(v) => update({ favicon_url: v })}
+                onClear={() => update({ favicon_url: null })}
+                loading={uploadingFav}
+                shape="square"
+              />
+
+              <Field label="Coins arrondis">
                 <Select value={draft.radius} onValueChange={(v) => update({ radius: v })}>
                   <SelectTrigger className="bg-secondary border-border"><SelectValue /></SelectTrigger>
-                  <SelectContent>{RADII.map((r) => <SelectItem key={r.v} value={r.v}>{r.label} ({r.v})</SelectItem>)}</SelectContent>
+                  <SelectContent>{RADII.map((r) => <SelectItem key={r.v} value={r.v}>{r.label} <span className="text-muted-foreground">({r.v})</span></SelectItem>)}</SelectContent>
                 </Select>
-              </div>
+                <div className="flex gap-2 mt-2">
+                  {RADII.map((r) => (
+                    <button
+                      key={r.v}
+                      onClick={() => update({ radius: r.v })}
+                      className={cn(
+                        "h-9 flex-1 bg-secondary border transition-all",
+                        draft.radius === r.v ? "border-primary ring-2 ring-primary/30" : "border-border hover:border-primary/40"
+                      )}
+                      style={{ borderRadius: r.v }}
+                      aria-label={r.label}
+                    />
+                  ))}
+                </div>
+              </Field>
             </TabsContent>
 
-            <TabsContent value="colors" className="space-y-4 mt-4">
-              <div>
-                <h3 className="text-xs font-bold uppercase text-muted-foreground mb-2 flex items-center gap-1"><Sun className="h-3 w-3" /> Mode clair</h3>
-                <div className="space-y-2">
-                  <ColorRow label="Primaire" field="light_primary" />
-                  <ColorRow label="Accent" field="light_accent" />
-                  <ColorRow label="Fond" field="light_background" />
-                  <ColorRow label="Texte" field="light_foreground" />
-                  <ColorRow label="Cartes" field="light_card" />
-                  <ColorRow label="Discret" field="light_muted" />
-                  <ColorRow label="Bordures" field="light_border" />
-                </div>
-              </div>
-              <div>
-                <h3 className="text-xs font-bold uppercase text-muted-foreground mb-2 flex items-center gap-1"><Moon className="h-3 w-3" /> Mode sombre</h3>
-                <div className="space-y-2">
-                  <ColorRow label="Primaire" field="dark_primary" />
-                  <ColorRow label="Accent" field="dark_accent" />
-                  <ColorRow label="Fond" field="dark_background" />
-                  <ColorRow label="Texte" field="dark_foreground" />
-                  <ColorRow label="Cartes" field="dark_card" />
-                  <ColorRow label="Discret" field="dark_muted" />
-                  <ColorRow label="Bordures" field="dark_border" />
-                </div>
-              </div>
+            {/* ---------- Colors ---------- */}
+            <TabsContent value="colors" className="space-y-5 mt-5">
+              <ColorMode
+                title="Mode clair" icon={<Sun className="h-3 w-3" />}
+                draft={draft} update={update} mode="light"
+              />
+              <ColorMode
+                title="Mode sombre" icon={<Moon className="h-3 w-3" />}
+                draft={draft} update={update} mode="dark"
+              />
+              <button
+                onClick={copyTokensCss}
+                className="w-full text-xs h-9 rounded-md border border-border hover:border-primary/40 hover:bg-secondary/50 transition-colors flex items-center justify-center gap-2"
+              >
+                <Copy className="h-3 w-3" /> Copier les tokens CSS
+              </button>
             </TabsContent>
 
-            <TabsContent value="typo" className="space-y-3 mt-4">
+            {/* ---------- Typo ---------- */}
+            <TabsContent value="typo" className="space-y-4 mt-5">
               <div>
-                <Label>Police des titres</Label>
+                <Label className="text-xs font-bold uppercase text-muted-foreground mb-2 block">Couples typographiques</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  {FONT_PAIRS.map((p) => {
+                    const active = draft.font_display === p.display && draft.font_body === p.body;
+                    return (
+                      <button
+                        key={p.label}
+                        onClick={() => update({ font_display: p.display, font_body: p.body })}
+                        className={cn(
+                          "rounded-xl border p-3 text-left transition-all",
+                          active ? "border-primary bg-primary/5 ring-2 ring-primary/30" : "border-border hover:border-primary/40"
+                        )}
+                      >
+                        <div style={{ fontFamily: `"${p.display}"` }} className="text-xl font-bold leading-tight">{p.display}</div>
+                        <div style={{ fontFamily: `"${p.body}"` }} className="text-[11px] text-muted-foreground mt-0.5">{p.body} · {p.vibe}</div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <Field label="Police des titres">
                 <Select value={draft.font_display} onValueChange={(v) => update({ font_display: v })}>
                   <SelectTrigger className="bg-secondary border-border"><SelectValue /></SelectTrigger>
                   <SelectContent>{FONTS.map((f) => <SelectItem key={f} value={f} style={{ fontFamily: f }}>{f}</SelectItem>)}</SelectContent>
                 </Select>
-                <p className="font-display text-2xl mt-2">Aa Bb Cc 123</p>
-              </div>
-              <div>
-                <Label>Police du texte</Label>
+                <div className="mt-2 p-3 rounded-md bg-secondary/50 border border-border">
+                  <p style={{ fontFamily: `"${draft.font_display}"` }} className="text-3xl font-bold leading-tight">{draft.site_name}</p>
+                </div>
+              </Field>
+              <Field label="Police du texte">
                 <Select value={draft.font_body} onValueChange={(v) => update({ font_body: v })}>
                   <SelectTrigger className="bg-secondary border-border"><SelectValue /></SelectTrigger>
                   <SelectContent>{FONTS.map((f) => <SelectItem key={f} value={f} style={{ fontFamily: f }}>{f}</SelectItem>)}</SelectContent>
                 </Select>
-                <p className="font-body text-sm mt-2 text-muted-foreground">The quick brown fox jumps over the lazy dog.</p>
-              </div>
+                <div className="mt-2 p-3 rounded-md bg-secondary/50 border border-border">
+                  <p style={{ fontFamily: `"${draft.font_body}"` }} className="text-sm">
+                    The quick brown fox jumps over the lazy dog. — Le DJ mixe ses tracks tard dans la nuit. 1234567890
+                  </p>
+                </div>
+              </Field>
             </TabsContent>
 
-            <TabsContent value="content" className="space-y-3 mt-4">
-              <div>
-                <Label>Titre du Hero</Label>
-                <Input value={draft.hero_title ?? ""} onChange={(e) => update({ hero_title: e.target.value })} className="bg-secondary border-border" />
-              </div>
-              <div>
-                <Label>Sous-titre du Hero</Label>
-                <Textarea value={draft.hero_subtitle ?? ""} onChange={(e) => update({ hero_subtitle: e.target.value })} className="bg-secondary border-border min-h-[80px]" />
-              </div>
-              <div>
-                <Label>Texte du footer</Label>
+            {/* ---------- Content ---------- */}
+            <TabsContent value="content" className="space-y-4 mt-5">
+              <Field label="Titre du Hero" hint={`${(draft.hero_title ?? "").length}/60`}>
+                <Input maxLength={60} value={draft.hero_title ?? ""} onChange={(e) => update({ hero_title: e.target.value })} className="bg-secondary border-border" />
+              </Field>
+              <Field label="Sous-titre du Hero" hint={`${(draft.hero_subtitle ?? "").length}/160`}>
+                <Textarea maxLength={160} value={draft.hero_subtitle ?? ""} onChange={(e) => update({ hero_subtitle: e.target.value })} className="bg-secondary border-border min-h-[80px]" />
+              </Field>
+              <Field label="Texte du footer">
                 <Input value={draft.footer_text ?? ""} onChange={(e) => update({ footer_text: e.target.value })} className="bg-secondary border-border" />
-              </div>
+              </Field>
             </TabsContent>
           </Tabs>
         </div>
 
-        {/* PREVIEW */}
+        {/* ===================== PREVIEW ===================== */}
         <div className="space-y-4">
-          <div className="bg-card border border-border rounded-xl overflow-hidden">
-            <div className="flex items-center justify-between px-4 py-2 border-b border-border bg-secondary/30">
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <Eye className="h-3 w-3" /> Aperçu en direct
-              </div>
-              <span className="text-xs text-muted-foreground">L'app entière change pendant l'édition</span>
+          {/* Device toolbar */}
+          <div className="flex items-center justify-between rounded-2xl border border-border bg-card/60 backdrop-blur px-3 py-2">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <Eye className="h-3.5 w-3.5" /> Aperçu en direct
             </div>
-            <div className="p-8 space-y-6">
-              <div className="flex items-center gap-3">
-                {draft.logo_url && <img src={draft.logo_url} alt="" className="h-10 w-10 rounded-lg object-contain" />}
-                <div>
-                  <h1 className="font-display text-3xl font-bold gradient-text">{draft.site_name}</h1>
-                  <p className="text-sm text-muted-foreground">{draft.tagline}</p>
-                </div>
-              </div>
-              <div className="rounded-xl p-8 text-center" style={{ background: "var(--gradient-primary)" }}>
-                <h2 className="font-display text-4xl font-bold text-primary-foreground mb-2">{draft.hero_title}</h2>
-                <p className="text-primary-foreground/90">{draft.hero_subtitle}</p>
-              </div>
-              <div className="grid grid-cols-3 gap-3">
-                <div className="bg-secondary border border-border rounded-lg p-4">
-                  <p className="text-xs text-muted-foreground">Tracks</p>
-                  <p className="font-display text-2xl font-bold">1 247</p>
-                </div>
-                <div className="bg-secondary border border-border rounded-lg p-4">
-                  <p className="text-xs text-muted-foreground">Artistes</p>
-                  <p className="font-display text-2xl font-bold text-primary">328</p>
-                </div>
-                <div className="bg-secondary border border-border rounded-lg p-4">
-                  <p className="text-xs text-muted-foreground">DJs</p>
-                  <p className="font-display text-2xl font-bold text-accent">5 612</p>
-                </div>
-              </div>
-              <div className="flex gap-2 flex-wrap">
-                <Button variant="hero">Action principale</Button>
-                <Button variant="outline">Secondaire</Button>
-                <Button variant="ghost">Discret</Button>
-                <Button variant="destructive">Supprimer</Button>
-              </div>
-              <div className="bg-card border border-border rounded-lg p-4">
-                <h3 className="font-display font-bold mb-1">Carte exemple</h3>
-                <p className="text-sm text-muted-foreground">{draft.footer_text}</p>
-              </div>
+            <div className="flex items-center gap-1 bg-secondary rounded-lg p-0.5">
+              {([
+                { v: "desktop", icon: Monitor, label: "Desktop" },
+                { v: "tablet", icon: Tablet, label: "Tablet" },
+                { v: "mobile", icon: Smartphone, label: "Mobile" },
+              ] as const).map((d) => (
+                <button
+                  key={d.v}
+                  onClick={() => setDevice(d.v)}
+                  className={cn(
+                    "h-7 px-2.5 rounded-md flex items-center gap-1 text-[11px] transition-all",
+                    device === d.v ? "bg-card shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
+                  )}
+                  title={d.label}
+                >
+                  <d.icon className="h-3.5 w-3.5" />
+                </button>
+              ))}
             </div>
           </div>
-          <Link to="/" target="_blank" className="block text-center text-xs text-primary hover:underline">
-            Ouvrir le site complet dans un nouvel onglet ↗
-          </Link>
+
+          <motion.div
+            layout
+            className="mx-auto rounded-3xl border border-border bg-card overflow-hidden shadow-2xl"
+            style={{
+              width: device === "desktop" ? "100%" : device === "tablet" ? 768 : 390,
+              maxWidth: "100%",
+              transition: "width 0.4s cubic-bezier(.2,.7,.2,1)",
+            }}
+          >
+            {/* Browser chrome */}
+            <div className="flex items-center gap-2 px-4 h-9 bg-secondary/60 border-b border-border">
+              <div className="flex gap-1.5">
+                <span className="h-2.5 w-2.5 rounded-full bg-red-400/70" />
+                <span className="h-2.5 w-2.5 rounded-full bg-yellow-400/70" />
+                <span className="h-2.5 w-2.5 rounded-full bg-green-400/70" />
+              </div>
+              <div className="flex-1 mx-3 h-5 rounded bg-background/70 border border-border flex items-center px-2 text-[10px] text-muted-foreground truncate">
+                frenchrecordpool.com /
+              </div>
+            </div>
+
+            <SitePreview draft={draft} device={device} />
+          </motion.div>
+
+          <ContrastReport draft={draft} />
         </div>
       </div>
+
+      {/* ===================== STICKY SAVE BAR ===================== */}
+      <AnimatePresence>
+        {dirty && (
+          <motion.div
+            initial={{ y: 100, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 100, opacity: 0 }}
+            transition={{ type: "spring", stiffness: 360, damping: 32 }}
+            className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50"
+          >
+            <div className="flex items-center gap-3 px-4 py-2.5 rounded-2xl border border-border bg-card/95 backdrop-blur-xl shadow-2xl">
+              <div className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
+              <span className="text-xs text-muted-foreground">Modifications non publiées</span>
+              <Button variant="ghost" size="sm" onClick={reset} disabled={saving}>
+                <RotateCcw className="h-3 w-3 mr-1" /> Annuler
+              </Button>
+              <Button
+                size="sm"
+                onClick={save}
+                disabled={saving}
+                className="bg-gradient-to-r from-primary to-accent text-primary-foreground hover:opacity-90"
+              >
+                {saving ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Save className="h-3 w-3 mr-1" />}
+                Publier
+              </Button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </AdminLayout>
+  );
+}
+
+/* --------------------------- SUBCOMPONENTS --------------------------- */
+function Field({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <div className="flex items-baseline justify-between mb-1">
+        <Label className="text-xs font-semibold">{label}</Label>
+        {hint && <span className="text-[10px] text-muted-foreground">{hint}</span>}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function AssetDropzone({
+  label, url, onPick, onUrl, onClear, loading, shape,
+}: {
+  label: string; url: string | null;
+  onPick: (f: File) => void; onUrl: (v: string) => void; onClear: () => void;
+  loading: boolean; shape: "rect" | "square";
+}) {
+  const [drag, setDrag] = useState(false);
+  return (
+    <div>
+      <Label className="text-xs font-semibold mb-1 block">{label}</Label>
+      <div
+        onDragOver={(e) => { e.preventDefault(); setDrag(true); }}
+        onDragLeave={() => setDrag(false)}
+        onDrop={(e) => {
+          e.preventDefault(); setDrag(false);
+          const f = e.dataTransfer.files?.[0];
+          if (f) onPick(f);
+        }}
+        className={cn(
+          "relative rounded-xl border-2 border-dashed p-3 transition-all flex items-center gap-3",
+          drag ? "border-primary bg-primary/5" : "border-border hover:border-primary/40 bg-secondary/30"
+        )}
+      >
+        <div
+          className={cn(
+            "shrink-0 bg-background/70 border border-border flex items-center justify-center overflow-hidden",
+            shape === "square" ? "h-12 w-12 rounded-md" : "h-12 w-20 rounded-md"
+          )}
+        >
+          {url ? <img src={url} alt="" className="h-full w-full object-contain" /> : <ImageIcon className="h-5 w-5 text-muted-foreground" />}
+        </div>
+        <div className="flex-1 min-w-0 space-y-1">
+          <Input
+            value={url ?? ""} placeholder="URL ou glisser-déposer"
+            onChange={(e) => onUrl(e.target.value)}
+            className="h-7 text-xs bg-background border-border"
+          />
+          <div className="flex items-center gap-1">
+            <label className="cursor-pointer">
+              <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && onPick(e.target.files[0])} />
+              <span className="inline-flex items-center gap-1 text-[10px] text-primary hover:underline">
+                {loading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />}
+                Téléverser
+              </span>
+            </label>
+            {url && (
+              <button onClick={onClear} className="text-[10px] text-destructive hover:underline ml-2 inline-flex items-center gap-1">
+                <Trash2 className="h-3 w-3" /> Retirer
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ColorMode({
+  title, icon, draft, update, mode,
+}: {
+  title: string; icon: React.ReactNode; draft: Branding;
+  update: (p: Partial<Branding>) => void; mode: "light" | "dark";
+}) {
+  const fields: Array<{ key: keyof Branding; label: string }> = [
+    { key: `${mode}_primary` as keyof Branding, label: "Primaire" },
+    { key: `${mode}_accent` as keyof Branding, label: "Accent" },
+    { key: `${mode}_background` as keyof Branding, label: "Fond" },
+    { key: `${mode}_foreground` as keyof Branding, label: "Texte" },
+    { key: `${mode}_card` as keyof Branding, label: "Cartes" },
+    { key: `${mode}_muted` as keyof Branding, label: "Discret" },
+    { key: `${mode}_border` as keyof Branding, label: "Bordures" },
+  ];
+  return (
+    <div>
+      <h3 className="text-xs font-bold uppercase text-muted-foreground mb-2 flex items-center gap-1.5">
+        {icon} {title}
+      </h3>
+      <div className="grid grid-cols-2 gap-2">
+        {fields.map((f) => (
+          <ColorChip key={String(f.key)} label={f.label} value={String(draft[f.key])} onChange={(v) => update({ [f.key]: v } as any)} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ColorChip({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+  const hex = hslToHex(value);
+  return (
+    <label className="group relative flex items-center gap-2 rounded-lg border border-border bg-secondary/40 hover:bg-secondary/70 p-2 transition-colors cursor-pointer">
+      <input
+        type="color" value={hex}
+        onChange={(e) => onChange(hexToHsl(e.target.value))}
+        className="h-8 w-8 rounded-md border border-border cursor-pointer bg-transparent shrink-0"
+      />
+      <div className="min-w-0 flex-1">
+        <p className="text-[10px] uppercase tracking-wide text-muted-foreground">{label}</p>
+        <p className="text-[11px] font-mono truncate">{hex}</p>
+      </div>
+      <button
+        type="button"
+        onClick={(e) => { e.preventDefault(); navigator.clipboard.writeText(hex); toast({ title: "Copié", description: hex }); }}
+        className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-background"
+        title="Copier"
+      >
+        <Copy className="h-3 w-3" />
+      </button>
+    </label>
+  );
+}
+
+function ContrastReport({ draft }: { draft: Branding }) {
+  const checks = [
+    { label: "Texte sur fond (clair)", a: draft.light_foreground, b: draft.light_background },
+    { label: "Texte sur fond (sombre)", a: draft.dark_foreground, b: draft.dark_background },
+    { label: "Primaire sur fond (clair)", a: draft.light_primary, b: draft.light_background },
+    { label: "Primaire sur fond (sombre)", a: draft.dark_primary, b: draft.dark_background },
+  ];
+  return (
+    <div className="rounded-2xl border border-border bg-card/60 backdrop-blur p-4">
+      <h3 className="text-xs font-bold uppercase text-muted-foreground mb-2 flex items-center gap-1.5">
+        <ShieldCheck className="h-3 w-3" /> Lisibilité (estimation)
+      </h3>
+      <div className="grid grid-cols-2 gap-2">
+        {checks.map((c) => {
+          const ratio = contrastRatio(c.a, c.b);
+          const pass = ratio >= 3.5;
+          return (
+            <div key={c.label} className="flex items-center justify-between rounded-lg border border-border bg-secondary/40 px-3 py-2 text-[11px]">
+              <span className="truncate">{c.label}</span>
+              <span className={cn("flex items-center gap-1 font-mono", pass ? "text-emerald-500" : "text-amber-500")}>
+                {pass ? <Check className="h-3 w-3" /> : <AlertTriangle className="h-3 w-3" />}
+                {ratio.toFixed(2)}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function SitePreview({ draft, device }: { draft: Branding; device: "desktop" | "tablet" | "mobile" }) {
+  const compact = device === "mobile";
+  return (
+    <div className="p-6 sm:p-8 space-y-6">
+      {/* Nav */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          {draft.logo_url
+            ? <img src={draft.logo_url} alt="" className="h-8 w-8 rounded-md object-contain" />
+            : <div className="h-8 w-8 rounded-md bg-gradient-to-br from-primary to-accent" />}
+          <span style={{ fontFamily: `"${draft.font_display}"` }} className="font-bold text-base">{draft.site_name}</span>
+        </div>
+        {!compact && (
+          <nav className="flex items-center gap-4 text-xs text-muted-foreground">
+            <span>Tracks</span><span>Artistes</span><span>Genres</span><span>Top</span>
+          </nav>
+        )}
+        <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90 h-8 text-xs">Connexion</Button>
+      </div>
+
+      {/* Hero */}
+      <div
+        className="rounded-2xl p-6 sm:p-10 text-center relative overflow-hidden"
+        style={{
+          background: `linear-gradient(135deg, hsl(${draft.light_primary}), hsl(${draft.light_accent}))`,
+        }}
+      >
+        <div className="absolute inset-0 opacity-20 mix-blend-overlay" style={{
+          backgroundImage: "radial-gradient(circle at 30% 20%, white 1px, transparent 1px)",
+          backgroundSize: "16px 16px",
+        }} />
+        <div className="relative">
+          <span style={{ fontFamily: `"${draft.font_body}"` }} className="inline-block text-[10px] uppercase tracking-widest text-white/80 mb-2">
+            {draft.tagline}
+          </span>
+          <h2 style={{ fontFamily: `"${draft.font_display}"` }} className={cn("font-bold text-white leading-tight mb-3", compact ? "text-2xl" : "text-4xl")}>
+            {draft.hero_title}
+          </h2>
+          <p style={{ fontFamily: `"${draft.font_body}"` }} className="text-white/90 text-sm max-w-md mx-auto mb-4">
+            {draft.hero_subtitle}
+          </p>
+          <div className="flex gap-2 justify-center">
+            <button className="px-4 h-9 rounded-md bg-white text-sm font-semibold" style={{ color: `hsl(${draft.light_primary})`, borderRadius: draft.radius }}>
+              Découvrir
+            </button>
+            <button className="px-4 h-9 rounded-md border border-white/40 text-white text-sm" style={{ borderRadius: draft.radius }}>
+              En savoir +
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Stats */}
+      <div className={cn("grid gap-3", compact ? "grid-cols-2" : "grid-cols-3")}>
+        {[
+          { l: "Tracks", v: "1 247", c: "light_primary" },
+          { l: "Artistes", v: "328", c: "light_accent" },
+          { l: "DJs", v: "5 612", c: "light_foreground" },
+        ].slice(0, compact ? 2 : 3).map((s) => (
+          <div key={s.l} className="rounded-xl p-4 border border-border bg-secondary/40" style={{ borderRadius: draft.radius }}>
+            <p className="text-[10px] uppercase tracking-wide text-muted-foreground">{s.l}</p>
+            <p style={{ fontFamily: `"${draft.font_display}"`, color: `hsl(${(draft as any)[s.c]})` }} className="text-2xl font-bold mt-0.5">{s.v}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Track card row */}
+      <div className="rounded-xl border border-border bg-secondary/40 p-3 flex items-center gap-3" style={{ borderRadius: draft.radius }}>
+        <div className="h-12 w-12 rounded-md shrink-0" style={{
+          background: `linear-gradient(135deg, hsl(${draft.light_primary}), hsl(${draft.light_accent}))`,
+          borderRadius: draft.radius,
+        }} />
+        <div className="flex-1 min-w-0">
+          <p style={{ fontFamily: `"${draft.font_display}"` }} className="text-sm font-semibold truncate">Midnight Drive</p>
+          <p style={{ fontFamily: `"${draft.font_body}"` }} className="text-[11px] text-muted-foreground truncate">DJ Lumière · House · 124 BPM</p>
+        </div>
+        <span className="text-[10px] px-2 py-0.5 rounded-full border border-primary/30 text-primary bg-primary/10">NEW</span>
+      </div>
+
+      {/* Footer */}
+      <p style={{ fontFamily: `"${draft.font_body}"` }} className="text-center text-[11px] text-muted-foreground pt-2 border-t border-border">
+        {draft.footer_text}
+      </p>
+    </div>
   );
 }
