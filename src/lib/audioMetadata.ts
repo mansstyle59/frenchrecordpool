@@ -12,6 +12,8 @@ export interface AudioMetadata {
   bpm?: number;
   key?: string;
   comment?: string;
+  version?: string;
+  pictureFile?: File;
 }
 
 function formatDuration(sec: number): string {
