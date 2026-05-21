@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useTracks } from "@/hooks/useTracks";
 import { generateTrackCover } from "@/lib/trackCover";
+import { slugify } from "@/lib/slug";
 
 type Artist = {
   name: string;
