@@ -31,6 +31,8 @@ export default function AdminUsers() {
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState<"all" | "admin" | "client">("all");
   const [subFilter, setSubFilter] = useState<"all" | "active" | "none">("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "blocked">("all");
+  const [confirmDelete, setConfirmDelete] = useState<ProfileRow | null>(null);
 
   const { data: profiles = [] } = useQuery({
     queryKey: ["admin-profiles"],
