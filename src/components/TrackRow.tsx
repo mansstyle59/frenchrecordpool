@@ -56,6 +56,7 @@ export default function TrackRow({ track, index }: TrackRowProps) {
           size="icon"
           className="hidden group-hover:inline-flex h-8 w-8 text-primary"
           onClick={handlePlay}
+          onDoubleClick={(e) => e.stopPropagation()}
         >
           <Play className="h-4 w-4 fill-current" />
         </Button>
