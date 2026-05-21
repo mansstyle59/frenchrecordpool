@@ -156,6 +156,9 @@ export async function extractAudioMetadataFast(file: File): Promise<AudioMetadat
     ...(dur ?? {}),
     bpm: tagBpm ?? fileBpm,
     key: tags.key ?? filename.key,
+    title: tags.title || filename.title,
+    artist: tags.artist || filename.artist,
+    version: filename.version,
   };
 }
 
