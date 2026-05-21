@@ -74,6 +74,18 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             {user ? (
               <>
                 <NotificationBell />
+                {realIsAdmin && (
+                  <Button
+                    variant={viewAsUser ? "accent" as any : "ghost"}
+                    size="sm"
+                    className="gap-1"
+                    onClick={() => setViewAsUser(!viewAsUser)}
+                    title={viewAsUser ? "Quitter le mode aperçu utilisateur" : "Voir le site comme un utilisateur"}
+                  >
+                    {viewAsUser ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    <span className="hidden lg:inline">{viewAsUser ? "Aperçu" : "Voir comme user"}</span>
+                  </Button>
+                )}
                 {isAdmin && (
                   <Link to="/admin">
                     <Button variant="ghost" size="sm" className="gap-1">
