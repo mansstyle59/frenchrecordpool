@@ -302,3 +302,17 @@ function TrackListShell({ isLoading, empty, emptyText, children }: { isLoading: 
     </div>
   );
 }
+
+function HeroBgEditor({ src }: { src: string }) {
+  const { useCms } = require("@/contexts/CmsContext") as typeof import("@/contexts/CmsContext");
+  const { editMode } = useCms();
+  if (!editMode) return null;
+  return (
+    <div className="absolute top-4 left-4 z-20">
+      <div className="rounded-lg border border-primary/40 bg-background/80 backdrop-blur p-2 flex items-center gap-2 text-xs">
+        <span className="text-muted-foreground">Fond d'écran</span>
+        <CmsImage editKey="home.hero.bg" src={src} alt="" className="w-12 h-8 object-cover rounded" />
+      </div>
+    </div>
+  );
+}
