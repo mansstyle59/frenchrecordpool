@@ -85,49 +85,88 @@ export default function Index() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.2 }}
-            className="text-lg md:text-2xl text-muted-foreground max-w-2xl mx-auto mb-10"
+            className="text-base md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10"
           >
             <CmsText editKey="home.hero.subtitle">Edits, remixes & exclusivités. Mis à jour chaque semaine pour vos sets.</CmsText>
           </motion.p>
 
-          <motion.form
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.6, delay: 0.4 }}
-            onSubmit={(e) => {
-              e.preventDefault();
-              const q = (e.currentTarget.elements.namedItem("q") as HTMLInputElement).value;
-              window.location.href = `/new${q ? `?q=${encodeURIComponent(q)}` : ""}`;
-            }}
-            className="flex items-center max-w-lg mx-auto gap-2"
-          >
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input name="q" placeholder="Titre, remixeur, genre..." className="pl-10 h-12 bg-secondary/80 border-border text-base" />
-            </div>
-            <Button type="submit" variant="hero" size="lg" className="shadow-lg shadow-primary/30">Rechercher</Button>
-          </motion.form>
-
-          {/* Stats counters */}
+          {/* Search + Stats — asymmetric grid */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.6 }}
-            className="grid grid-cols-3 max-w-xl mx-auto gap-2 sm:gap-6 mt-12"
+            transition={{ duration: 0.6, delay: 0.35 }}
+            className="w-full max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-3"
           >
-            {[
-              { icon: Headphones, label: "Tracks", value: tracks.length },
-              { icon: Users, label: "Remixeurs", value: artistsCount },
-              { icon: TrendingUp, label: "Téléchargements", value: totalDownloads },
-            ].map((s) => (
-              <div key={s.label} className="rounded-xl border border-border bg-card/40 backdrop-blur px-3 py-4">
-                <s.icon className="h-4 w-4 mx-auto text-primary mb-2" />
-                <p className="font-display text-2xl sm:text-3xl font-bold gradient-text">{s.value.toLocaleString("fr-FR")}</p>
-                <p className="text-[10px] sm:text-xs uppercase tracking-widest text-muted-foreground mt-1">{s.label}</p>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                const q = (e.currentTarget.elements.namedItem("q") as HTMLInputElement).value;
+                window.location.href = `/new${q ? `?q=${encodeURIComponent(q)}` : ""}`;
+              }}
+              className="lg:col-span-8 group relative"
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-accent/20 rounded-2xl blur-xl opacity-0 group-focus-within:opacity-100 transition-opacity duration-500 pointer-events-none" />
+              <div className="relative flex items-center bg-card/60 backdrop-blur-2xl border border-border rounded-2xl p-2 focus-within:border-primary/40 transition-all">
+                <Search className="h-5 w-5 ml-3 text-muted-foreground shrink-0" />
+                <Input
+                  name="q"
+                  placeholder="Titre, remixeur, BPM…"
+                  className="flex-1 bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 h-11 text-base placeholder:text-muted-foreground/60"
+                />
+                <Button type="submit" variant="hero" className="shrink-0 px-6 h-11 font-bold uppercase tracking-wider text-xs shadow-lg shadow-primary/30">
+                  Rechercher
+                </Button>
               </div>
-            ))}
+            </form>
+
+            <div className="lg:col-span-4 grid grid-cols-3 gap-2">
+              {[
+                { icon: Headphones, label: "Tracks", value: tracks.length, color: "text-primary" },
+                { icon: Users, label: "Remixeurs", value: artistsCount, color: "text-foreground" },
+                { icon: TrendingUp, label: "Downloads", value: totalDownloads, color: "text-accent" },
+              ].map((s) => (
+                <div
+                  key={s.label}
+                  className="flex flex-col items-center justify-center rounded-2xl border border-border bg-card/40 backdrop-blur-md px-2 py-3 hover:bg-card/70 transition-colors"
+                >
+                  <span className="text-[9px] uppercase tracking-[0.18em] font-bold text-muted-foreground/70 mb-0.5">{s.label}</span>
+                  <span className={`font-display text-lg sm:text-xl font-bold ${s.color}`}>{s.value.toLocaleString("fr-FR")}</span>
+                </div>
+              ))}
+            </div>
           </motion.div>
+
+          {/* Genre quick access pills */}
+          {genres.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.55 }}
+              className="mt-10 flex flex-wrap justify-center items-center gap-2 max-w-3xl mx-auto"
+            >
+              <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/60 mr-1">Genres:</span>
+              {genres.slice(0, 6).map((g, i) => (
+                <Link
+                  key={g}
+                  to={`/new?q=${encodeURIComponent(g!)}`}
+                  className={`px-3.5 py-1.5 rounded-full bg-card/50 border border-border text-[11px] font-semibold uppercase tracking-wider transition-all ${
+                    i % 2 === 0
+                      ? "hover:bg-primary/15 hover:border-primary/40 hover:text-primary"
+                      : "hover:bg-accent/15 hover:border-accent/40 hover:text-accent"
+                  }`}
+                >
+                  {g}
+                </Link>
+              ))}
+              {genres.length > 6 && (
+                <Link to="/genres" className="px-3.5 py-1.5 rounded-full border border-dashed border-border text-[11px] font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground hover:border-foreground/40 transition-all">
+                  +{genres.length - 6} autres
+                </Link>
+              )}
+            </motion.div>
+          )}
         </div>
+
 
         {/* Marquee genres */}
         {genres.length > 0 && (
