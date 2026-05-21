@@ -1,10 +1,11 @@
-import { useState } from "react";
-import { Plus, Pencil, Trash2, Copy, Ticket } from "lucide-react";
+import { useState, useMemo } from "react";
+import { Plus, Pencil, Trash2, Copy, Ticket, Search, X, TrendingUp, CheckCircle2, Power } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import AdminLayout from "@/components/admin/AdminLayout";
+import AdminStatsRow from "@/components/admin/AdminStatsRow";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -42,6 +43,13 @@ const TYPE_LABEL: Record<DiscountType, string> = {
   free_period: "Période gratuite", full_access: "Accès total",
 };
 
+const TYPE_HINT: Record<DiscountType, string> = {
+  percent: "Pourcentage de remise (0-100)",
+  fixed: "Montant fixe à déduire (en centimes)",
+  free_period: "Durée d'accès gratuit (en mois)",
+  full_access: "Accès complet à vie, sans paiement",
+};
+
 function randomCode(len = 8) {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   return Array.from({ length: len }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
@@ -54,6 +62,7 @@ export default function AdminPromoCodes() {
   const [editing, setEditing] = useState<PromoCode | null>(null);
   const [form, setForm] = useState(empty);
   const [saving, setSaving] = useState(false);
+  const [search, setSearch] = useState("");
 
   const { data: codes = [] } = useQuery({
     queryKey: ["admin-promo-codes"],
@@ -72,6 +81,19 @@ export default function AdminPromoCodes() {
     },
     enabled: isAdmin,
   });
+
+  const stats = useMemo(() => {
+    const active = codes.filter((c) => c.is_active).length;
+    const totalUses = codes.reduce((sum, c) => sum + (c.uses_count ?? 0), 0);
+    const expired = codes.filter((c) => c.expires_at && new Date(c.expires_at) < new Date()).length;
+    return { total: codes.length, active, totalUses, expired };
+  }, [codes]);
+
+  const filtered = useMemo(() => {
+    if (!search) return codes;
+    const q = search.toLowerCase();
+    return codes.filter((c) => c.code.toLowerCase().includes(q) || (c.notes ?? "").toLowerCase().includes(q));
+  }, [codes, search]);
 
   const openAdd = () => { setEditing(null); setForm({ ...empty, code: randomCode() }); setOpen(true); };
   const openEdit = (c: PromoCode) => {
@@ -113,6 +135,12 @@ export default function AdminPromoCodes() {
     qc.invalidateQueries({ queryKey: ["admin-promo-codes"] });
   };
 
+  const toggleActive = async (c: PromoCode) => {
+    const { error } = await supabase.from("promo_codes").update({ is_active: !c.is_active }).eq("id", c.id);
+    if (error) { toast({ title: "Erreur", description: error.message, variant: "destructive" }); return; }
+    qc.invalidateQueries({ queryKey: ["admin-promo-codes"] });
+  };
+
   const remove = async (c: PromoCode) => {
     if (!confirm(`Supprimer le code ${c.code} ?`)) return;
     const { error } = await supabase.from("promo_codes").delete().eq("id", c.id);
@@ -122,10 +150,10 @@ export default function AdminPromoCodes() {
   };
 
   const togglePlan = (id: string) => {
-    setForm(f => ({
+    setForm((f) => ({
       ...f,
       allowed_plan_ids: f.allowed_plan_ids.includes(id)
-        ? f.allowed_plan_ids.filter(x => x !== id)
+        ? f.allowed_plan_ids.filter((x) => x !== id)
         : [...f.allowed_plan_ids, id],
     }));
   };
@@ -143,65 +171,114 @@ export default function AdminPromoCodes() {
     <AdminLayout
       wide
       title="Codes promo"
-      subtitle={`${codes.length} code${codes.length > 1 ? "s" : ""}`}
-      actions={<Button onClick={openAdd}><Plus className="h-4 w-4 mr-2" />Nouveau code</Button>}
+      subtitle="Créez des codes de réduction, d'essai ou d'accès total."
+      actions={<Button onClick={openAdd} variant="hero"><Plus className="h-4 w-4 mr-2" />Nouveau code</Button>}
     >
-      <div className="rounded-xl border border-border overflow-hidden">
-        <table className="w-full text-sm">
-          <thead className="bg-secondary/50 text-left text-xs text-muted-foreground">
-            <tr>
-              <th className="px-4 py-3">Code</th>
-              <th className="px-4 py-3">Type</th>
-              <th className="px-4 py-3">Valeur</th>
-              <th className="px-4 py-3">Utilisations</th>
-              <th className="px-4 py-3">Expire</th>
-              <th className="px-4 py-3">Statut</th>
-              <th className="px-4 py-3 text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border">
-            {codes.length === 0 ? (
-              <tr><td colSpan={7} className="px-4 py-12 text-center text-muted-foreground">
-                <Ticket className="h-8 w-8 mx-auto mb-2 opacity-40" />
-                Aucun code promo. Crée le premier !
-              </td></tr>
-            ) : codes.map(c => (
-              <tr key={c.id} className="hover:bg-secondary/30">
-                <td className="px-4 py-3">
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono font-bold">{c.code}</span>
-                    <Button
-                      variant="ghost" size="icon" className="h-6 w-6"
-                      onClick={() => { navigator.clipboard.writeText(c.code); toast({ title: "Copié !" }); }}
-                    ><Copy className="h-3 w-3" /></Button>
-                  </div>
-                </td>
-                <td className="px-4 py-3 text-muted-foreground">{TYPE_LABEL[c.discount_type]}</td>
-                <td className="px-4 py-3 font-medium">{formatValue(c)}</td>
-                <td className="px-4 py-3 text-muted-foreground">
-                  {c.uses_count}{c.max_uses ? ` / ${c.max_uses}` : ""}
-                </td>
-                <td className="px-4 py-3 text-muted-foreground">
-                  {c.expires_at ? new Date(c.expires_at).toLocaleDateString("fr-FR") : "—"}
-                </td>
-                <td className="px-4 py-3">
-                  <Badge variant={c.is_active ? "default" : "secondary"} className="text-xs">
-                    {c.is_active ? "Actif" : "Désactivé"}
-                  </Badge>
-                </td>
-                <td className="px-4 py-3 text-right">
-                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(c)}>
-                    <Pencil className="h-3 w-3" />
-                  </Button>
-                  <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => remove(c)}>
-                    <Trash2 className="h-3 w-3" />
-                  </Button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <AdminStatsRow
+        stats={[
+          { icon: <Ticket className="h-4 w-4" />, label: "Total", value: stats.total, hint: "codes créés" },
+          { icon: <CheckCircle2 className="h-4 w-4" />, label: "Actifs", value: stats.active, hint: "utilisables", accent: "primary" },
+          { icon: <TrendingUp className="h-4 w-4" />, label: "Utilisations", value: stats.totalUses, hint: "cumulées", accent: "accent" },
+          { icon: <Power className="h-4 w-4" />, label: "Expirés", value: stats.expired, hint: "à nettoyer", accent: "muted" },
+        ]}
+      />
+
+      <div className="rounded-2xl border border-border bg-card/40 backdrop-blur-xl p-3 shadow-xl shadow-primary/5">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Rechercher un code ou une note..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-10 h-11 bg-secondary/60 border-border/60"
+          />
+          {search && (
+            <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+              <X className="h-4 w-4" />
+            </button>
+          )}
+        </div>
       </div>
+
+      {codes.length === 0 ? (
+        <div className="rounded-2xl border border-dashed border-border bg-card/40 backdrop-blur-xl p-12 text-center">
+          <Ticket className="h-10 w-10 mx-auto mb-3 text-muted-foreground/50" />
+          <p className="text-muted-foreground mb-4">Aucun code promo pour le moment.</p>
+          <Button onClick={openAdd} variant="hero"><Plus className="h-4 w-4 mr-2" />Créer le premier code</Button>
+        </div>
+      ) : (
+        <div className="rounded-2xl border border-border bg-card/40 backdrop-blur overflow-hidden shadow-lg shadow-primary/5">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-secondary/40 text-left text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70">
+                <tr>
+                  <th className="px-4 py-3">Code</th>
+                  <th className="px-4 py-3">Type</th>
+                  <th className="px-4 py-3">Valeur</th>
+                  <th className="px-4 py-3">Utilisations</th>
+                  <th className="px-4 py-3">Expire</th>
+                  <th className="px-4 py-3">Visible</th>
+                  <th className="px-4 py-3 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border/60">
+                {filtered.map((c) => {
+                  const usagePct = c.max_uses ? Math.min(100, ((c.uses_count ?? 0) / c.max_uses) * 100) : 0;
+                  const isExpired = c.expires_at && new Date(c.expires_at) < new Date();
+                  return (
+                    <tr key={c.id} className="hover:bg-secondary/30 transition-colors">
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono font-bold tracking-wider text-primary">{c.code}</span>
+                          <Button
+                            variant="ghost" size="icon" className="h-6 w-6"
+                            onClick={() => { navigator.clipboard.writeText(c.code); toast({ title: "Copié !" }); }}
+                          ><Copy className="h-3 w-3" /></Button>
+                        </div>
+                        {c.notes && <p className="text-[11px] text-muted-foreground mt-0.5 truncate max-w-[200px]">{c.notes}</p>}
+                      </td>
+                      <td className="px-4 py-3">
+                        <Badge variant="outline" className="text-[10px]">{TYPE_LABEL[c.discount_type]}</Badge>
+                      </td>
+                      <td className="px-4 py-3 font-medium">{formatValue(c)}</td>
+                      <td className="px-4 py-3">
+                        <div className="text-xs font-mono">
+                          {c.uses_count}{c.max_uses ? <span className="text-muted-foreground"> / {c.max_uses}</span> : <span className="text-muted-foreground"> / ∞</span>}
+                        </div>
+                        {c.max_uses && (
+                          <div className="mt-1 h-1 w-20 rounded-full bg-secondary/60 overflow-hidden">
+                            <div className="h-full bg-gradient-to-r from-primary to-accent" style={{ width: `${usagePct}%` }} />
+                          </div>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-xs font-mono">
+                        {c.expires_at ? (
+                          <span className={isExpired ? "text-destructive" : "text-muted-foreground"}>
+                            {new Date(c.expires_at).toLocaleDateString("fr-FR")}
+                          </span>
+                        ) : <span className="text-muted-foreground">—</span>}
+                      </td>
+                      <td className="px-4 py-3">
+                        <Switch checked={c.is_active} onCheckedChange={() => toggleActive(c)} />
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <div className="flex justify-end gap-1">
+                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(c)}>
+                            <Pencil className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => remove(c)}>
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-2xl">
@@ -212,8 +289,8 @@ export default function AdminPromoCodes() {
             <div className="space-y-2 col-span-2">
               <Label>Code</Label>
               <div className="flex gap-2">
-                <Input className="font-mono uppercase" value={form.code}
-                  onChange={e => setForm({ ...form, code: e.target.value.toUpperCase() })} />
+                <Input className="font-mono uppercase tracking-wider" value={form.code}
+                  onChange={(e) => setForm({ ...form, code: e.target.value.toUpperCase() })} />
                 <Button variant="outline" type="button" onClick={() => setForm({ ...form, code: randomCode() })}>
                   Générer
                 </Button>
@@ -221,7 +298,7 @@ export default function AdminPromoCodes() {
             </div>
             <div className="space-y-2">
               <Label>Type de remise</Label>
-              <Select value={form.discount_type} onValueChange={v => setForm({ ...form, discount_type: v as DiscountType })}>
+              <Select value={form.discount_type} onValueChange={(v) => setForm({ ...form, discount_type: v as DiscountType })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="percent">Réduction %</SelectItem>
@@ -230,6 +307,7 @@ export default function AdminPromoCodes() {
                   <SelectItem value="full_access">Accès total gratuit</SelectItem>
                 </SelectContent>
               </Select>
+              <p className="text-[11px] text-muted-foreground">{TYPE_HINT[form.discount_type]}</p>
             </div>
             <div className="space-y-2">
               <Label>
@@ -240,32 +318,32 @@ export default function AdminPromoCodes() {
               </Label>
               <Input type="number" value={form.discount_value ?? 0}
                 disabled={form.discount_type === "full_access"}
-                onChange={e => setForm({ ...form, discount_value: Number(e.target.value) })} />
+                onChange={(e) => setForm({ ...form, discount_value: Number(e.target.value) })} />
             </div>
             <div className="space-y-2">
               <Label>Utilisations max (total)</Label>
               <Input type="number" placeholder="illimité" value={form.max_uses}
-                onChange={e => setForm({ ...form, max_uses: e.target.value as any })} />
+                onChange={(e) => setForm({ ...form, max_uses: e.target.value as any })} />
             </div>
             <div className="space-y-2">
               <Label>Limite par utilisateur</Label>
               <Input type="number" value={form.per_user_limit}
-                onChange={e => setForm({ ...form, per_user_limit: Number(e.target.value) })} />
+                onChange={(e) => setForm({ ...form, per_user_limit: Number(e.target.value) })} />
             </div>
             <div className="space-y-2 col-span-2">
               <Label>Expire le (optionnel)</Label>
               <Input type="datetime-local" value={form.expires_at}
-                onChange={e => setForm({ ...form, expires_at: e.target.value })} />
+                onChange={(e) => setForm({ ...form, expires_at: e.target.value })} />
             </div>
             <div className="space-y-2 col-span-2">
-              <Label>Plans autorisés (vide = tous)</Label>
+              <Label>Plans autorisés <span className="text-muted-foreground font-normal">(vide = tous les plans)</span></Label>
               <div className="flex flex-wrap gap-2">
                 {plans.length === 0 && <span className="text-xs text-muted-foreground">Aucun plan défini.</span>}
                 {plans.map((p: any) => {
                   const on = form.allowed_plan_ids.includes(p.id);
                   return (
                     <Badge key={p.id} variant={on ? "default" : "outline"}
-                      className="cursor-pointer" onClick={() => togglePlan(p.id)}>
+                      className="cursor-pointer select-none" onClick={() => togglePlan(p.id)}>
                       {p.name}
                     </Badge>
                   );
@@ -275,16 +353,17 @@ export default function AdminPromoCodes() {
             <div className="space-y-2 col-span-2">
               <Label>Notes internes</Label>
               <Textarea rows={2} value={form.notes}
-                onChange={e => setForm({ ...form, notes: e.target.value })} />
+                onChange={(e) => setForm({ ...form, notes: e.target.value })}
+                placeholder="Campagne newsletter, partenaire X, etc." />
             </div>
             <div className="flex items-center gap-3 col-span-2">
-              <Switch checked={form.is_active} onCheckedChange={v => setForm({ ...form, is_active: v })} />
-              <Label>Code actif</Label>
+              <Switch checked={form.is_active} onCheckedChange={(v) => setForm({ ...form, is_active: v })} />
+              <Label>Code actif (utilisable immédiatement)</Label>
             </div>
           </div>
           <div className="flex justify-end gap-2 mt-4">
             <Button variant="outline" onClick={() => setOpen(false)}>Annuler</Button>
-            <Button onClick={save} disabled={saving}>{saving ? "Enregistrement…" : "Enregistrer"}</Button>
+            <Button variant="hero" onClick={save} disabled={saving}>{saving ? "Enregistrement…" : "Enregistrer"}</Button>
           </div>
         </DialogContent>
       </Dialog>
