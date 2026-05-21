@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Search, Users, Disc3, X } from "lucide-react";
 import { motion } from "framer-motion";
 import Layout from "@/components/Layout";
+import PageHero from "@/components/PageHero";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useTracks } from "@/hooks/useTracks";
