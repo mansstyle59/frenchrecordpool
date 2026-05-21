@@ -400,6 +400,7 @@ export default function TrackForm({ initialData, saving, onSubmit, existingGenre
     onSubmit({
       title, artist, genre, bpm, musicalKey, version, label, duration,
       tags: tagsStr,
+      featuredArtists, remixers, producer, releaseYear, isrc, subgenre, mood,
       audioFile, audioUrl, previewFile, previewUrl, coverFile, coverUrl,
       downloadUrl, acapellaUrl, instrumentalUrl,
     });
