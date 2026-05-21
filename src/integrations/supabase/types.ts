@@ -135,6 +135,99 @@ export type Database = {
         }
         Relationships: []
       }
+      promo_codes: {
+        Row: {
+          allowed_plan_ids: string[] | null
+          code: string
+          created_at: string
+          created_by: string | null
+          discount_type: Database["public"]["Enums"]["promo_discount_type"]
+          discount_value: number | null
+          expires_at: string | null
+          id: string
+          is_active: boolean
+          max_uses: number | null
+          notes: string | null
+          per_user_limit: number
+          updated_at: string
+          uses_count: number
+        }
+        Insert: {
+          allowed_plan_ids?: string[] | null
+          code: string
+          created_at?: string
+          created_by?: string | null
+          discount_type: Database["public"]["Enums"]["promo_discount_type"]
+          discount_value?: number | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          max_uses?: number | null
+          notes?: string | null
+          per_user_limit?: number
+          updated_at?: string
+          uses_count?: number
+        }
+        Update: {
+          allowed_plan_ids?: string[] | null
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          discount_type?: Database["public"]["Enums"]["promo_discount_type"]
+          discount_value?: number | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          max_uses?: number | null
+          notes?: string | null
+          per_user_limit?: number
+          updated_at?: string
+          uses_count?: number
+        }
+        Relationships: []
+      }
+      promo_redemptions: {
+        Row: {
+          granted_until: string | null
+          id: string
+          plan_id: string | null
+          promo_code_id: string
+          redeemed_at: string
+          user_id: string
+        }
+        Insert: {
+          granted_until?: string | null
+          id?: string
+          plan_id?: string | null
+          promo_code_id: string
+          redeemed_at?: string
+          user_id: string
+        }
+        Update: {
+          granted_until?: string | null
+          id?: string
+          plan_id?: string | null
+          promo_code_id?: string
+          redeemed_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "promo_redemptions_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "promo_redemptions_promo_code_id_fkey"
+            columns: ["promo_code_id"]
+            isOneToOne: false
+            referencedRelation: "promo_codes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       site_branding: {
         Row: {
           dark_accent: string
@@ -225,12 +318,58 @@ export type Database = {
         }
         Relationships: []
       }
+      subscription_plans: {
+        Row: {
+          created_at: string
+          currency: string
+          description: string | null
+          features: Json
+          id: string
+          interval: string
+          is_active: boolean
+          name: string
+          price_cents: number
+          slug: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          currency?: string
+          description?: string | null
+          features?: Json
+          id?: string
+          interval?: string
+          is_active?: boolean
+          name: string
+          price_cents?: number
+          slug: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          currency?: string
+          description?: string | null
+          features?: Json
+          id?: string
+          interval?: string
+          is_active?: boolean
+          name?: string
+          price_cents?: number
+          slug?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       subscriptions: {
         Row: {
           created_at: string
           current_period_end: string | null
           id: string
           plan: string
+          plan_id: string | null
           status: string
           stripe_customer_id: string | null
           user_id: string
@@ -240,6 +379,7 @@ export type Database = {
           current_period_end?: string | null
           id?: string
           plan?: string
+          plan_id?: string | null
           status?: string
           stripe_customer_id?: string | null
           user_id: string
@@ -249,11 +389,20 @@ export type Database = {
           current_period_end?: string | null
           id?: string
           plan?: string
+          plan_id?: string | null
           status?: string
           stripe_customer_id?: string | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "subscriptions_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_plans"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       tracks: {
         Row: {
@@ -361,9 +510,14 @@ export type Database = {
         }
         Returns: boolean
       }
+      redeem_promo_code: {
+        Args: { _code: string; _plan_id?: string }
+        Returns: Json
+      }
     }
     Enums: {
       app_role: "admin" | "client"
+      promo_discount_type: "percent" | "fixed" | "free_period" | "full_access"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -492,6 +646,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "client"],
+      promo_discount_type: ["percent", "fixed", "free_period", "full_access"],
     },
   },
 } as const
