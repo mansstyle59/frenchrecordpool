@@ -26,6 +26,11 @@ import AdminAuditLog from "./pages/AdminAuditLog";
 import AdminPlans from "./pages/AdminPlans";
 import AdminPromoCodes from "./pages/AdminPromoCodes";
 import AdminArtists from "./pages/AdminArtists";
+import AdminQueue from "./pages/AdminQueue";
+import DjDashboard from "./pages/DjDashboard";
+import DjTracks from "./pages/DjTracks";
+import DjUpload from "./pages/DjUpload";
+import DjEdit from "./pages/DjEdit";
 import Pricing from "./pages/Pricing";
 import Artists from "./pages/Artists";
 import Genres from "./pages/Genres";
@@ -65,6 +70,11 @@ const App = () => (
               <Route path="/admin/promo-codes" element={<AdminPromoCodes />} />
               <Route path="/admin/branding" element={<AdminBranding />} />
               <Route path="/admin/audit" element={<AdminAuditLog />} />
+              <Route path="/admin/queue" element={<AdminQueue />} />
+              <Route path="/dj" element={<DjDashboard />} />
+              <Route path="/dj/tracks" element={<DjTracks />} />
+              <Route path="/dj/upload" element={<DjUpload />} />
+              <Route path="/dj/edit/:id" element={<DjEdit />} />
               <Route path="/pricing" element={<Pricing />} />
               <Route path="/artists" element={<Artists />} />
 

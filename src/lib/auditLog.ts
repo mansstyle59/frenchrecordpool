@@ -2,6 +2,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 export type AuditAction =
   | "track.create" | "track.update" | "track.delete" | "track.bulk_delete"
+  | "track.approve" | "track.reject"
   | "user.password_reset" | "user.role_promote" | "user.role_demote"
   | "user.block" | "user.unblock" | "user.delete" | "user.access_grant" | "user.access_revoke"
   | "user.bulk_block" | "user.bulk_unblock" | "user.bulk_delete" | "user.profile_update"

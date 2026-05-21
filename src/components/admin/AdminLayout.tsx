@@ -2,8 +2,11 @@ import { ReactNode, useEffect } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
   Disc3, LayoutDashboard, Music, Users, CreditCard, Palette, ScrollText,
-  ArrowLeft, ExternalLink, Layers, Ticket, Mic2,
+  ArrowLeft, ExternalLink, Layers, Ticket, Mic2, Inbox,
 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import NotificationBell from "@/components/NotificationBell";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
@@ -14,6 +17,7 @@ import {
 const items = [
   { to: "/admin", label: "Dashboard", icon: LayoutDashboard, end: true },
   { to: "/admin/tracks", label: "Tracks", icon: Music },
+  { to: "/admin/queue", label: "File de modération", icon: Inbox },
   { to: "/admin/users", label: "Utilisateurs", icon: Users },
   { to: "/admin/artists", label: "DJs / Artistes", icon: Mic2 },
   { to: "/admin/plans", label: "Plans", icon: Layers },
