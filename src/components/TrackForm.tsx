@@ -608,7 +608,7 @@ export default function TrackForm({ initialData, saving, onSubmit, existingGenre
           {/* ===== Crédits étendus ===== */}
           <div className="rounded-lg border border-border bg-card/40 p-3 space-y-3">
             <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              <Users2Icon /> Crédits
+              <Disc3 className="h-3.5 w-3.5" /> Crédits
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1">
