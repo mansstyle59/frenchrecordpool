@@ -1,21 +1,38 @@
-import { useEffect, useState } from "react";
-import { Upload, Link as LinkIcon, Sparkles } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  Upload, Link as LinkIcon, Sparkles, Wand2, Play, Pause, RefreshCw, X, Tag as TagIcon, Music2, FileAudio, Image as ImageIcon, Disc3,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
 import FileDropzone from "@/components/FileDropzone";
 import { extractAudioMetadataFast, needsBpmAnalysis, analyzeBpmAsync } from "@/lib/audioMetadata";
+import { generateAudioPreview, type PreviewStartMode } from "@/lib/audioPreview";
 import { trackSchema, validateAudioFile, validateImageFile } from "@/lib/trackSchema";
 import { toast } from "@/hooks/use-toast";
 import type { DbTrack } from "@/hooks/useTracks";
 
-const VERSIONS = ["Original", "Intro Edit", "Clean", "Dirty", "Extended", "Short Edit", "Acapella", "Instrumental"];
+const VERSIONS = ["Original", "Intro Edit", "Clean", "Dirty", "Extended", "Short Edit", "Acapella", "Instrumental", "Quick Hit", "Transition"];
+const MUSICAL_KEYS = [
+  "C", "Cm", "C#", "C#m", "Db", "Dbm", "D", "Dm", "D#", "D#m", "Eb", "Ebm",
+  "E", "Em", "F", "Fm", "F#", "F#m", "Gb", "Gbm", "G", "Gm", "G#", "G#m",
+  "Ab", "Abm", "A", "Am", "A#", "A#m", "Bb", "Bbm", "B", "Bm",
+];
+const SUGGESTED_TAG_BANK = [
+  "exclusive", "summer", "club", "festival", "radio", "tiktok", "viral",
+  "throwback", "remix", "vocal", "instrumental", "mashup", "transition",
+  "bigroom", "afterhours", "warmup", "peaktime", "drive", "chill",
+];
 
 interface TrackFormProps {
   initialData?: DbTrack | null;
   saving: boolean;
   onSubmit: (data: TrackFormData) => void;
+  existingGenres?: string[];
+  existingTags?: string[];
 }
 
 export interface TrackFormData {
@@ -41,7 +58,7 @@ export interface TrackFormData {
 
 type SourceMode = "file" | "url";
 
-export default function TrackForm({ initialData, saving, onSubmit }: TrackFormProps) {
+export default function TrackForm({ initialData, saving, onSubmit, existingGenres = [], existingTags = [] }: TrackFormProps) {
   const [title, setTitle] = useState(initialData?.title ?? "");
   const [artist, setArtist] = useState(initialData?.artist ?? "");
   const [genre, setGenre] = useState(initialData?.genre ?? "");
@@ -50,7 +67,7 @@ export default function TrackForm({ initialData, saving, onSubmit }: TrackFormPr
   const [version, setVersion] = useState(initialData?.version ?? "Original");
   const [label, setLabel] = useState(initialData?.label ?? "");
   const [duration, setDuration] = useState(initialData?.duration ?? "");
-  const [tags, setTags] = useState(initialData?.tags?.join(", ") ?? "");
+  const [tagList, setTagList] = useState<string[]>(initialData?.tags ?? []);
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [audioUrl, setAudioUrl] = useState("");
   const [previewFile, setPreviewFile] = useState<File | null>(null);
@@ -65,8 +82,16 @@ export default function TrackForm({ initialData, saving, onSubmit }: TrackFormPr
   const [coverMode, setCoverMode] = useState<SourceMode>("file");
   const [extracting, setExtracting] = useState(false);
   const [coverPreview, setCoverPreview] = useState<string | null>(initialData?.cover_url ?? null);
-
   const [analyzingBpm, setAnalyzingBpm] = useState(false);
+
+  // Preview auto-generation
+  const [previewAuto, setPreviewAuto] = useState(true);
+  const [previewStart, setPreviewStart] = useState<PreviewStartMode>("quarter");
+  const [previewSeconds, setPreviewSeconds] = useState(30);
+  const [previewGenerating, setPreviewGenerating] = useState(false);
+  const [previewBlobUrl, setPreviewBlobUrl] = useState<string | null>(null);
+  const [previewPlaying, setPreviewPlaying] = useState(false);
+  const previewAudioRef = useRef<HTMLAudioElement | null>(null);
 
   // Auto-fill metadata when audio file selected
   useEffect(() => {
@@ -86,7 +111,6 @@ export default function TrackForm({ initialData, saving, onSubmit }: TrackFormPr
           toast({ title: "Métadonnées détectées", description: "Champs pré-remplis depuis le fichier." });
         }
         setExtracting(false);
-        // Analyse BPM en tâche de fond si nécessaire
         if (needsBpmAnalysis(meta)) {
           setAnalyzingBpm(true);
           analyzeBpmAsync(audioFile)
@@ -101,11 +125,35 @@ export default function TrackForm({ initialData, saving, onSubmit }: TrackFormPr
         }
       })
       .catch(() => !cancelled && setExtracting(false));
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [audioFile]);
 
+  // Auto-generate preview when full audio is set and no manual preview provided
+  const generatePreview = async (file: File, mode: PreviewStartMode, seconds: number) => {
+    setPreviewGenerating(true);
+    try {
+      const blob = await generateAudioPreview(file, { startMode: mode, seconds });
+      if (!blob) {
+        toast({ title: "Génération impossible", description: "Impossible de décoder le fichier audio.", variant: "destructive" });
+        return;
+      }
+      const generated = new File([blob], `preview-${Date.now()}.wav`, { type: "audio/wav" });
+      setPreviewFile(generated);
+      const url = URL.createObjectURL(blob);
+      setPreviewBlobUrl((old) => { if (old) URL.revokeObjectURL(old); return url; });
+      toast({ title: "Extrait généré", description: `${seconds}s · ${(blob.size / 1024).toFixed(0)} Ko` });
+    } finally {
+      setPreviewGenerating(false);
+    }
+  };
+
+  // Trigger auto-generation when audio file changes (only if no manual preview)
+  useEffect(() => {
+    if (!audioFile || !previewAuto) return;
+    if (previewFile || previewUrl) return;
+    generatePreview(audioFile, previewStart, previewSeconds);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [audioFile]);
 
   // Cover preview
   useEffect(() => {
@@ -115,10 +163,39 @@ export default function TrackForm({ initialData, saving, onSubmit }: TrackFormPr
     return () => URL.revokeObjectURL(url);
   }, [coverFile]);
 
+  useEffect(() => {
+    return () => { if (previewBlobUrl) URL.revokeObjectURL(previewBlobUrl); };
+  }, [previewBlobUrl]);
+
+  const togglePreviewPlayback = () => {
+    if (!previewBlobUrl) return;
+    if (!previewAudioRef.current) {
+      previewAudioRef.current = new Audio(previewBlobUrl);
+      previewAudioRef.current.onended = () => setPreviewPlaying(false);
+    } else if (previewAudioRef.current.src !== previewBlobUrl) {
+      previewAudioRef.current.src = previewBlobUrl;
+    }
+    if (previewPlaying) {
+      previewAudioRef.current.pause();
+      setPreviewPlaying(false);
+    } else {
+      previewAudioRef.current.play().then(() => setPreviewPlaying(true)).catch(() => {});
+    }
+  };
+
+  const regeneratePreview = () => {
+    if (!audioFile) {
+      toast({ title: "Fichier audio requis", description: "Charge d'abord un fichier audio complet.", variant: "destructive" });
+      return;
+    }
+    generatePreview(audioFile, previewStart, previewSeconds);
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const tagsStr = tagList.join(", ");
     const result = trackSchema.safeParse({
-      title, artist, genre, bpm, musicalKey, version, label, duration, tags,
+      title, artist, genre, bpm, musicalKey, version, label, duration, tags: tagsStr,
       audioUrl, previewUrl, coverUrl, downloadUrl,
     });
     if (!result.success) {
@@ -130,7 +207,12 @@ export default function TrackForm({ initialData, saving, onSubmit }: TrackFormPr
       toast({ title: "Audio requis", description: "Ajoute un fichier ou une URL audio.", variant: "destructive" });
       return;
     }
-    onSubmit({ title, artist, genre, bpm, musicalKey, version, label, duration, tags, audioFile, audioUrl, previewFile, previewUrl, coverFile, coverUrl, downloadUrl, acapellaUrl, instrumentalUrl });
+    onSubmit({
+      title, artist, genre, bpm, musicalKey, version, label, duration,
+      tags: tagsStr,
+      audioFile, audioUrl, previewFile, previewUrl, coverFile, coverUrl,
+      downloadUrl, acapellaUrl, instrumentalUrl,
+    });
   };
 
   const ModeToggle = ({ mode, setMode }: { mode: SourceMode; setMode: (m: SourceMode) => void }) => (
@@ -144,52 +226,130 @@ export default function TrackForm({ initialData, saving, onSubmit }: TrackFormPr
     </div>
   );
 
+  const tagSuggestions = useMemo(() => {
+    const lower = new Set(tagList.map((t) => t.toLowerCase()));
+    const pool = Array.from(new Set([...existingTags, ...SUGGESTED_TAG_BANK]));
+    return pool.filter((t) => !lower.has(t.toLowerCase())).slice(0, 14);
+  }, [tagList, existingTags]);
+
+  // Progress / status pills
+  const statusPills = [
+    { ok: !!title && !!artist, label: "Titre + Remixeur" },
+    { ok: !!genre, label: "Genre" },
+    { ok: !!bpm && !!musicalKey, label: "BPM + Tonalité" },
+    { ok: tagList.length > 0, label: "Tags" },
+    { ok: !!audioFile || !!audioUrl || !!initialData?.audio_url, label: "Audio" },
+    { ok: !!previewFile || !!previewUrl || !!initialData?.preview_url, label: "Extrait" },
+    { ok: !!coverFile || !!coverUrl || !!initialData?.cover_url, label: "Pochette" },
+  ];
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      {extracting && (
-        <div className="text-xs text-primary flex items-center gap-1.5 bg-primary/5 border border-primary/20 rounded px-2 py-1.5">
-          <Sparkles className="h-3 w-3 animate-pulse" /> Extraction des métadonnées audio...
-        </div>
-      )}
-      {analyzingBpm && (
-        <div className="text-xs text-accent flex items-center gap-2 bg-accent/5 border border-accent/20 rounded px-2 py-1.5">
-          <Sparkles className="h-3 w-3 animate-pulse" />
-          <span>Analyse BPM en cours…</span>
-          <div className="flex-1 h-1 bg-accent/10 rounded overflow-hidden">
-            <div className="h-full bg-accent/60 animate-pulse" style={{ width: "60%" }} />
-          </div>
+      {/* Status bar */}
+      <div className="flex flex-wrap gap-1.5 items-center px-1">
+        {statusPills.map((p) => (
+          <span
+            key={p.label}
+            className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border transition-colors ${
+              p.ok ? "bg-primary/10 text-primary border-primary/30" : "bg-muted/40 text-muted-foreground border-border"
+            }`}
+          >
+            {p.ok ? "✓" : "·"} {p.label}
+          </span>
+        ))}
+      </div>
+
+      {(extracting || analyzingBpm || previewGenerating) && (
+        <div className="space-y-1">
+          {extracting && (
+            <div className="text-xs text-primary flex items-center gap-1.5 bg-primary/5 border border-primary/20 rounded px-2 py-1.5">
+              <Sparkles className="h-3 w-3 animate-pulse" /> Extraction des métadonnées audio...
+            </div>
+          )}
+          {analyzingBpm && (
+            <div className="text-xs text-accent flex items-center gap-2 bg-accent/5 border border-accent/20 rounded px-2 py-1.5">
+              <Sparkles className="h-3 w-3 animate-pulse" /> Analyse BPM en cours…
+            </div>
+          )}
+          {previewGenerating && (
+            <div className="text-xs text-primary flex items-center gap-2 bg-primary/5 border border-primary/20 rounded px-2 py-1.5">
+              <Wand2 className="h-3 w-3 animate-pulse" /> Génération de l'extrait audio…
+            </div>
+          )}
         </div>
       )}
 
-      <div className="grid lg:grid-cols-2 gap-6">
-        {/* Colonne métadonnées */}
-        <section className="space-y-3">
-          <h3 className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Métadonnées</h3>
+      <Tabs defaultValue="meta" className="w-full">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="meta" className="gap-1.5"><Disc3 className="h-3.5 w-3.5" /> Métadonnées</TabsTrigger>
+          <TabsTrigger value="files" className="gap-1.5"><FileAudio className="h-3.5 w-3.5" /> Fichiers</TabsTrigger>
+          <TabsTrigger value="links" className="gap-1.5"><LinkIcon className="h-3.5 w-3.5" /> Versions & Liens</TabsTrigger>
+        </TabsList>
+
+        {/* ============= MÉTADONNÉES ============= */}
+        <TabsContent value="meta" className="space-y-4 pt-4">
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
               <Label>Titre *</Label>
-              <Input value={title} onChange={(e) => setTitle(e.target.value)} required className="bg-secondary border-border" />
+              <Input value={title} onChange={(e) => setTitle(e.target.value)} required placeholder="Ma Philosophie" className="bg-secondary border-border" />
             </div>
             <div className="space-y-1">
               <Label>Remixeur *</Label>
-              <Input value={artist} onChange={(e) => setArtist(e.target.value)} required className="bg-secondary border-border" />
+              <Input value={artist} onChange={(e) => setArtist(e.target.value)} required placeholder="DJ Yass" className="bg-secondary border-border" />
             </div>
           </div>
-          <div className="grid grid-cols-3 gap-3">
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div className="space-y-1">
-              <Label>Genre</Label>
-              <Input value={genre} onChange={(e) => setGenre(e.target.value)} placeholder="House..." className="bg-secondary border-border" />
+              <Label className="flex items-center gap-1"><Music2 className="h-3 w-3" /> Genre</Label>
+              <Input
+                value={genre}
+                onChange={(e) => setGenre(e.target.value)}
+                placeholder="House, Hip-Hop, Reggaeton…"
+                list="track-genres-suggest"
+                className="bg-secondary border-border"
+              />
+              <datalist id="track-genres-suggest">
+                {existingGenres.map((g) => <option key={g} value={g} />)}
+              </datalist>
+              {existingGenres.length > 0 && (
+                <div className="flex gap-1 flex-wrap pt-1">
+                  {existingGenres.slice(0, 6).map((g) => (
+                    <button
+                      key={g}
+                      type="button"
+                      onClick={() => setGenre(g)}
+                      className={`text-[10px] px-2 py-0.5 rounded-full border transition-colors ${
+                        genre === g ? "bg-primary text-primary-foreground border-primary" : "bg-muted/40 text-muted-foreground border-border hover:text-foreground"
+                      }`}
+                    >
+                      {g}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
+
             <div className="space-y-1">
               <Label>BPM</Label>
-              <Input type="number" min={40} max={220} value={bpm} onChange={(e) => setBpm(e.target.value)} className="bg-secondary border-border" />
+              <Input type="number" min={40} max={220} value={bpm} onChange={(e) => setBpm(e.target.value)} placeholder="128" className="bg-secondary border-border font-mono" />
             </div>
+
             <div className="space-y-1">
               <Label>Tonalité</Label>
-              <Input value={musicalKey} onChange={(e) => setMusicalKey(e.target.value)} placeholder="Am" className="bg-secondary border-border" />
+              <Select value={musicalKey || "__none"} onValueChange={(v) => setMusicalKey(v === "__none" ? "" : v)}>
+                <SelectTrigger className="bg-secondary border-border font-mono">
+                  <SelectValue placeholder="—" />
+                </SelectTrigger>
+                <SelectContent className="max-h-72">
+                  <SelectItem value="__none">— Aucune</SelectItem>
+                  {MUSICAL_KEYS.map((k) => <SelectItem key={k} value={k} className="font-mono">{k}</SelectItem>)}
+                </SelectContent>
+              </Select>
             </div>
           </div>
-          <div className="grid grid-cols-3 gap-3">
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div className="space-y-1">
               <Label>Version</Label>
               <Select value={version} onValueChange={setVersion}>
@@ -199,99 +359,265 @@ export default function TrackForm({ initialData, saving, onSubmit }: TrackFormPr
             </div>
             <div className="space-y-1">
               <Label>Label</Label>
-              <Input value={label} onChange={(e) => setLabel(e.target.value)} className="bg-secondary border-border" />
+              <Input value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Universal, Indie…" className="bg-secondary border-border" />
             </div>
             <div className="space-y-1">
               <Label>Durée</Label>
-              <Input value={duration} onChange={(e) => setDuration(e.target.value)} placeholder="4:30" className="bg-secondary border-border" />
+              <Input value={duration} onChange={(e) => setDuration(e.target.value)} placeholder="4:30" className="bg-secondary border-border font-mono" />
             </div>
-          </div>
-          <div className="space-y-1">
-            <Label>Tags (séparés par des virgules)</Label>
-            <Input value={tags} onChange={(e) => setTags(e.target.value)} placeholder="house, melodic, summer" className="bg-secondary border-border" />
           </div>
 
-          <div className="pt-3 border-t border-border space-y-3">
-            <h3 className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Liens additionnels</h3>
-            <div className="space-y-1">
-              <Label className="flex items-center gap-1">
-                Lien de téléchargement
-                {(initialData as any)?.download_url && <span className="text-xs text-muted-foreground ml-1">(actuel conservé si vide)</span>}
-              </Label>
-              <Input type="url" value={downloadUrl} onChange={(e) => setDownloadUrl(e.target.value)} placeholder="https://example.com/download" className="bg-secondary border-border" />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <Label className="text-xs">🎤 URL Acapella</Label>
-                <Input type="url" value={acapellaUrl} onChange={(e) => setAcapellaUrl(e.target.value)} placeholder="https://..." className="bg-secondary border-border" />
+          {/* Tags chip input */}
+          <div className="space-y-2">
+            <Label className="flex items-center gap-1"><TagIcon className="h-3 w-3" /> Tags <span className="text-muted-foreground font-normal">— Entrée ou virgule pour valider</span></Label>
+            <TagsInput value={tagList} onChange={setTagList} />
+            {tagSuggestions.length > 0 && (
+              <div className="flex flex-wrap gap-1 pt-1">
+                <span className="text-[10px] uppercase tracking-wider text-muted-foreground self-center mr-1">Suggestions :</span>
+                {tagSuggestions.map((t) => (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => setTagList((prev) => [...prev, t])}
+                    className="text-[10px] px-2 py-0.5 rounded-full border border-dashed border-border text-muted-foreground hover:text-primary hover:border-primary/60 transition-colors"
+                  >
+                    + {t}
+                  </button>
+                ))}
               </div>
-              <div className="space-y-1">
-                <Label className="text-xs">🎹 URL Instrumentale</Label>
-                <Input type="url" value={instrumentalUrl} onChange={(e) => setInstrumentalUrl(e.target.value)} placeholder="https://..." className="bg-secondary border-border" />
-              </div>
-            </div>
+            )}
           </div>
-        </section>
+        </TabsContent>
 
-        {/* Colonne médias */}
-        <section className="space-y-3">
-          <h3 className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Médias</h3>
-          <div className="space-y-1">
-            <Label className="flex items-center gap-1">
-              Fichier audio (MP3/WAV)
-              {initialData?.audio_url && <span className="text-xs text-muted-foreground ml-1">(actuel conservé si vide)</span>}
+        {/* ============= FICHIERS ============= */}
+        <TabsContent value="files" className="space-y-5 pt-4">
+          {/* Audio principal */}
+          <div className="space-y-2 rounded-lg border border-border bg-card/40 p-3">
+            <Label className="flex items-center gap-1.5 text-sm">
+              <FileAudio className="h-4 w-4 text-primary" />
+              Fichier audio complet
+              {initialData?.audio_url && <span className="text-xs text-muted-foreground ml-1 font-normal">(actuel conservé si vide)</span>}
               <ModeToggle mode={audioMode} setMode={setAudioMode} />
             </Label>
             {audioMode === "file" ? (
               <FileDropzone
                 accept="*/*" file={audioFile} onFile={setAudioFile} validate={validateAudioFile}
-                helper="Tout format · métadonnées auto-détectées"
+                helper="MP3, WAV, FLAC… Métadonnées + BPM auto-détectés. Extrait public généré automatiquement."
               />
             ) : (
               <Input type="url" value={audioUrl} onChange={(e) => setAudioUrl(e.target.value)} placeholder="https://example.com/track.mp3" className="bg-secondary border-border" />
             )}
           </div>
 
-          <div className="space-y-1">
-            <Label className="flex items-center gap-1">
-              Extrait/Preview
-              {initialData?.preview_url && <span className="text-xs text-muted-foreground ml-1">(actuel conservé si vide)</span>}
-              <ModeToggle mode={previewMode} setMode={setPreviewMode} />
-            </Label>
-            {previewMode === "file" ? (
-              <FileDropzone
-                accept="*/*" file={previewFile} onFile={setPreviewFile} validate={validateAudioFile}
-                helper="Tout format · aucune limite"
-              />
+          {/* Preview avec auto-génération */}
+          <div className="space-y-3 rounded-lg border border-primary/30 bg-primary/5 p-3">
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <Label className="flex items-center gap-1.5 text-sm m-0">
+                <Wand2 className="h-4 w-4 text-primary" />
+                Extrait public (preview)
+                {initialData?.preview_url && <span className="text-xs text-muted-foreground ml-1 font-normal">(actuel conservé si vide)</span>}
+              </Label>
+              <label className="flex items-center gap-1.5 text-xs cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={previewAuto}
+                  onChange={(e) => setPreviewAuto(e.target.checked)}
+                  className="accent-primary"
+                />
+                Générer automatiquement
+              </label>
+            </div>
+
+            {previewAuto ? (
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  <div className="space-y-1">
+                    <Label className="text-xs">Départ</Label>
+                    <Select value={previewStart} onValueChange={(v) => setPreviewStart(v as PreviewStartMode)}>
+                      <SelectTrigger className="h-9 bg-secondary border-border"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="intro">Intro (0%)</SelectItem>
+                        <SelectItem value="quarter">Premier quart (25%)</SelectItem>
+                        <SelectItem value="middle">Milieu (45%)</SelectItem>
+                        <SelectItem value="drop">Drop (60%)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Durée</Label>
+                    <Select value={String(previewSeconds)} onValueChange={(v) => setPreviewSeconds(Number(v))}>
+                      <SelectTrigger className="h-9 bg-secondary border-border"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="15">15 secondes</SelectItem>
+                        <SelectItem value="30">30 secondes</SelectItem>
+                        <SelectItem value="45">45 secondes</SelectItem>
+                        <SelectItem value="60">60 secondes</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1 col-span-2 sm:col-span-1">
+                    <Label className="text-xs">Action</Label>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-9 w-full gap-1.5"
+                      disabled={!audioFile || previewGenerating}
+                      onClick={regeneratePreview}
+                    >
+                      <RefreshCw className={`h-3.5 w-3.5 ${previewGenerating ? "animate-spin" : ""}`} />
+                      {previewBlobUrl ? "Régénérer" : "Générer"}
+                    </Button>
+                  </div>
+                </div>
+
+                {previewFile && previewBlobUrl && (
+                  <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-background/60 border border-border">
+                    <Button type="button" variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={togglePreviewPlayback}>
+                      {previewPlaying ? <Pause className="h-4 w-4 text-primary" /> : <Play className="h-4 w-4 text-primary fill-current" />}
+                    </Button>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-medium truncate">Extrait généré · {previewSeconds}s</p>
+                      <p className="text-[10px] text-muted-foreground">{(previewFile.size / 1024).toFixed(0)} Ko · WAV mono 22kHz</p>
+                    </div>
+                    <Badge variant="outline" className="text-[10px] border-primary/40 text-primary">AUTO</Badge>
+                  </div>
+                )}
+
+                {!audioFile && !initialData && (
+                  <p className="text-[11px] text-muted-foreground italic">
+                    L'extrait sera créé automatiquement dès que vous ajouterez un fichier audio complet.
+                  </p>
+                )}
+              </div>
             ) : (
-              <Input type="url" value={previewUrl} onChange={(e) => setPreviewUrl(e.target.value)} placeholder="https://example.com/preview.mp3" className="bg-secondary border-border" />
+              <div className="space-y-2">
+                <ModeToggle mode={previewMode} setMode={setPreviewMode} />
+                {previewMode === "file" ? (
+                  <FileDropzone
+                    accept="*/*" file={previewFile} onFile={setPreviewFile} validate={validateAudioFile}
+                    helper="Format libre. ~30s recommandés pour le public non abonné."
+                  />
+                ) : (
+                  <Input type="url" value={previewUrl} onChange={(e) => setPreviewUrl(e.target.value)} placeholder="https://example.com/preview.mp3" className="bg-secondary border-border" />
+                )}
+              </div>
             )}
           </div>
 
-          <div className="space-y-1">
-            <Label className="flex items-center gap-1">
-              Cover (image)
-              {initialData?.cover_url && <span className="text-xs text-muted-foreground ml-1">(actuelle conservée si vide)</span>}
+          {/* Cover */}
+          <div className="space-y-2 rounded-lg border border-border bg-card/40 p-3">
+            <Label className="flex items-center gap-1.5 text-sm">
+              <ImageIcon className="h-4 w-4 text-accent" />
+              Pochette
+              {initialData?.cover_url && <span className="text-xs text-muted-foreground ml-1 font-normal">(actuelle conservée si vide)</span>}
               <ModeToggle mode={coverMode} setMode={setCoverMode} />
             </Label>
             {coverMode === "file" ? (
               <FileDropzone
                 accept="*/*" file={coverFile} onFile={setCoverFile} validate={validateImageFile}
                 preview={coverFile ? coverPreview ?? undefined : undefined}
-                helper="Tout type d'image · aucune limite"
+                helper="JPG, PNG, WebP. Format carré recommandé (1000×1000)."
               />
             ) : (
               <Input type="url" value={coverUrl} onChange={(e) => setCoverUrl(e.target.value)} placeholder="https://example.com/cover.jpg" className="bg-secondary border-border" />
             )}
           </div>
-        </section>
-      </div>
+        </TabsContent>
 
-      <div className="flex justify-end pt-2 border-t border-border">
+        {/* ============= VERSIONS & LIENS ============= */}
+        <TabsContent value="links" className="space-y-4 pt-4">
+          <div className="space-y-2">
+            <Label>Lien de téléchargement direct (optionnel)</Label>
+            <Input type="url" value={downloadUrl} onChange={(e) => setDownloadUrl(e.target.value)} placeholder="https://drive.google.com/… ou https://wetransfer.com/…" className="bg-secondary border-border" />
+            <p className="text-[11px] text-muted-foreground">
+              Si renseigné, ce lien sera utilisé prioritairement pour le bouton de téléchargement. Sinon le fichier hébergé sera servi.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-border">
+            <div className="space-y-1">
+              <Label className="text-xs flex items-center gap-1">🎤 URL Acapella</Label>
+              <Input type="url" value={acapellaUrl} onChange={(e) => setAcapellaUrl(e.target.value)} placeholder="https://…" className="bg-secondary border-border" />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs flex items-center gap-1">🎹 URL Instrumentale</Label>
+              <Input type="url" value={instrumentalUrl} onChange={(e) => setInstrumentalUrl(e.target.value)} placeholder="https://…" className="bg-secondary border-border" />
+            </div>
+          </div>
+        </TabsContent>
+      </Tabs>
+
+      <div className="flex items-center justify-end gap-2 pt-3 border-t border-border">
         <Button variant="hero" type="submit" disabled={saving} className="min-w-[200px]">
           {saving ? "Enregistrement..." : initialData ? "Modifier la track" : "Ajouter la track"}
         </Button>
       </div>
     </form>
+  );
+}
+
+// =========== Chip-based Tags Input ===========
+function TagsInput({ value, onChange }: { value: string[]; onChange: (next: string[]) => void }) {
+  const [draft, setDraft] = useState("");
+
+  const commit = (raw: string) => {
+    const parts = raw.split(",").map((s) => s.trim()).filter(Boolean);
+    if (!parts.length) return;
+    const lower = new Set(value.map((v) => v.toLowerCase()));
+    const next = [...value];
+    for (const p of parts) {
+      if (!lower.has(p.toLowerCase())) {
+        next.push(p);
+        lower.add(p.toLowerCase());
+      }
+    }
+    onChange(next);
+    setDraft("");
+  };
+
+  const removeAt = (i: number) => onChange(value.filter((_, idx) => idx !== i));
+
+  return (
+    <div className="flex flex-wrap items-center gap-1.5 min-h-[44px] rounded-md border border-border bg-secondary px-2 py-1.5 focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
+      {value.map((tag, i) => (
+        <span
+          key={`${tag}-${i}`}
+          className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/30"
+        >
+          {tag}
+          <button
+            type="button"
+            onClick={() => removeAt(i)}
+            className="hover:text-destructive transition-colors"
+            aria-label={`Retirer ${tag}`}
+          >
+            <X className="h-3 w-3" />
+          </button>
+        </span>
+      ))}
+      <input
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === ",") {
+            e.preventDefault();
+            commit(draft);
+          } else if (e.key === "Backspace" && !draft && value.length) {
+            removeAt(value.length - 1);
+          }
+        }}
+        onBlur={() => draft && commit(draft)}
+        onPaste={(e) => {
+          const text = e.clipboardData.getData("text");
+          if (text.includes(",")) {
+            e.preventDefault();
+            commit(text);
+          }
+        }}
+        placeholder={value.length === 0 ? "Tape un tag puis Entrée…" : ""}
+        className="flex-1 min-w-[120px] bg-transparent outline-none text-sm py-0.5"
+      />
+    </div>
   );
 }
