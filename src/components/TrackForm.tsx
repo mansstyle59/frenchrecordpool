@@ -207,6 +207,71 @@ export default function TrackForm({ initialData, saving, onSubmit, existingGenre
     generatePreview(audioFile, previewStart, previewSeconds);
   };
 
+  const importFromSoundCloud = async () => {
+    const url = scUrl.trim();
+    if (!url || !/soundcloud\.com/i.test(url)) {
+      toast({ title: "Lien invalide", description: "Colle un lien SoundCloud valide.", variant: "destructive" });
+      return;
+    }
+    setScImporting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("cover-tools", {
+        body: { action: "soundcloud_meta", url },
+      });
+      if (error || !data || (data as any).error) {
+        throw new Error((data as any)?.error || error?.message || "Échec de l'import");
+      }
+      const meta = data as { thumbnail?: string; title?: string; author_name?: string };
+
+      // Parse "Artist - Title" pattern when present
+      let parsedArtist = meta.author_name || "";
+      let parsedTitle = meta.title || "";
+      if (parsedTitle && /\s[-–—]\s/.test(parsedTitle)) {
+        const [left, ...rest] = parsedTitle.split(/\s[-–—]\s/);
+        parsedArtist = parsedArtist || left.trim();
+        parsedTitle = rest.join(" - ").trim();
+      }
+
+      // Fill audio + preview URL with the SoundCloud page URL (public listenable link)
+      setAudioMode("url");
+      setAudioUrl(url);
+      setPreviewMode("url");
+      setPreviewUrl(url);
+      setPreviewAuto(false);
+      setDownloadUrl((v) => v || url);
+
+      if (parsedTitle) setTitle((v) => v || parsedTitle);
+      if (parsedArtist) setArtist((v) => v || parsedArtist);
+
+      // Cover from SoundCloud artwork
+      if (meta.thumbnail) {
+        try {
+          const proxy = await supabase.functions.invoke("cover-tools", {
+            body: { action: "fetch", url: meta.thumbnail },
+          });
+          const dataUrl = (proxy.data as any)?.dataUrl as string | undefined;
+          if (dataUrl) {
+            const res = await fetch(dataUrl);
+            const blob = await res.blob();
+            const file = new File([blob], "soundcloud-cover.jpg", { type: blob.type || "image/jpeg" });
+            setCoverFile(file);
+            setCoverUrl("");
+          } else {
+            setCoverUrl(meta.thumbnail);
+          }
+        } catch {
+          setCoverUrl(meta.thumbnail);
+        }
+      }
+
+      toast({ title: "Import SoundCloud", description: "Métadonnées et pochette importées." });
+    } catch (err: any) {
+      toast({ title: "Erreur SoundCloud", description: err?.message || "Import impossible", variant: "destructive" });
+    } finally {
+      setScImporting(false);
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const tagsStr = tagList.join(", ");
