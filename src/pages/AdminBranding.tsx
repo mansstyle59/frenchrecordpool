@@ -359,6 +359,6 @@ export default function AdminBranding() {
           </Link>
         </div>
       </div>
-    </div>
+    </AdminLayout>
   );
 }
