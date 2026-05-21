@@ -81,7 +81,7 @@ export default function Tracks() {
         <div className="flex flex-col sm:flex-row gap-3 mb-4">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Rechercher titre, artiste, genre..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10 bg-secondary border-border" />
+            <Input placeholder="Rechercher titre, remixeur, genre..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10 bg-secondary border-border" />
           </div>
 
           <Select value={genre} onValueChange={setGenre}>

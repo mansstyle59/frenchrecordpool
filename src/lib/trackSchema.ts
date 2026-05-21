@@ -1,14 +1,14 @@
 import { z } from "zod";
 
 // Aucune restriction d'upload : tout fichier accepté, pas de limite de taille,
-// pas de validation stricte des champs. Seuls le titre et l'artiste restent requis.
+// pas de validation stricte des champs. Seuls le titre et le remixeur restent requis.
 
 export const MAX_AUDIO_SIZE = Number.POSITIVE_INFINITY;
 export const MAX_COVER_SIZE = Number.POSITIVE_INFINITY;
 
 export const trackSchema = z.object({
   title: z.string().trim().min(1, "Titre requis"),
-  artist: z.string().trim().min(1, "Artiste requis"),
+  artist: z.string().trim().min(1, "Remixeur requis"),
   genre: z.string().optional().or(z.literal("")),
   bpm: z.union([z.string(), z.number()]).optional(),
   musicalKey: z.string().optional().or(z.literal("")),

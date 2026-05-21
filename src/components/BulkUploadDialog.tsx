@@ -244,7 +244,7 @@ export default function BulkUploadDialog({ open, onOpenChange, userId }: BulkUpl
   const handleUpload = async () => {
     const valid = rows.filter((r) => r.title && r.artist && r.status !== "done");
     if (valid.length === 0) {
-      toast({ title: "Rien à publier", description: "Vérifie titre + artiste pour chaque ligne.", variant: "destructive" });
+      toast({ title: "Rien à publier", description: "Vérifie titre + remixeur pour chaque ligne.", variant: "destructive" });
       return;
     }
     setUploading(true);
@@ -356,7 +356,7 @@ export default function BulkUploadDialog({ open, onOpenChange, userId }: BulkUpl
           <p className="text-sm">
             <span className="text-primary font-medium">Cliquez</span> ou glissez plusieurs fichiers audio
           </p>
-          <p className="text-xs text-muted-foreground mt-1">Métadonnées (BPM, titre, artiste...) extraites automatiquement</p>
+          <p className="text-xs text-muted-foreground mt-1">Métadonnées (BPM, titre, remixeur...) extraites automatiquement</p>
         </div>
 
         {rows.length > 0 && (
@@ -367,7 +367,7 @@ export default function BulkUploadDialog({ open, onOpenChange, userId }: BulkUpl
                   <th className="px-2 py-2 w-6"></th>
                   <th className="px-2 py-2 w-14">Cover</th>
                   <th className="px-2 py-2">Titre *</th>
-                  <th className="px-2 py-2">Artiste *</th>
+                  <th className="px-2 py-2">Remixeur *</th>
                   <th className="px-2 py-2">Genre</th>
                   <th className="px-2 py-2 w-16">BPM</th>
                   <th className="px-2 py-2 w-16">Key</th>

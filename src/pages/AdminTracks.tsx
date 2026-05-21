@@ -326,7 +326,7 @@ export default function AdminTracks() {
             <div className="relative flex-1 min-w-[200px]">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Titre, artiste, label, tag..."
+                placeholder="Titre, remixeur, label, tag..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="pl-10 bg-secondary border-border"
@@ -386,7 +386,7 @@ export default function AdminTracks() {
                   </th>
                   <th className="px-4 py-3">Cover</th>
                   <th className="px-4 py-3">Titre</th>
-                  <th className="px-4 py-3">Artiste</th>
+                  <th className="px-4 py-3">Remixeur</th>
                   <th className="px-4 py-3">Genre</th>
                   <th className="px-4 py-3">Label</th>
                   <th className="px-4 py-3">BPM</th>

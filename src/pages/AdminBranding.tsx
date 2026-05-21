@@ -722,7 +722,7 @@ function SitePreview({ draft, device }: { draft: Branding; device: "desktop" | "
         </div>
         {!compact && (
           <nav className="flex items-center gap-4 text-xs text-muted-foreground">
-            <span>Tracks</span><span>Artistes</span><span>Genres</span><span>Top</span>
+            <span>Tracks</span><span>Remixeurs</span><span>Genres</span><span>Top</span>
           </nav>
         )}
         <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90 h-8 text-xs">Connexion</Button>
@@ -764,7 +764,7 @@ function SitePreview({ draft, device }: { draft: Branding; device: "desktop" | "
       <div className={cn("grid gap-3", compact ? "grid-cols-2" : "grid-cols-3")}>
         {[
           { l: "Tracks", v: "1 247", c: "light_primary" },
-          { l: "Artistes", v: "328", c: "light_accent" },
+          { l: "Remixeurs", v: "328", c: "light_accent" },
           { l: "DJs", v: "5 612", c: "light_foreground" },
         ].slice(0, compact ? 2 : 3).map((s) => (
           <div key={s.l} className="rounded-xl p-4 border border-border bg-secondary/40" style={{ borderRadius: draft.radius }}>
