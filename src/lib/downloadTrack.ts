@@ -1,13 +1,17 @@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { requireSubscription } from "@/components/SubscriptionRequiredDialog";
 
 export async function downloadTrack(trackId: string, user: { id: string } | null, hasActiveSubscription: boolean) {
   if (!user) {
-    toast({ title: "Connectez-vous pour télécharger", variant: "destructive" });
+    requireSubscription({
+      title: "Connexion requise",
+      description: "Connectez-vous puis souscrivez à une offre pour télécharger.",
+    });
     return;
   }
   if (!hasActiveSubscription) {
-    toast({ title: "Abonnement requis", description: "Un abonnement actif est nécessaire pour télécharger.", variant: "destructive" });
+    requireSubscription();
     return;
   }
 

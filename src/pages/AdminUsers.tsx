@@ -1,10 +1,13 @@
 import { useState, useMemo } from "react";
-import { Link } from "react-router-dom";
-import { KeyRound, Search, Shield, ShieldOff, UserCheck, X } from "lucide-react";
+import { KeyRound, Search, Shield, ShieldOff, UserCheck, X, Ban, CheckCircle2, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,6 +21,7 @@ interface ProfileRow {
   dj_name: string | null;
   email: string | null;
   avatar_url: string | null;
+  is_blocked: boolean | null;
   created_at: string;
 }
 
@@ -27,6 +31,8 @@ export default function AdminUsers() {
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState<"all" | "admin" | "client">("all");
   const [subFilter, setSubFilter] = useState<"all" | "active" | "none">("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "blocked">("all");
+  const [confirmDelete, setConfirmDelete] = useState<ProfileRow | null>(null);
 
   const { data: profiles = [] } = useQuery({
     queryKey: ["admin-profiles"],
@@ -90,11 +96,14 @@ export default function AdminUsers() {
         (!sub.current_period_end || new Date(sub.current_period_end) > new Date());
       if (subFilter === "active" && !active) return false;
       if (subFilter === "none" && active) return false;
+
+      if (statusFilter === "blocked" && !p.is_blocked) return false;
+      if (statusFilter === "active" && p.is_blocked) return false;
       return true;
     });
-  }, [profiles, search, roleFilter, subFilter, rolesByUser, subsByUser]);
+  }, [profiles, search, roleFilter, subFilter, statusFilter, rolesByUser, subsByUser]);
 
-  const hasFilters = search || roleFilter !== "all" || subFilter !== "all";
+  const hasFilters = search || roleFilter !== "all" || subFilter !== "all" || statusFilter !== "all";
 
   const handlePasswordReset = async (p: ProfileRow) => {
     if (!p.email) return;
@@ -150,7 +159,49 @@ export default function AdminUsers() {
     queryClient.invalidateQueries({ queryKey: ["admin-all-roles"] });
   };
 
-  const resetFilters = () => { setSearch(""); setRoleFilter("all"); setSubFilter("all"); };
+  const toggleBlock = async (p: ProfileRow) => {
+    if (p.user_id === user?.id) {
+      toast({ title: "Action interdite", description: "Tu ne peux pas te bloquer toi-même.", variant: "destructive" });
+      return;
+    }
+    const next = !p.is_blocked;
+    if (!confirm(next ? `Bloquer ${p.email} ?` : `Débloquer ${p.email} ?`)) return;
+    const { error } = await supabase.rpc("admin_set_user_blocked" as any, { _user_id: p.user_id, _blocked: next });
+    if (error) {
+      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      return;
+    }
+    await logAdminAction({
+      actorId: user!.id, action: next ? "user.block" : "user.unblock",
+      entityType: "user", entityId: p.user_id, entityLabel: p.email ?? p.user_id,
+    });
+    toast({ title: next ? "Utilisateur bloqué" : "Utilisateur débloqué" });
+    queryClient.invalidateQueries({ queryKey: ["admin-profiles"] });
+    queryClient.invalidateQueries({ queryKey: ["admin-all-subs"] });
+  };
+
+  const deleteUser = async (p: ProfileRow) => {
+    setConfirmDelete(null);
+    if (p.user_id === user?.id) {
+      toast({ title: "Action interdite", description: "Tu ne peux pas te supprimer toi-même.", variant: "destructive" });
+      return;
+    }
+    const { error } = await supabase.rpc("admin_delete_user" as any, { _user_id: p.user_id });
+    if (error) {
+      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      return;
+    }
+    await logAdminAction({
+      actorId: user!.id, action: "user.delete",
+      entityType: "user", entityId: p.user_id, entityLabel: p.email ?? p.user_id,
+    });
+    toast({ title: "Utilisateur supprimé" });
+    queryClient.invalidateQueries({ queryKey: ["admin-profiles"] });
+    queryClient.invalidateQueries({ queryKey: ["admin-all-roles"] });
+    queryClient.invalidateQueries({ queryKey: ["admin-all-subs"] });
+  };
+
+  const resetFilters = () => { setSearch(""); setRoleFilter("all"); setSubFilter("all"); setStatusFilter("all"); };
 
   return (
     <AdminLayout
@@ -178,6 +229,14 @@ export default function AdminUsers() {
               <SelectItem value="all">Tout abonnement</SelectItem>
               <SelectItem value="active">Abonnement actif</SelectItem>
               <SelectItem value="none">Sans abonnement actif</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as any)}>
+            <SelectTrigger className="w-full lg:w-44 bg-secondary border-border"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tous les statuts</SelectItem>
+              <SelectItem value="active">Comptes actifs</SelectItem>
+              <SelectItem value="blocked">Comptes bloqués</SelectItem>
             </SelectContent>
           </Select>
           {hasFilters && (
@@ -226,7 +285,12 @@ export default function AdminUsers() {
                       {isAdminRole ? (
                         <Badge className="bg-accent/15 text-accent border-accent/30 gap-1"><Shield className="h-3 w-3" /> Admin</Badge>
                       ) : (
-                        <Badge variant="outline" className="text-xs">Client</Badge>
+              <Badge variant="outline" className="text-xs">Client</Badge>
+                      )}
+                      {p.is_blocked && (
+                        <Badge className="ml-1 bg-destructive/15 text-destructive border-destructive/30 gap-1">
+                          <Ban className="h-3 w-3" /> Bloqué
+                        </Badge>
                       )}
                     </td>
                     <td className="px-4 py-3">
@@ -253,6 +317,27 @@ export default function AdminUsers() {
                         <Button variant="ghost" size="sm" className="gap-1" onClick={() => handlePasswordReset(p)}>
                           <KeyRound className="h-3 w-3" /> Mdp
                         </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className={`gap-1 ${p.is_blocked ? "text-primary" : "text-amber-500 hover:text-amber-600"}`}
+                          onClick={() => toggleBlock(p)}
+                          disabled={p.user_id === user?.id}
+                          title={p.is_blocked ? "Débloquer" : "Bloquer"}
+                        >
+                          {p.is_blocked ? <CheckCircle2 className="h-3 w-3" /> : <Ban className="h-3 w-3" />}
+                          {p.is_blocked ? "Débloquer" : "Bloquer"}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="gap-1 text-destructive hover:text-destructive hover:bg-destructive/10"
+                          onClick={() => setConfirmDelete(p)}
+                          disabled={p.user_id === user?.id}
+                          title="Supprimer"
+                        >
+                          <Trash2 className="h-3 w-3" /> Supprimer
+                        </Button>
                       </div>
                     </td>
                   </tr>
@@ -262,6 +347,28 @@ export default function AdminUsers() {
           </table>
         </div>
       </div>
+
+      <AlertDialog open={!!confirmDelete} onOpenChange={(o) => !o && setConfirmDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer définitivement ce compte ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmDelete?.email ?? confirmDelete?.dj_name} sera supprimé : profil,
+              abonnements, favoris, téléchargements et accès. Cette action est
+              irréversible.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => confirmDelete && deleteUser(confirmDelete)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Supprimer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AdminLayout>
   );
 }

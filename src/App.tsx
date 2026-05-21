@@ -8,6 +8,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { PlayerProvider } from "@/contexts/PlayerContext";
 import { BrandingProvider } from "@/contexts/BrandingContext";
 import MiniPlayer from "@/components/MiniPlayer";
+import SubscriptionRequiredDialog from "@/components/SubscriptionRequiredDialog";
 import Index from "./pages/Index";
 import Tracks from "./pages/Tracks";
 import TrackDetail from "./pages/TrackDetail";
@@ -72,6 +73,7 @@ const App = () => (
               <Route path="*" element={<NotFound />} />
             </Routes>
             <MiniPlayer />
+            <SubscriptionRequiredDialog />
           </BrowserRouter>
           </TooltipProvider>
         </PlayerProvider>
