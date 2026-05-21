@@ -82,6 +82,9 @@ const App = () => (
               <Route path="/dj/edit/:id" element={<DjEdit />} />
               <Route path="/pricing" element={<Pricing />} />
               <Route path="/artists" element={<Artists />} />
+              <Route path="/artists/:slug" element={<ArtistDetail kind="artist" />} />
+              <Route path="/remixers" element={<Remixers />} />
+              <Route path="/remixers/:slug" element={<ArtistDetail kind="remixer" />} />
 
               <Route path="/genres" element={<Genres />} />
               <Route path="/top" element={<Navigate to="/new" replace />} />
