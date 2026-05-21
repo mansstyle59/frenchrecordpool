@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import FileDropzone from "@/components/FileDropzone";
+import CoverPicker from "@/components/CoverPicker";
 import { extractAudioMetadataFast, needsBpmAnalysis, analyzeBpmAsync } from "@/lib/audioMetadata";
 import { generateAudioPreview, type PreviewStartMode } from "@/lib/audioPreview";
 import { trackSchema, validateAudioFile, validateImageFile } from "@/lib/trackSchema";
@@ -515,25 +516,20 @@ export default function TrackForm({ initialData, saving, onSubmit, existingGenre
             )}
           </div>
 
-          {/* Cover */}
-          <div className="space-y-2 rounded-lg border border-border bg-card/40 p-3">
-            <Label className="flex items-center gap-1.5 text-sm">
-              <ImageIcon className="h-4 w-4 text-accent" />
-              Pochette
-              {initialData?.cover_url && <span className="text-xs text-muted-foreground ml-1 font-normal">(actuelle conservée si vide)</span>}
-              <ModeToggle mode={coverMode} setMode={setCoverMode} />
-            </Label>
-            {coverMode === "file" ? (
-              <FileDropzone
-                accept="*/*" file={coverFile} onFile={setCoverFile} validate={validateImageFile}
-                preview={coverFile ? coverPreview ?? undefined : undefined}
-                helper="JPG, PNG, WebP. Format carré recommandé (1000×1000)."
-              />
-            ) : (
-              <Input type="url" value={coverUrl} onChange={(e) => setCoverUrl(e.target.value)} placeholder="https://example.com/cover.jpg" className="bg-secondary border-border" />
-            )}
-          </div>
+          {/* Cover with multi-source picker */}
+          <CoverPicker
+            artist={artist}
+            title={title}
+            genre={genre}
+            coverFile={coverFile}
+            coverUrl={coverUrl}
+            coverPreview={coverPreview}
+            currentCoverUrl={initialData?.cover_url ?? null}
+            onPickFile={(f) => { setCoverFile(f); if (f) setCoverUrl(""); }}
+            onPickUrl={(u) => { setCoverUrl(u); if (u) setCoverFile(null); }}
+          />
         </TabsContent>
+
 
         {/* ============= VERSIONS & LIENS ============= */}
         <TabsContent value="links" className="space-y-4 pt-4">

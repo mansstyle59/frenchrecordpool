@@ -2,3 +2,6 @@ project_id = "etwvfqjwnnbaaxhkljaz"
 
 [functions.download-track]
 verify_jwt = false
+
+[functions.cover-tools]
+verify_jwt = false
