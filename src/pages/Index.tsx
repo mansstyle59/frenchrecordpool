@@ -203,7 +203,7 @@ export default function Index() {
           </motion.div>
 
           {featured.length > 3 && (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mt-5">
+            <div className="grid-auto-cards mt-5">
               {featured.slice(3).map((t, i) => (
                 <button
                   key={t.id}
