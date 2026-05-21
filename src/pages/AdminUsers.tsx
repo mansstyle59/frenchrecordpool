@@ -1,8 +1,12 @@
 import { useState, useMemo } from "react";
-import { KeyRound, Search, Shield, ShieldOff, UserCheck, X, Ban, CheckCircle2, Trash2, Unlock, Lock } from "lucide-react";
+import {
+  KeyRound, Search, Shield, ShieldOff, UserCheck, X, Ban, CheckCircle2, Trash2,
+  Unlock, Lock, Users, Crown, Pencil, Eye, Download as DownloadIcon,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -14,6 +18,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { logAdminAction } from "@/lib/auditLog";
 import AdminLayout from "@/components/admin/AdminLayout";
+import AdminStatsRow from "@/components/admin/AdminStatsRow";
+import UserEditDialog from "@/components/admin/UserEditDialog";
+import UserDetailDialog from "@/components/admin/UserDetailDialog";
 
 interface ProfileRow {
   id: string;
@@ -33,6 +40,10 @@ export default function AdminUsers() {
   const [subFilter, setSubFilter] = useState<"all" | "active" | "none">("all");
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "blocked">("all");
   const [confirmDelete, setConfirmDelete] = useState<ProfileRow | null>(null);
+  const [bulkAction, setBulkAction] = useState<null | "block" | "unblock" | "delete">(null);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [editing, setEditing] = useState<ProfileRow | null>(null);
+  const [viewing, setViewing] = useState<ProfileRow | null>(null);
 
   const { data: profiles = [] } = useQuery({
     queryKey: ["admin-profiles"],
@@ -80,6 +91,18 @@ export default function AdminUsers() {
     return m;
   }, [subs]);
 
+  const stats = useMemo(() => {
+    let total = profiles.length;
+    let admins = 0, blocked = 0, activeSubs = 0;
+    profiles.forEach((p) => {
+      if ((rolesByUser.get(p.user_id) ?? []).includes("admin")) admins++;
+      if (p.is_blocked) blocked++;
+      const s = subsByUser.get(p.user_id);
+      if (s && s.status === "active" && (!s.current_period_end || new Date(s.current_period_end) > new Date())) activeSubs++;
+    });
+    return { total, admins, blocked, activeSubs };
+  }, [profiles, rolesByUser, subsByUser]);
+
   const filtered = useMemo(() => {
     const q = search.toLowerCase().trim();
     return profiles.filter((p) => {
@@ -104,6 +127,31 @@ export default function AdminUsers() {
   }, [profiles, search, roleFilter, subFilter, statusFilter, rolesByUser, subsByUser]);
 
   const hasFilters = search || roleFilter !== "all" || subFilter !== "all" || statusFilter !== "all";
+
+  // === Sélection ===
+  const allFilteredSelected = filtered.length > 0 && filtered.every((p) => selected.has(p.user_id));
+  const someSelected = selected.size > 0;
+  const toggleOne = (id: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+  const toggleAllFiltered = () => {
+    setSelected((prev) => {
+      if (allFilteredSelected) {
+        const next = new Set(prev);
+        filtered.forEach((p) => next.delete(p.user_id));
+        return next;
+      }
+      const next = new Set(prev);
+      filtered.forEach((p) => next.add(p.user_id));
+      return next;
+    });
+  };
+  const clearSelection = () => setSelected(new Set());
 
   const handlePasswordReset = async (p: ProfileRow) => {
     if (!p.email) return;
@@ -216,6 +264,84 @@ export default function AdminUsers() {
     queryClient.invalidateQueries({ queryKey: ["admin-all-subs"] });
   };
 
+  // === Bulk actions ===
+  const performBulk = async () => {
+    const action = bulkAction;
+    setBulkAction(null);
+    if (!action) return;
+    const ids = Array.from(selected).filter((id) => id !== user?.id);
+    if (ids.length === 0) {
+      toast({ title: "Sélection vide", variant: "destructive" });
+      return;
+    }
+    let ok = 0, ko = 0;
+    for (const id of ids) {
+      let err: any;
+      if (action === "block") {
+        const { error } = await supabase.rpc("admin_set_user_blocked" as any, { _user_id: id, _blocked: true });
+        err = error;
+      } else if (action === "unblock") {
+        const { error } = await supabase.rpc("admin_set_user_blocked" as any, { _user_id: id, _blocked: false });
+        err = error;
+      } else if (action === "delete") {
+        const { error } = await supabase.rpc("admin_delete_user" as any, { _user_id: id });
+        err = error;
+      }
+      if (err) ko++; else ok++;
+    }
+    await logAdminAction({
+      actorId: user!.id,
+      action: `user.bulk_${action}`,
+      entityType: "user",
+      entityId: null,
+      entityLabel: `${ok}/${ids.length} utilisateur(s)`,
+    });
+    toast({
+      title: "Action groupée terminée",
+      description: `${ok} OK${ko ? `, ${ko} erreur(s)` : ""}`,
+      variant: ko ? "destructive" : "default",
+    });
+    clearSelection();
+    queryClient.invalidateQueries({ queryKey: ["admin-profiles"] });
+    queryClient.invalidateQueries({ queryKey: ["admin-all-roles"] });
+    queryClient.invalidateQueries({ queryKey: ["admin-all-subs"] });
+  };
+
+  // === Export CSV ===
+  const exportCsv = () => {
+    const target = selected.size > 0 ? filtered.filter((p) => selected.has(p.user_id)) : filtered;
+    if (target.length === 0) {
+      toast({ title: "Rien à exporter", variant: "destructive" });
+      return;
+    }
+    const esc = (v: any) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+    const header = ["DJ", "Email", "Rôle", "Bloqué", "Abonnement", "Fin abonnement", "Inscrit le"];
+    const lines = [header.join(",")];
+    target.forEach((p) => {
+      const isAdminRole = (rolesByUser.get(p.user_id) ?? []).includes("admin");
+      const sub = subsByUser.get(p.user_id);
+      const active = sub && sub.status === "active" &&
+        (!sub.current_period_end || new Date(sub.current_period_end) > new Date());
+      lines.push([
+        esc(p.dj_name),
+        esc(p.email),
+        esc(isAdminRole ? "admin" : "client"),
+        esc(p.is_blocked ? "oui" : "non"),
+        esc(active ? (sub.plan ?? "actif") : ""),
+        esc(sub?.current_period_end ?? ""),
+        esc(new Date(p.created_at).toISOString()),
+      ].join(","));
+    });
+    const blob = new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `users-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast({ title: "Export CSV", description: `${target.length} ligne(s) exportée(s)` });
+  };
+
   const resetFilters = () => { setSearch(""); setRoleFilter("all"); setSubFilter("all"); setStatusFilter("all"); };
 
   return (
@@ -224,6 +350,15 @@ export default function AdminUsers() {
       title="Gestion des Utilisateurs"
       subtitle={`${filtered.length} utilisateur${filtered.length > 1 ? "s" : ""} ${hasFilters ? "filtré(s)" : ""}`}
     >
+      <AdminStatsRow
+        stats={[
+          { icon: <Users className="h-3 w-3" />, label: "Total", value: stats.total },
+          { icon: <UserCheck className="h-3 w-3" />, label: "Abonnés actifs", value: stats.activeSubs, accent: "primary" },
+          { icon: <Crown className="h-3 w-3" />, label: "Admins", value: stats.admins, accent: "accent" },
+          { icon: <Ban className="h-3 w-3" />, label: "Bloqués", value: stats.blocked, accent: "muted" },
+        ]}
+      />
+
       <div className="rounded-xl border border-border bg-card/50 p-4">
         <div className="flex flex-col lg:flex-row gap-3">
           <div className="relative flex-1 min-w-[200px]">
@@ -262,11 +397,41 @@ export default function AdminUsers() {
         </div>
       </div>
 
+      {/* Barre d'actions groupées */}
+      <div className="flex flex-wrap items-center gap-2 px-1">
+        <Button variant="outline" size="sm" onClick={exportCsv} className="gap-1.5">
+          <DownloadIcon className="h-3.5 w-3.5" />
+          Export CSV {selected.size > 0 ? `(${selected.size} sélectionné${selected.size > 1 ? "s" : ""})` : `(${filtered.length})`}
+        </Button>
+        {someSelected && (
+          <>
+            <span className="text-xs text-muted-foreground ml-2">
+              {selected.size} sélectionné{selected.size > 1 ? "s" : ""}
+            </span>
+            <Button variant="ghost" size="sm" onClick={() => setBulkAction("block")} className="gap-1 text-amber-500 hover:text-amber-600">
+              <Ban className="h-3.5 w-3.5" /> Bloquer
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => setBulkAction("unblock")} className="gap-1 text-primary">
+              <CheckCircle2 className="h-3.5 w-3.5" /> Débloquer
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => setBulkAction("delete")} className="gap-1 text-destructive">
+              <Trash2 className="h-3.5 w-3.5" /> Supprimer
+            </Button>
+            <Button variant="ghost" size="sm" onClick={clearSelection} className="gap-1">
+              <X className="h-3.5 w-3.5" /> Vider
+            </Button>
+          </>
+        )}
+      </div>
+
       <div className="rounded-xl border border-border overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-secondary/50">
               <tr className="text-left text-xs text-muted-foreground">
+                <th className="px-3 py-3 w-8">
+                  <Checkbox checked={allFilteredSelected} onCheckedChange={toggleAllFiltered} aria-label="Tout sélectionner" />
+                </th>
                 <th className="px-4 py-3">DJ</th>
                 <th className="px-4 py-3">Email</th>
                 <th className="px-4 py-3">Rôle</th>
@@ -277,30 +442,42 @@ export default function AdminUsers() {
             </thead>
             <tbody className="divide-y divide-border">
               {filtered.length === 0 ? (
-                <tr><td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">Aucun utilisateur.</td></tr>
+                <tr><td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">Aucun utilisateur.</td></tr>
               ) : filtered.map((p) => {
                 const userRoles = rolesByUser.get(p.user_id) ?? [];
                 const isAdminRole = userRoles.includes("admin");
                 const sub = subsByUser.get(p.user_id);
                 const active = sub && sub.status === "active" &&
                   (!sub.current_period_end || new Date(sub.current_period_end) > new Date());
+                const isSelected = selected.has(p.user_id);
                 return (
-                  <tr key={p.id} className="hover:bg-secondary/30">
+                  <tr key={p.id} className={`hover:bg-secondary/30 ${isSelected ? "bg-primary/5" : ""}`}>
+                    <td className="px-3 py-3">
+                      <Checkbox
+                        checked={isSelected}
+                        onCheckedChange={() => toggleOne(p.user_id)}
+                        aria-label={`Sélectionner ${p.email ?? p.dj_name}`}
+                      />
+                    </td>
                     <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setViewing(p)}
+                        className="flex items-center gap-2 text-left hover:text-primary transition-colors"
+                      >
                         <div className="h-8 w-8 rounded-full bg-secondary overflow-hidden shrink-0 flex items-center justify-center text-xs font-semibold">
                           {p.avatar_url ? <img src={p.avatar_url} alt="" className="h-full w-full object-cover" /> :
                             (p.dj_name || p.email || "?").slice(0, 1).toUpperCase()}
                         </div>
                         <span className="font-medium">{p.dj_name || "Sans nom"}</span>
-                      </div>
+                      </button>
                     </td>
                     <td className="px-4 py-3 text-muted-foreground">{p.email}</td>
                     <td className="px-4 py-3">
                       {isAdminRole ? (
                         <Badge className="bg-accent/15 text-accent border-accent/30 gap-1"><Shield className="h-3 w-3" /> Admin</Badge>
                       ) : (
-              <Badge variant="outline" className="text-xs">Client</Badge>
+                        <Badge variant="outline" className="text-xs">Client</Badge>
                       )}
                       {p.is_blocked && (
                         <Badge className="ml-1 bg-destructive/15 text-destructive border-destructive/30 gap-1">
@@ -319,7 +496,13 @@ export default function AdminUsers() {
                     </td>
                     <td className="px-4 py-3 text-muted-foreground">{new Date(p.created_at).toLocaleDateString("fr-FR")}</td>
                     <td className="px-4 py-3 text-right">
-                      <div className="flex justify-end gap-1">
+                      <div className="flex justify-end gap-1 flex-wrap">
+                        <Button variant="ghost" size="sm" className="gap-1" onClick={() => setViewing(p)} title="Voir la fiche">
+                          <Eye className="h-3 w-3" /> Voir
+                        </Button>
+                        <Button variant="ghost" size="sm" className="gap-1" onClick={() => setEditing(p)} title="Éditer">
+                          <Pencil className="h-3 w-3" /> Éditer
+                        </Button>
                         {isAdminRole ? (
                           <Button variant="ghost" size="sm" className="gap-1" onClick={() => demoteAdmin(p)} title="Retirer admin">
                             <ShieldOff className="h-3 w-3" /> Retirer admin
@@ -375,6 +558,21 @@ export default function AdminUsers() {
         </div>
       </div>
 
+      <UserEditDialog
+        open={!!editing}
+        onOpenChange={(o) => !o && setEditing(null)}
+        profile={editing}
+        onSaved={() => queryClient.invalidateQueries({ queryKey: ["admin-profiles"] })}
+      />
+
+      <UserDetailDialog
+        open={!!viewing}
+        onOpenChange={(o) => !o && setViewing(null)}
+        profile={viewing}
+        isAdmin={viewing ? (rolesByUser.get(viewing.user_id) ?? []).includes("admin") : false}
+        subscription={viewing ? subsByUser.get(viewing.user_id) : null}
+      />
+
       <AlertDialog open={!!confirmDelete} onOpenChange={(o) => !o && setConfirmDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -392,6 +590,34 @@ export default function AdminUsers() {
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Supprimer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!bulkAction} onOpenChange={(o) => !o && setBulkAction(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {bulkAction === "delete"
+                ? `Supprimer ${selected.size} utilisateur(s) ?`
+                : bulkAction === "block"
+                ? `Bloquer ${selected.size} utilisateur(s) ?`
+                : `Débloquer ${selected.size} utilisateur(s) ?`}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {bulkAction === "delete"
+                ? "Les comptes (profils, abonnements, favoris, téléchargements) seront définitivement supprimés."
+                : "L'action sera appliquée à tous les comptes sélectionnés. Ton compte est exclu automatiquement."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={performBulk}
+              className={bulkAction === "delete" ? "bg-destructive text-destructive-foreground hover:bg-destructive/90" : ""}
+            >
+              Confirmer
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
