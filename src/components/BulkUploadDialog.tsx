@@ -244,7 +244,7 @@ export default function BulkUploadDialog({ open, onOpenChange, userId }: BulkUpl
   const handleUpload = async () => {
     const valid = rows.filter((r) => r.title && r.artist && r.status !== "done");
     if (valid.length === 0) {
-      toast({ title: "Rien à publier", description: "Vérifie titre + artiste pour chaque ligne.", variant: "destructive" });
+      toast({ title: "Rien à publier", description: "Vérifie titre + remixeur pour chaque ligne.", variant: "destructive" });
       return;
     }
     setUploading(true);
