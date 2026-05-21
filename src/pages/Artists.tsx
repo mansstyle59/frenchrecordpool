@@ -76,12 +76,12 @@ export default function Artists() {
   return (
     <Layout>
       <PageHero
-        eyebrow="Remixeurs en vedette"
+        eyebrow="Artistes du pool"
         title="Les"
-        highlight="Remixeurs"
-        description="Découvrez les producteurs et DJs derrière les exclusivités du pool."
+        highlight="Artistes"
+        description="Tous les artistes dont les titres sont publiés sur la plateforme."
         stats={[
-          { icon: <Users className="h-3.5 w-3.5 text-primary" />, label: `${artists.length} remixeurs` },
+          { icon: <Users className="h-3.5 w-3.5 text-primary" />, label: `${artists.length} artistes` },
           { icon: <Disc3 className="h-3.5 w-3.5 text-accent" />, label: `${totalTracks} titres` },
         ]}
       />
