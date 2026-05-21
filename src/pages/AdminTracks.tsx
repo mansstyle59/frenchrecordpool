@@ -250,11 +250,14 @@ export default function AdminTracks() {
     if (selected.size === 0) return;
     if (!confirm(`Supprimer ${selected.size} track(s) ? Action irréversible.`)) return;
     const ids = Array.from(selected);
-    const { error } = await supabase.from("tracks").delete().in("id", ids);
-    if (error) {
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
-      return;
+    for (const id of ids) {
+      const { error } = await supabase.rpc("admin_delete_track", { _id: id });
+      if (error) {
+        toast({ title: "Erreur", description: error.message, variant: "destructive" });
+        return;
+      }
     }
+
     await logAdminAction({
       actorId: user!.id, action: "track.bulk_delete",
       entityType: "track", entityId: ids.join(","),
