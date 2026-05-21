@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useRef, useCallback, type ReactNode } from "react";
+import { createContext, useContext, useState, useRef, useCallback, useMemo, type ReactNode } from "react";
 
 export interface PlayerTrack {
   id: string;
