@@ -124,7 +124,6 @@ export default function AdminSubscriptions() {
             </table>
           </div>
         </div>
-      </div>
     </AdminLayout>
   );
 }
