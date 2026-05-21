@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  Upload, Link as LinkIcon, Sparkles, Wand2, Play, Pause, RefreshCw, X, Tag as TagIcon, Music2, FileAudio, Image as ImageIcon, Disc3, Cloud, Loader2,
+  Upload, Link as LinkIcon, Sparkles, Wand2, Play, Pause, RefreshCw, X, Tag as TagIcon,
+  Music2, FileAudio, Image as ImageIcon, Disc3, Cloud, Loader2, Search, Check, ChevronLeft, ChevronRight, Eye,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import FileDropzone from "@/components/FileDropzone";
 import CoverPicker from "@/components/CoverPicker";
@@ -89,6 +89,12 @@ export default function TrackForm({ initialData, saving, onSubmit, existingGenre
   // SoundCloud quick-import
   const [scUrl, setScUrl] = useState("");
   const [scImporting, setScImporting] = useState(false);
+
+  // Wizard step + meta search
+  const [step, setStep] = useState(0);
+  const [metaQuery, setMetaQuery] = useState("");
+  const [metaSearching, setMetaSearching] = useState(false);
+  const [metaResults, setMetaResults] = useState<any[]>([]);
 
   // Preview auto-generation
   const [previewAuto, setPreviewAuto] = useState(true);
@@ -272,6 +278,61 @@ export default function TrackForm({ initialData, saving, onSubmit, existingGenre
     }
   };
 
+  // Auto-fill metadata from iTunes / Deezer
+  const runMetaSearch = async () => {
+    const q = metaQuery.trim() || `${artist} ${title}`.trim();
+    if (!q) {
+      toast({ title: "Recherche vide", description: "Tape un artiste ou un titre.", variant: "destructive" });
+      return;
+    }
+    setMetaSearching(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("cover-tools", {
+        body: { action: "meta_search", query: q },
+      });
+      if (error || (data as any)?.error) throw new Error((data as any)?.error || error?.message || "Erreur");
+      const results = ((data as any).results ?? []) as any[];
+      setMetaResults(results);
+      if (!results.length) toast({ title: "Aucun résultat", description: "Essaie une autre formulation." });
+    } catch (err: any) {
+      toast({ title: "Erreur de recherche", description: err?.message ?? "Inconnue", variant: "destructive" });
+    } finally {
+      setMetaSearching(false);
+    }
+  };
+
+  const applyMetaResult = async (r: any) => {
+    if (r.artist) setArtist(r.artist);
+    if (r.title) setTitle(r.title);
+    if (r.genre && !genre) setGenre(r.genre);
+    if (r.album && !label) setLabel(r.album);
+    if (r.durationMs && !duration) {
+      const total = Math.round(r.durationMs / 1000);
+      const m = Math.floor(total / 60);
+      const s = String(total % 60).padStart(2, "0");
+      setDuration(`${m}:${s}`);
+    }
+    if (r.coverUrl && !coverFile && !coverUrl) {
+      try {
+        const proxy = await supabase.functions.invoke("cover-tools", {
+          body: { action: "fetch", url: r.coverUrl },
+        });
+        const dataUrl = (proxy.data as any)?.dataUrl as string | undefined;
+        if (dataUrl) {
+          const res = await fetch(dataUrl);
+          const blob = await res.blob();
+          setCoverFile(new File([blob], "cover.jpg", { type: blob.type || "image/jpeg" }));
+        } else {
+          setCoverUrl(r.coverUrl);
+        }
+      } catch {
+        setCoverUrl(r.coverUrl);
+      }
+    }
+    setMetaResults([]);
+    toast({ title: "Métadonnées appliquées", description: `${r.source} · ${r.artist} — ${r.title}` });
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const tagsStr = tagList.join(", ");
@@ -360,15 +421,129 @@ export default function TrackForm({ initialData, saving, onSubmit, existingGenre
         </div>
       )}
 
-      <Tabs defaultValue="meta" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="meta" className="gap-1.5"><Disc3 className="h-3.5 w-3.5" /> Métadonnées</TabsTrigger>
-          <TabsTrigger value="files" className="gap-1.5"><FileAudio className="h-3.5 w-3.5" /> Fichiers</TabsTrigger>
-          <TabsTrigger value="links" className="gap-1.5"><LinkIcon className="h-3.5 w-3.5" /> Versions & Liens</TabsTrigger>
-        </TabsList>
+      {/* ============= STEPPER ============= */}
+      <Stepper
+        current={step}
+        steps={[
+          { label: "Source", icon: <Cloud className="h-3.5 w-3.5" /> },
+          { label: "Métadonnées", icon: <Disc3 className="h-3.5 w-3.5" /> },
+          { label: "Pochette & Extrait", icon: <ImageIcon className="h-3.5 w-3.5" /> },
+          { label: "Publication", icon: <Check className="h-3.5 w-3.5" /> },
+        ]}
+        onSelect={setStep}
+      />
 
-        {/* ============= MÉTADONNÉES ============= */}
-        <TabsContent value="meta" className="space-y-4 pt-4">
+      {/* ============= STEP 0 : SOURCE ============= */}
+      {step === 0 && (
+        <div className="space-y-5 pt-2">
+          {/* SoundCloud quick-import */}
+          <div className="space-y-2 rounded-lg border border-[hsl(15_90%_55%)]/40 bg-[hsl(15_90%_55%)]/5 p-3">
+            <Label className="flex items-center gap-1.5 text-sm">
+              <Cloud className="h-4 w-4 text-[hsl(15_90%_55%)]" />
+              Import depuis SoundCloud
+              <span className="text-[10px] uppercase tracking-wider font-normal text-muted-foreground ml-1">
+                morceau + lien
+              </span>
+            </Label>
+            <div className="flex gap-2">
+              <Input
+                type="url"
+                value={scUrl}
+                onChange={(e) => setScUrl(e.target.value)}
+                placeholder="https://soundcloud.com/artiste/titre"
+                className="bg-secondary border-border"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    if (!scImporting) importFromSoundCloud();
+                  }
+                }}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="shrink-0 gap-1.5 border-[hsl(15_90%_55%)]/40 hover:bg-[hsl(15_90%_55%)]/10"
+                disabled={scImporting || !scUrl.trim()}
+                onClick={importFromSoundCloud}
+              >
+                {scImporting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+                Importer
+              </Button>
+            </div>
+            <p className="text-[11px] text-muted-foreground">
+              Lien SoundCloud public : titre, artiste, pochette importés automatiquement.
+            </p>
+          </div>
+
+          {/* Audio principal */}
+          <div className="space-y-2 rounded-lg border border-border bg-card/40 p-3">
+            <Label className="flex items-center gap-1.5 text-sm">
+              <FileAudio className="h-4 w-4 text-primary" />
+              Fichier audio complet
+              {initialData?.audio_url && <span className="text-xs text-muted-foreground ml-1 font-normal">(actuel conservé si vide)</span>}
+              <ModeToggle mode={audioMode} setMode={setAudioMode} />
+            </Label>
+            {audioMode === "file" ? (
+              <FileDropzone
+                accept="*/*" file={audioFile} onFile={setAudioFile} validate={validateAudioFile}
+                helper="MP3, WAV, FLAC… Métadonnées + BPM auto-détectés. Extrait public généré automatiquement."
+              />
+            ) : (
+              <Input type="url" value={audioUrl} onChange={(e) => setAudioUrl(e.target.value)} placeholder="https://example.com/track.mp3" className="bg-secondary border-border" />
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ============= STEP 1 : MÉTADONNÉES ============= */}
+      {step === 1 && (
+        <div className="space-y-4 pt-2">
+          {/* Auto-fill recherche iTunes/Deezer */}
+          <div className="space-y-2 rounded-lg border border-primary/30 bg-primary/5 p-3">
+            <Label className="flex items-center gap-1.5 text-sm">
+              <Search className="h-4 w-4 text-primary" />
+              Auto-remplir depuis iTunes / Deezer
+            </Label>
+            <div className="flex gap-2">
+              <Input
+                value={metaQuery}
+                onChange={(e) => setMetaQuery(e.target.value)}
+                placeholder={artist || title ? `${artist} ${title}`.trim() : "Artiste — Titre"}
+                className="bg-secondary border-border"
+                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); if (!metaSearching) runMetaSearch(); } }}
+              />
+              <Button type="button" variant="outline" size="sm" className="shrink-0 gap-1.5" disabled={metaSearching} onClick={runMetaSearch}>
+                {metaSearching ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Search className="h-3.5 w-3.5" />}
+                Chercher
+              </Button>
+            </div>
+            {metaResults.length > 0 && (
+              <div className="max-h-64 overflow-y-auto divide-y divide-border rounded-md border border-border bg-background/60">
+                {metaResults.map((r, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => applyMetaResult(r)}
+                    className="w-full flex items-center gap-2 px-2 py-1.5 hover:bg-primary/10 text-left transition-colors"
+                  >
+                    <img src={r.thumb || r.coverUrl} alt="" className="h-10 w-10 rounded object-cover bg-secondary shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-medium truncate">{r.artist} — {r.title}</p>
+                      <p className="text-[10px] text-muted-foreground truncate">
+                        {r.source}{r.album ? ` · ${r.album}` : ""}{r.genre ? ` · ${r.genre}` : ""}
+                      </p>
+                    </div>
+                    <Check className="h-3.5 w-3.5 text-primary shrink-0" />
+                  </button>
+                ))}
+              </div>
+            )}
+            <p className="text-[11px] text-muted-foreground">
+              Remplit titre, artiste, genre, label (album), durée et pochette en un clic.
+            </p>
+          </div>
+
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
               <Label>Titre *</Label>
@@ -468,70 +643,12 @@ export default function TrackForm({ initialData, saving, onSubmit, existingGenre
               </div>
             )}
           </div>
-        </TabsContent>
+        </div>
+      )}
 
-        {/* ============= FICHIERS ============= */}
-        <TabsContent value="files" className="space-y-5 pt-4">
-          {/* SoundCloud quick-import */}
-          <div className="space-y-2 rounded-lg border border-[hsl(15_90%_55%)]/40 bg-[hsl(15_90%_55%)]/5 p-3">
-            <Label className="flex items-center gap-1.5 text-sm">
-              <Cloud className="h-4 w-4 text-[hsl(15_90%_55%)]" />
-              Import depuis SoundCloud
-              <span className="text-[10px] uppercase tracking-wider font-normal text-muted-foreground ml-1">
-                morceau + lien
-              </span>
-            </Label>
-            <div className="flex gap-2">
-              <Input
-                type="url"
-                value={scUrl}
-                onChange={(e) => setScUrl(e.target.value)}
-                placeholder="https://soundcloud.com/artiste/titre"
-                className="bg-secondary border-border"
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    if (!scImporting) importFromSoundCloud();
-                  }
-                }}
-              />
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="shrink-0 gap-1.5 border-[hsl(15_90%_55%)]/40 hover:bg-[hsl(15_90%_55%)]/10"
-                disabled={scImporting || !scUrl.trim()}
-                onClick={importFromSoundCloud}
-              >
-                {scImporting
-                  ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  : <Sparkles className="h-3.5 w-3.5" />}
-                Importer
-              </Button>
-            </div>
-            <p className="text-[11px] text-muted-foreground">
-              Colle un lien SoundCloud public : le titre, l'artiste et la pochette sont récupérés automatiquement, et le lien sert d'extrait + téléchargement.
-            </p>
-          </div>
-
-          {/* Audio principal */}
-          <div className="space-y-2 rounded-lg border border-border bg-card/40 p-3">
-            <Label className="flex items-center gap-1.5 text-sm">
-              <FileAudio className="h-4 w-4 text-primary" />
-              Fichier audio complet
-              {initialData?.audio_url && <span className="text-xs text-muted-foreground ml-1 font-normal">(actuel conservé si vide)</span>}
-              <ModeToggle mode={audioMode} setMode={setAudioMode} />
-            </Label>
-            {audioMode === "file" ? (
-              <FileDropzone
-                accept="*/*" file={audioFile} onFile={setAudioFile} validate={validateAudioFile}
-                helper="MP3, WAV, FLAC… Métadonnées + BPM auto-détectés. Extrait public généré automatiquement."
-              />
-            ) : (
-              <Input type="url" value={audioUrl} onChange={(e) => setAudioUrl(e.target.value)} placeholder="https://example.com/track.mp3" className="bg-secondary border-border" />
-            )}
-          </div>
-
+      {/* ============= STEP 2 : POCHETTE & EXTRAIT ============= */}
+      {step === 2 && (
+        <div className="space-y-5 pt-2">
           {/* Preview avec auto-génération */}
           <div className="space-y-3 rounded-lg border border-primary/30 bg-primary/5 p-3">
             <div className="flex items-center justify-between flex-wrap gap-2">
@@ -640,16 +757,76 @@ export default function TrackForm({ initialData, saving, onSubmit, existingGenre
             onPickFile={(f) => { setCoverFile(f); if (f) setCoverUrl(""); }}
             onPickUrl={(u) => { setCoverUrl(u); if (u) setCoverFile(null); }}
           />
-        </TabsContent>
+        </div>
+      )}
 
+      {/* ============= STEP 3 : PUBLICATION ============= */}
+      {step === 3 && (
+        <div className="space-y-5 pt-2">
+          {/* Summary card */}
+          <div className="rounded-xl border border-primary/30 bg-primary/5 p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <Eye className="h-4 w-4 text-primary" />
+              <h3 className="text-sm font-semibold uppercase tracking-wider">Aperçu avant publication</h3>
+            </div>
+            <div className="flex gap-4">
+              <div className="h-24 w-24 rounded-lg overflow-hidden bg-secondary shrink-0 border border-border">
+                {coverPreview || initialData?.cover_url || coverUrl ? (
+                  <img
+                    src={coverPreview ?? coverUrl ?? initialData?.cover_url ?? ""}
+                    alt=""
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <div className="h-full w-full flex items-center justify-center text-muted-foreground">
+                    <ImageIcon className="h-6 w-6" />
+                  </div>
+                )}
+              </div>
+              <div className="min-w-0 flex-1 space-y-1">
+                <p className="font-display text-lg font-bold truncate">{title || <span className="text-muted-foreground italic">Sans titre</span>}</p>
+                <p className="text-sm text-muted-foreground truncate">{artist || <span className="italic">Sans artiste</span>}</p>
+                <div className="flex flex-wrap gap-1.5 pt-1">
+                  {genre && <Badge variant="outline" className="text-[10px]">{genre}</Badge>}
+                  {bpm && <Badge variant="outline" className="text-[10px] font-mono">{bpm} BPM</Badge>}
+                  {musicalKey && <Badge variant="outline" className="text-[10px] font-mono">{musicalKey}</Badge>}
+                  {version && version !== "Original" && <Badge variant="outline" className="text-[10px]">{version}</Badge>}
+                  {label && <Badge variant="outline" className="text-[10px]">{label}</Badge>}
+                  {duration && <Badge variant="outline" className="text-[10px] font-mono">{duration}</Badge>}
+                </div>
+                {tagList.length > 0 && (
+                  <div className="flex flex-wrap gap-1 pt-1.5">
+                    {tagList.map((t) => (
+                      <span key={t} className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/30">
+                        {t}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+            {previewFile && previewBlobUrl && (
+              <div className="flex items-center gap-2 px-3 py-2 mt-3 rounded-md bg-background/60 border border-border">
+                <Button type="button" variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={togglePreviewPlayback}>
+                  {previewPlaying ? <Pause className="h-4 w-4 text-primary" /> : <Play className="h-4 w-4 text-primary fill-current" />}
+                </Button>
+                <p className="text-xs text-muted-foreground">Écouter l'extrait généré</p>
+              </div>
+            )}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-3 text-[10px] uppercase tracking-wider font-mono">
+              <SummaryPill ok={!!title && !!artist} label="Métadonnées" />
+              <SummaryPill ok={!!audioFile || !!audioUrl || !!initialData?.audio_url} label="Audio" />
+              <SummaryPill ok={!!previewFile || !!previewUrl || !!initialData?.preview_url} label="Extrait" />
+              <SummaryPill ok={!!coverFile || !!coverUrl || !!initialData?.cover_url} label="Pochette" />
+            </div>
+          </div>
 
-        {/* ============= VERSIONS & LIENS ============= */}
-        <TabsContent value="links" className="space-y-4 pt-4">
+          {/* Liens optionnels */}
           <div className="space-y-2">
             <Label>Lien de téléchargement direct (optionnel)</Label>
             <Input type="url" value={downloadUrl} onChange={(e) => setDownloadUrl(e.target.value)} placeholder="https://drive.google.com/… ou https://wetransfer.com/…" className="bg-secondary border-border" />
             <p className="text-[11px] text-muted-foreground">
-              Si renseigné, ce lien sera utilisé prioritairement pour le bouton de téléchargement. Sinon le fichier hébergé sera servi.
+              Si renseigné, ce lien sera utilisé prioritairement pour le bouton de téléchargement.
             </p>
           </div>
 
@@ -663,15 +840,83 @@ export default function TrackForm({ initialData, saving, onSubmit, existingGenre
               <Input type="url" value={instrumentalUrl} onChange={(e) => setInstrumentalUrl(e.target.value)} placeholder="https://…" className="bg-secondary border-border" />
             </div>
           </div>
-        </TabsContent>
-      </Tabs>
+        </div>
+      )}
 
-      <div className="flex items-center justify-end gap-2 pt-3 border-t border-border">
-        <Button variant="hero" type="submit" disabled={saving} className="min-w-[200px]">
-          {saving ? "Enregistrement..." : initialData ? "Modifier la track" : "Ajouter la track"}
+      {/* ============= NAVIGATION ============= */}
+      <div className="flex items-center justify-between gap-2 pt-3 border-t border-border">
+        <Button
+          type="button"
+          variant="ghost"
+          disabled={step === 0}
+          onClick={() => setStep((s) => Math.max(0, s - 1))}
+          className="gap-1.5"
+        >
+          <ChevronLeft className="h-4 w-4" /> Précédent
         </Button>
+        {step < 3 ? (
+          <Button
+            type="button"
+            variant="hero"
+            onClick={() => setStep((s) => Math.min(3, s + 1))}
+            className="gap-1.5 min-w-[160px]"
+          >
+            Suivant <ChevronRight className="h-4 w-4" />
+          </Button>
+        ) : (
+          <Button variant="hero" type="submit" disabled={saving} className="min-w-[220px] gap-1.5">
+            <Check className="h-4 w-4" />
+            {saving ? "Enregistrement..." : initialData ? "Modifier la track" : "Publier la track"}
+          </Button>
+        )}
       </div>
     </form>
+  );
+}
+
+function SummaryPill({ ok, label }: { ok: boolean; label: string }) {
+  return (
+    <span className={`px-2 py-1 rounded-full border text-center ${
+      ok ? "bg-primary/10 text-primary border-primary/30" : "bg-muted/40 text-muted-foreground border-border"
+    }`}>
+      {ok ? "✓" : "·"} {label}
+    </span>
+  );
+}
+
+function Stepper({
+  current, steps, onSelect,
+}: {
+  current: number;
+  steps: { label: string; icon: React.ReactNode }[];
+  onSelect: (i: number) => void;
+}) {
+  return (
+    <div className="grid grid-cols-4 gap-1 rounded-xl border border-border bg-card/40 p-1.5">
+      {steps.map((s, i) => {
+        const active = i === current;
+        const done = i < current;
+        return (
+          <button
+            key={i}
+            type="button"
+            onClick={() => onSelect(i)}
+            className={`flex items-center justify-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider px-2 py-2 rounded-lg transition-all ${
+              active
+                ? "bg-primary text-primary-foreground shadow"
+                : done
+                ? "bg-primary/15 text-primary hover:bg-primary/20"
+                : "text-muted-foreground hover:text-foreground hover:bg-secondary/60"
+            }`}
+          >
+            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-background/30 text-[10px]">
+              {done ? <Check className="h-3 w-3" /> : i + 1}
+            </span>
+            <span className="hidden sm:inline">{s.label}</span>
+          </button>
+        );
+      })}
+    </div>
   );
 }
 
