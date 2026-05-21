@@ -90,6 +90,7 @@ export default function TrackRow({ track, index }: TrackRowProps) {
       <div className="flex-1 min-w-0">
         <Link
           to={`/tracks/${track.id}`}
+          onDoubleClick={(e) => e.stopPropagation()}
           className={`text-sm font-semibold truncate block hover:text-primary transition-colors ${isCurrentTrack ? "text-primary" : ""}`}
         >
           {track.title}
