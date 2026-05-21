@@ -7,8 +7,10 @@ import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { PlayerProvider } from "@/contexts/PlayerContext";
 import { BrandingProvider } from "@/contexts/BrandingContext";
+import { CmsProvider } from "@/contexts/CmsContext";
 import MiniPlayer from "@/components/MiniPlayer";
 import SubscriptionRequiredDialog from "@/components/SubscriptionRequiredDialog";
+import CmsEditBar from "@/components/cms/CmsEditBar";
 import Index from "./pages/Index";
 
 import TrackDetail from "./pages/TrackDetail";
