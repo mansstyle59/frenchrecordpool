@@ -1,31 +1,102 @@
-import { useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, Disc3, KeyRound } from "lucide-react";
+import { useState, useMemo } from "react";
+import { Link } from "react-router-dom";
+import { KeyRound, Search, Shield, ShieldOff, UserCheck, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/contexts/AuthContext";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { logAdminAction } from "@/lib/auditLog";
+import AdminLayout from "@/components/admin/AdminLayout";
+
+interface ProfileRow {
+  id: string;
+  user_id: string;
+  dj_name: string | null;
+  email: string | null;
+  avatar_url: string | null;
+  created_at: string;
+}
 
 export default function AdminUsers() {
-  const { user, loading, isAdmin } = useAuth();
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    if (!loading && (!user || !isAdmin)) navigate("/login");
-  }, [user, loading, isAdmin, navigate]);
+  const { user, isAdmin } = useAuth();
+  const queryClient = useQueryClient();
+  const [search, setSearch] = useState("");
+  const [roleFilter, setRoleFilter] = useState<"all" | "admin" | "client">("all");
+  const [subFilter, setSubFilter] = useState<"all" | "active" | "none">("all");
 
   const { data: profiles = [] } = useQuery({
     queryKey: ["admin-profiles"],
     queryFn: async () => {
-      const { data } = await supabase.from("profiles").select("*").order("created_at", { ascending: false });
+      const { data } = await supabase
+        .from("profiles").select("*")
+        .order("created_at", { ascending: false });
+      return (data ?? []) as ProfileRow[];
+    },
+    enabled: isAdmin,
+  });
+
+  const { data: roles = [] } = useQuery({
+    queryKey: ["admin-all-roles"],
+    queryFn: async () => {
+      const { data } = await supabase.from("user_roles").select("user_id, role");
       return data ?? [];
     },
     enabled: isAdmin,
   });
 
-  const handlePasswordReset = async (p: any) => {
+  const { data: subs = [] } = useQuery({
+    queryKey: ["admin-all-subs"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("subscriptions").select("user_id, status, plan, current_period_end");
+      return data ?? [];
+    },
+    enabled: isAdmin,
+  });
+
+  const rolesByUser = useMemo(() => {
+    const m = new Map<string, string[]>();
+    roles.forEach((r: any) => {
+      const arr = m.get(r.user_id) ?? [];
+      arr.push(r.role);
+      m.set(r.user_id, arr);
+    });
+    return m;
+  }, [roles]);
+
+  const subsByUser = useMemo(() => {
+    const m = new Map<string, any>();
+    subs.forEach((s: any) => m.set(s.user_id, s));
+    return m;
+  }, [subs]);
+
+  const filtered = useMemo(() => {
+    const q = search.toLowerCase().trim();
+    return profiles.filter((p) => {
+      if (q) {
+        const hay = `${p.dj_name ?? ""} ${p.email ?? ""}`.toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      const userRoles = rolesByUser.get(p.user_id) ?? [];
+      if (roleFilter === "admin" && !userRoles.includes("admin")) return false;
+      if (roleFilter === "client" && userRoles.includes("admin")) return false;
+
+      const sub = subsByUser.get(p.user_id);
+      const active = sub && sub.status === "active" &&
+        (!sub.current_period_end || new Date(sub.current_period_end) > new Date());
+      if (subFilter === "active" && !active) return false;
+      if (subFilter === "none" && active) return false;
+      return true;
+    });
+  }, [profiles, search, roleFilter, subFilter, rolesByUser, subsByUser]);
+
+  const hasFilters = search || roleFilter !== "all" || subFilter !== "all";
+
+  const handlePasswordReset = async (p: ProfileRow) => {
     if (!p.email) return;
     if (!confirm(`Envoyer un email de réinitialisation à ${p.email} ?`)) return;
     const { error } = await supabase.auth.resetPasswordForEmail(p.email, {
@@ -42,52 +113,155 @@ export default function AdminUsers() {
     toast({ title: "Email envoyé", description: `Réinitialisation envoyée à ${p.email}` });
   };
 
+  const promoteAdmin = async (p: ProfileRow) => {
+    if (!confirm(`Promouvoir ${p.email} en administrateur ?`)) return;
+    const { error } = await supabase.from("user_roles").insert({
+      user_id: p.user_id, role: "admin" as any,
+    });
+    if (error) {
+      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      return;
+    }
+    await logAdminAction({
+      actorId: user!.id, action: "user.role_promote",
+      entityType: "user", entityId: p.user_id, entityLabel: p.email ?? p.user_id,
+    });
+    toast({ title: "Promu admin" });
+    queryClient.invalidateQueries({ queryKey: ["admin-all-roles"] });
+  };
+
+  const demoteAdmin = async (p: ProfileRow) => {
+    if (p.user_id === user?.id) {
+      toast({ title: "Action interdite", description: "Tu ne peux pas te retirer toi-même.", variant: "destructive" });
+      return;
+    }
+    if (!confirm(`Retirer les droits admin de ${p.email} ?`)) return;
+    const { error } = await supabase.from("user_roles").delete()
+      .eq("user_id", p.user_id).eq("role", "admin" as any);
+    if (error) {
+      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      return;
+    }
+    await logAdminAction({
+      actorId: user!.id, action: "user.role_demote",
+      entityType: "user", entityId: p.user_id, entityLabel: p.email ?? p.user_id,
+    });
+    toast({ title: "Droits admin retirés" });
+    queryClient.invalidateQueries({ queryKey: ["admin-all-roles"] });
+  };
+
+  const resetFilters = () => { setSearch(""); setRoleFilter("all"); setSubFilter("all"); };
+
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b border-border glass">
-        <div className="container flex items-center justify-between h-14">
-          <div className="flex items-center gap-2">
-            <Disc3 className="h-6 w-6 text-primary" />
-            <span className="font-display font-bold gradient-text">Admin</span>
+    <AdminLayout
+      wide
+      title="Gestion des Utilisateurs"
+      subtitle={`${filtered.length} utilisateur${filtered.length > 1 ? "s" : ""} ${hasFilters ? "filtré(s)" : ""}`}
+    >
+      <div className="rounded-xl border border-border bg-card/50 p-4">
+        <div className="flex flex-col lg:flex-row gap-3">
+          <div className="relative flex-1 min-w-[200px]">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input placeholder="Nom DJ ou email..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10 bg-secondary border-border" />
           </div>
-          <Link to="/admin" className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1">
-            <ArrowLeft className="h-3 w-3" /> Dashboard
-          </Link>
-        </div>
-      </header>
-      <div className="container py-8">
-        <h1 className="font-display text-2xl font-bold mb-6">Gestion des Utilisateurs</h1>
-        <div className="rounded-xl border border-border overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-secondary/50">
-                <tr className="text-left text-xs text-muted-foreground">
-                  <th className="px-4 py-3">Nom DJ</th>
-                  <th className="px-4 py-3">Email</th>
-                  <th className="px-4 py-3">Inscrit le</th>
-                  <th className="px-4 py-3 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {profiles.length === 0 ? (
-                  <tr><td colSpan={4} className="px-4 py-8 text-center text-muted-foreground">Aucun utilisateur.</td></tr>
-                ) : profiles.map((p: any) => (
-                  <tr key={p.id} className="hover:bg-secondary/30">
-                    <td className="px-4 py-3 font-medium">{p.dj_name || "-"}</td>
-                    <td className="px-4 py-3 text-muted-foreground">{p.email}</td>
-                    <td className="px-4 py-3 text-muted-foreground">{new Date(p.created_at).toLocaleDateString("fr-FR")}</td>
-                    <td className="px-4 py-3 text-right">
-                      <Button variant="ghost" size="sm" className="gap-1" onClick={() => handlePasswordReset(p)}>
-                        <KeyRound className="h-3 w-3" /> Réinitialiser mdp
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <Select value={roleFilter} onValueChange={(v) => setRoleFilter(v as any)}>
+            <SelectTrigger className="w-full lg:w-44 bg-secondary border-border"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tous les rôles</SelectItem>
+              <SelectItem value="admin">Admins seulement</SelectItem>
+              <SelectItem value="client">Clients seulement</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={subFilter} onValueChange={(v) => setSubFilter(v as any)}>
+            <SelectTrigger className="w-full lg:w-52 bg-secondary border-border"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tout abonnement</SelectItem>
+              <SelectItem value="active">Abonnement actif</SelectItem>
+              <SelectItem value="none">Sans abonnement actif</SelectItem>
+            </SelectContent>
+          </Select>
+          {hasFilters && (
+            <Button variant="ghost" onClick={resetFilters} className="gap-1">
+              <X className="h-4 w-4" /> Réinitialiser
+            </Button>
+          )}
         </div>
       </div>
-    </div>
+
+      <div className="rounded-xl border border-border overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-secondary/50">
+              <tr className="text-left text-xs text-muted-foreground">
+                <th className="px-4 py-3">DJ</th>
+                <th className="px-4 py-3">Email</th>
+                <th className="px-4 py-3">Rôle</th>
+                <th className="px-4 py-3">Abonnement</th>
+                <th className="px-4 py-3">Inscrit le</th>
+                <th className="px-4 py-3 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {filtered.length === 0 ? (
+                <tr><td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">Aucun utilisateur.</td></tr>
+              ) : filtered.map((p) => {
+                const userRoles = rolesByUser.get(p.user_id) ?? [];
+                const isAdminRole = userRoles.includes("admin");
+                const sub = subsByUser.get(p.user_id);
+                const active = sub && sub.status === "active" &&
+                  (!sub.current_period_end || new Date(sub.current_period_end) > new Date());
+                return (
+                  <tr key={p.id} className="hover:bg-secondary/30">
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <div className="h-8 w-8 rounded-full bg-secondary overflow-hidden shrink-0 flex items-center justify-center text-xs font-semibold">
+                          {p.avatar_url ? <img src={p.avatar_url} alt="" className="h-full w-full object-cover" /> :
+                            (p.dj_name || p.email || "?").slice(0, 1).toUpperCase()}
+                        </div>
+                        <span className="font-medium">{p.dj_name || "Sans nom"}</span>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-muted-foreground">{p.email}</td>
+                    <td className="px-4 py-3">
+                      {isAdminRole ? (
+                        <Badge className="bg-accent/15 text-accent border-accent/30 gap-1"><Shield className="h-3 w-3" /> Admin</Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-xs">Client</Badge>
+                      )}
+                    </td>
+                    <td className="px-4 py-3">
+                      {active ? (
+                        <Badge className="bg-primary/15 text-primary border-primary/30 gap-1">
+                          <UserCheck className="h-3 w-3" /> {sub.plan ?? "actif"}
+                        </Badge>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">—</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-muted-foreground">{new Date(p.created_at).toLocaleDateString("fr-FR")}</td>
+                    <td className="px-4 py-3 text-right">
+                      <div className="flex justify-end gap-1">
+                        {isAdminRole ? (
+                          <Button variant="ghost" size="sm" className="gap-1" onClick={() => demoteAdmin(p)} title="Retirer admin">
+                            <ShieldOff className="h-3 w-3" /> Retirer admin
+                          </Button>
+                        ) : (
+                          <Button variant="ghost" size="sm" className="gap-1" onClick={() => promoteAdmin(p)} title="Promouvoir admin">
+                            <Shield className="h-3 w-3" /> Promouvoir
+                          </Button>
+                        )}
+                        <Button variant="ghost" size="sm" className="gap-1" onClick={() => handlePasswordReset(p)}>
+                          <KeyRound className="h-3 w-3" /> Mdp
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </AdminLayout>
   );
 }
