@@ -59,16 +59,23 @@ async function searchDeezer(q: string) {
   } catch { return []; }
 }
 
-async function fetchSoundCloudThumb(url: string) {
+async function fetchSoundCloudOEmbed(url: string) {
   try {
     const r = await fetch(
       `https://soundcloud.com/oembed?format=json&url=${encodeURIComponent(url)}`,
     );
     if (!r.ok) return null;
     const d = await r.json();
-    return d.thumbnail_url
+    const thumb = d.thumbnail_url
       ? String(d.thumbnail_url).replace(/-large\.(jpg|png)/, "-t500x500.$1")
       : null;
+    return {
+      thumbnail: thumb,
+      title: d.title || null,
+      author_name: d.author_name || null,
+      author_url: d.author_url || null,
+      html: d.html || null,
+    };
   } catch { return null; }
 }
 
@@ -145,9 +152,17 @@ Deno.serve(async (req) => {
 
     if (action === "soundcloud") {
       if (!url) return json({ error: "url manquant" }, 400);
-      const thumb = await fetchSoundCloudThumb(url);
-      if (!thumb) return json({ error: "Miniature SoundCloud indisponible" }, 404);
-      return json({ url: thumb });
+      const meta = await fetchSoundCloudOEmbed(url);
+      if (!meta) return json({ error: "SoundCloud indisponible" }, 404);
+      // Backward-compat: also expose `url` for legacy thumbnail callers
+      return json({ ...meta, url: meta.thumbnail });
+    }
+
+    if (action === "soundcloud_meta") {
+      if (!url) return json({ error: "url manquant" }, 400);
+      const meta = await fetchSoundCloudOEmbed(url);
+      if (!meta) return json({ error: "SoundCloud indisponible" }, 404);
+      return json(meta);
     }
 
     if (action === "generate") {

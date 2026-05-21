@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  Upload, Link as LinkIcon, Sparkles, Wand2, Play, Pause, RefreshCw, X, Tag as TagIcon, Music2, FileAudio, Image as ImageIcon, Disc3,
+  Upload, Link as LinkIcon, Sparkles, Wand2, Play, Pause, RefreshCw, X, Tag as TagIcon, Music2, FileAudio, Image as ImageIcon, Disc3, Cloud, Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,6 +14,7 @@ import { extractAudioMetadataFast, needsBpmAnalysis, analyzeBpmAsync } from "@/l
 import { generateAudioPreview, type PreviewStartMode } from "@/lib/audioPreview";
 import { trackSchema, validateAudioFile, validateImageFile } from "@/lib/trackSchema";
 import { toast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import type { DbTrack } from "@/hooks/useTracks";
 
 const VERSIONS = ["Original", "Intro Edit", "Clean", "Dirty", "Extended", "Short Edit", "Acapella", "Instrumental", "Quick Hit", "Transition"];
@@ -84,6 +85,10 @@ export default function TrackForm({ initialData, saving, onSubmit, existingGenre
   const [extracting, setExtracting] = useState(false);
   const [coverPreview, setCoverPreview] = useState<string | null>(initialData?.cover_url ?? null);
   const [analyzingBpm, setAnalyzingBpm] = useState(false);
+
+  // SoundCloud quick-import
+  const [scUrl, setScUrl] = useState("");
+  const [scImporting, setScImporting] = useState(false);
 
   // Preview auto-generation
   const [previewAuto, setPreviewAuto] = useState(true);
@@ -200,6 +205,71 @@ export default function TrackForm({ initialData, saving, onSubmit, existingGenre
       return;
     }
     generatePreview(audioFile, previewStart, previewSeconds);
+  };
+
+  const importFromSoundCloud = async () => {
+    const url = scUrl.trim();
+    if (!url || !/soundcloud\.com/i.test(url)) {
+      toast({ title: "Lien invalide", description: "Colle un lien SoundCloud valide.", variant: "destructive" });
+      return;
+    }
+    setScImporting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("cover-tools", {
+        body: { action: "soundcloud_meta", url },
+      });
+      if (error || !data || (data as any).error) {
+        throw new Error((data as any)?.error || error?.message || "Échec de l'import");
+      }
+      const meta = data as { thumbnail?: string; title?: string; author_name?: string };
+
+      // Parse "Artist - Title" pattern when present
+      let parsedArtist = meta.author_name || "";
+      let parsedTitle = meta.title || "";
+      if (parsedTitle && /\s[-–—]\s/.test(parsedTitle)) {
+        const [left, ...rest] = parsedTitle.split(/\s[-–—]\s/);
+        parsedArtist = parsedArtist || left.trim();
+        parsedTitle = rest.join(" - ").trim();
+      }
+
+      // Fill audio + preview URL with the SoundCloud page URL (public listenable link)
+      setAudioMode("url");
+      setAudioUrl(url);
+      setPreviewMode("url");
+      setPreviewUrl(url);
+      setPreviewAuto(false);
+      setDownloadUrl((v) => v || url);
+
+      if (parsedTitle) setTitle((v) => v || parsedTitle);
+      if (parsedArtist) setArtist((v) => v || parsedArtist);
+
+      // Cover from SoundCloud artwork
+      if (meta.thumbnail) {
+        try {
+          const proxy = await supabase.functions.invoke("cover-tools", {
+            body: { action: "fetch", url: meta.thumbnail },
+          });
+          const dataUrl = (proxy.data as any)?.dataUrl as string | undefined;
+          if (dataUrl) {
+            const res = await fetch(dataUrl);
+            const blob = await res.blob();
+            const file = new File([blob], "soundcloud-cover.jpg", { type: blob.type || "image/jpeg" });
+            setCoverFile(file);
+            setCoverUrl("");
+          } else {
+            setCoverUrl(meta.thumbnail);
+          }
+        } catch {
+          setCoverUrl(meta.thumbnail);
+        }
+      }
+
+      toast({ title: "Import SoundCloud", description: "Métadonnées et pochette importées." });
+    } catch (err: any) {
+      toast({ title: "Erreur SoundCloud", description: err?.message || "Import impossible", variant: "destructive" });
+    } finally {
+      setScImporting(false);
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -402,6 +472,48 @@ export default function TrackForm({ initialData, saving, onSubmit, existingGenre
 
         {/* ============= FICHIERS ============= */}
         <TabsContent value="files" className="space-y-5 pt-4">
+          {/* SoundCloud quick-import */}
+          <div className="space-y-2 rounded-lg border border-[hsl(15_90%_55%)]/40 bg-[hsl(15_90%_55%)]/5 p-3">
+            <Label className="flex items-center gap-1.5 text-sm">
+              <Cloud className="h-4 w-4 text-[hsl(15_90%_55%)]" />
+              Import depuis SoundCloud
+              <span className="text-[10px] uppercase tracking-wider font-normal text-muted-foreground ml-1">
+                morceau + lien
+              </span>
+            </Label>
+            <div className="flex gap-2">
+              <Input
+                type="url"
+                value={scUrl}
+                onChange={(e) => setScUrl(e.target.value)}
+                placeholder="https://soundcloud.com/artiste/titre"
+                className="bg-secondary border-border"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    if (!scImporting) importFromSoundCloud();
+                  }
+                }}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="shrink-0 gap-1.5 border-[hsl(15_90%_55%)]/40 hover:bg-[hsl(15_90%_55%)]/10"
+                disabled={scImporting || !scUrl.trim()}
+                onClick={importFromSoundCloud}
+              >
+                {scImporting
+                  ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  : <Sparkles className="h-3.5 w-3.5" />}
+                Importer
+              </Button>
+            </div>
+            <p className="text-[11px] text-muted-foreground">
+              Colle un lien SoundCloud public : le titre, l'artiste et la pochette sont récupérés automatiquement, et le lien sert d'extrait + téléchargement.
+            </p>
+          </div>
+
           {/* Audio principal */}
           <div className="space-y-2 rounded-lg border border-border bg-card/40 p-3">
             <Label className="flex items-center gap-1.5 text-sm">
