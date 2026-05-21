@@ -472,6 +472,48 @@ export default function TrackForm({ initialData, saving, onSubmit, existingGenre
 
         {/* ============= FICHIERS ============= */}
         <TabsContent value="files" className="space-y-5 pt-4">
+          {/* SoundCloud quick-import */}
+          <div className="space-y-2 rounded-lg border border-[hsl(15_90%_55%)]/40 bg-[hsl(15_90%_55%)]/5 p-3">
+            <Label className="flex items-center gap-1.5 text-sm">
+              <Cloud className="h-4 w-4 text-[hsl(15_90%_55%)]" />
+              Import depuis SoundCloud
+              <span className="text-[10px] uppercase tracking-wider font-normal text-muted-foreground ml-1">
+                morceau + lien
+              </span>
+            </Label>
+            <div className="flex gap-2">
+              <Input
+                type="url"
+                value={scUrl}
+                onChange={(e) => setScUrl(e.target.value)}
+                placeholder="https://soundcloud.com/artiste/titre"
+                className="bg-secondary border-border"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    if (!scImporting) importFromSoundCloud();
+                  }
+                }}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="shrink-0 gap-1.5 border-[hsl(15_90%_55%)]/40 hover:bg-[hsl(15_90%_55%)]/10"
+                disabled={scImporting || !scUrl.trim()}
+                onClick={importFromSoundCloud}
+              >
+                {scImporting
+                  ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  : <Sparkles className="h-3.5 w-3.5" />}
+                Importer
+              </Button>
+            </div>
+            <p className="text-[11px] text-muted-foreground">
+              Colle un lien SoundCloud public : le titre, l'artiste et la pochette sont récupérés automatiquement, et le lien sert d'extrait + téléchargement.
+            </p>
+          </div>
+
           {/* Audio principal */}
           <div className="space-y-2 rounded-lg border border-border bg-card/40 p-3">
             <Label className="flex items-center gap-1.5 text-sm">
