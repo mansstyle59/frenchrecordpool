@@ -34,10 +34,10 @@ export default function Pricing() {
   return (
     <Layout>
       <PageHero
-        eyebrow={<CmsText editKey="pricing.eyebrow">Sans engagement</CmsText> as any}
-        title={<CmsText editKey="pricing.title">Choisis ton</CmsText> as any}
-        highlight={<CmsText editKey="pricing.highlight">abonnement</CmsText> as any}
-        description={<CmsText editKey="pricing.description">Accède aux exclus, edits et remixes du pool. Annule à tout moment, en un clic.</CmsText> as any}
+        eyebrow={<CmsText editKey="pricing.eyebrow">Sans engagement</CmsText>}
+        title={<CmsText editKey="pricing.title">Choisis ton</CmsText>}
+        highlight={<CmsText editKey="pricing.highlight">abonnement</CmsText>}
+        description={<CmsText editKey="pricing.description">Accède aux exclus, edits et remixes du pool. Annule à tout moment, en un clic.</CmsText>}
         stats={[
           { icon: <CreditCard className="h-3.5 w-3.5 text-primary" />, label: `${plans.length} formules` },
           { icon: <Shield className="h-3.5 w-3.5 text-accent" />, label: "Paiement sécurisé" },
