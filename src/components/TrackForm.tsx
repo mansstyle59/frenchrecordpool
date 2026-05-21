@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  Upload, Link as LinkIcon, Sparkles, Wand2, Play, Pause, RefreshCw, X, Tag as TagIcon, Music2, FileAudio, Image as ImageIcon, Disc3, Cloud, Loader2,
+  Upload, Link as LinkIcon, Sparkles, Wand2, Play, Pause, RefreshCw, X, Tag as TagIcon,
+  Music2, FileAudio, Image as ImageIcon, Disc3, Cloud, Loader2, Search, Check, ChevronLeft, ChevronRight, Eye,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import FileDropzone from "@/components/FileDropzone";
 import CoverPicker from "@/components/CoverPicker";
