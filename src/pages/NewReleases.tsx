@@ -78,28 +78,18 @@ export default function NewReleases() {
 
   return (
     <Layout>
-      {/* Hero header */}
-      <section className="relative border-b border-border/50 overflow-hidden">
-        <div className="absolute -top-32 -left-32 w-[28rem] h-[28rem] rounded-full bg-primary/20 blur-3xl" />
-        <div className="absolute -bottom-32 -right-32 w-[28rem] h-[28rem] rounded-full bg-accent/15 blur-3xl" />
-        <div className="relative container py-10 md:py-14">
-          <span className="inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.3em] text-primary px-3 py-1 rounded-full border border-primary/30 bg-primary/5">
-            <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
-            Mis à jour quotidiennement
-          </span>
-          <h1 className="font-display text-4xl md:text-6xl font-bold tracking-tight mt-4">
-            <span className="gradient-text">Nouveautés</span>
-          </h1>
-          <p className="text-muted-foreground mt-2 text-base md:text-lg max-w-xl">
-            Les derniers edits, remixes et exclusivités pour vos sets. Filtrez par genre, version, BPM ou tonalité.
-          </p>
-          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 mt-5 text-xs text-muted-foreground font-mono">
-            <span className="inline-flex items-center gap-1.5"><Disc3 className="h-3.5 w-3.5 text-primary" /> {tracks.length} titres</span>
-            <span className="inline-flex items-center gap-1.5"><Flame className="h-3.5 w-3.5 text-accent" /> {genres.length} genres</span>
-            <span className="inline-flex items-center gap-1.5"><Clock className="h-3.5 w-3.5 text-primary" /> {filtered.length} résultats</span>
-          </div>
-        </div>
-      </section>
+      <PageHero
+        eyebrow="Mis à jour quotidiennement"
+        title=""
+        highlight="Nouveautés"
+        description="Les derniers edits, remixes et exclusivités pour vos sets. Filtrez par genre, version, BPM ou tonalité."
+        stats={[
+          { icon: <Disc3 className="h-3.5 w-3.5 text-primary" />, label: `${tracks.length} titres` },
+          { icon: <Flame className="h-3.5 w-3.5 text-accent" />, label: `${genres.length} genres` },
+          { icon: <Clock className="h-3.5 w-3.5 text-primary" />, label: `${filtered.length} résultats` },
+        ]}
+      />
+
 
       <div className="container py-6">
         {/* Genre pills row — djcity style */}
