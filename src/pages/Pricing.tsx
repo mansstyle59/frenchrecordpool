@@ -1,8 +1,9 @@
 import { motion } from "framer-motion";
-import { Check, Sparkles } from "lucide-react";
+import { Check, Sparkles, CreditCard, Shield } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import Layout from "@/components/Layout";
+import PageHero from "@/components/PageHero";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -31,26 +32,23 @@ export default function Pricing() {
 
   return (
     <Layout>
-      <section className="container py-12 md:py-20">
-        <motion.div
-          initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
-          className="text-center max-w-2xl mx-auto mb-12"
-        >
-          <Badge variant="outline" className="mb-4 gap-1">
-            <Sparkles className="h-3 w-3" /> Sans engagement
-          </Badge>
-          <h1 className="font-display text-4xl md:text-5xl font-bold mb-4">
-            Choisis ton <span className="gradient-text">abonnement</span>
-          </h1>
-          <p className="text-muted-foreground">
-            Accède aux exclus, edits et remixes du pool. Annule à tout moment.
-          </p>
-        </motion.div>
+      <PageHero
+        eyebrow="Sans engagement"
+        title="Choisis ton"
+        highlight="abonnement"
+        description="Accède aux exclus, edits et remixes du pool. Annule à tout moment, en un clic."
+        stats={[
+          { icon: <CreditCard className="h-3.5 w-3.5 text-primary" />, label: `${plans.length} formules` },
+          { icon: <Shield className="h-3.5 w-3.5 text-accent" />, label: "Paiement sécurisé" },
+          { icon: <Sparkles className="h-3.5 w-3.5 text-primary" />, label: "Activation immédiate" },
+        ]}
+      />
 
+      <section className="container py-10">
         {isLoading ? (
-          <div className="text-center text-muted-foreground">Chargement…</div>
+          <div className="text-center text-muted-foreground py-16">Chargement…</div>
         ) : plans.length === 0 ? (
-          <div className="text-center text-muted-foreground py-12">
+          <div className="text-center text-muted-foreground py-20 rounded-2xl border border-dashed border-border">
             Aucun plan disponible pour le moment.
           </div>
         ) : (
@@ -64,7 +62,7 @@ export default function Pricing() {
                   initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.08 }}
                 >
-                  <Card className={`p-6 h-full flex flex-col relative ${featured ? "border-primary shadow-elegant ring-1 ring-primary/30" : ""}`}>
+                  <Card className={`p-6 h-full flex flex-col relative bg-card/40 backdrop-blur-xl ${featured ? "border-primary shadow-elegant ring-1 ring-primary/30" : ""}`}>
                     {featured && (
                       <Badge className="absolute -top-3 left-1/2 -translate-x-1/2">
                         Populaire
@@ -85,7 +83,7 @@ export default function Pricing() {
                         </li>
                       ))}
                     </ul>
-                    <Button asChild className="w-full" variant={featured ? "default" : "outline"}>
+                    <Button asChild className="w-full" variant={featured ? "hero" : "outline"}>
                       <Link to={user ? "/dashboard" : "/signup"}>
                         {user ? "Activer" : "Commencer"}
                       </Link>

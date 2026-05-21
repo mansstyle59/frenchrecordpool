@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Search, Users, Disc3, X } from "lucide-react";
 import { motion } from "framer-motion";
 import Layout from "@/components/Layout";
+import PageHero from "@/components/PageHero";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useTracks } from "@/hooks/useTracks";
@@ -73,27 +74,17 @@ export default function Artists() {
 
   return (
     <Layout>
-      {/* Hero */}
-      <section className="relative border-b border-border/50 overflow-hidden">
-        <div className="absolute -top-32 -left-32 w-[28rem] h-[28rem] rounded-full bg-primary/20 blur-3xl" />
-        <div className="absolute -bottom-32 -right-32 w-[28rem] h-[28rem] rounded-full bg-accent/15 blur-3xl" />
-        <div className="relative container py-10 md:py-14">
-          <span className="inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.3em] text-primary px-3 py-1 rounded-full border border-primary/30 bg-primary/5">
-            <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
-            Remixeurs en vedette
-          </span>
-          <h1 className="font-display text-4xl md:text-6xl font-bold tracking-tight mt-4">
-            Les <span className="gradient-text">Remixeurs</span>
-          </h1>
-          <p className="text-muted-foreground mt-2 text-base md:text-lg max-w-xl">
-            Découvrez les producteurs et DJs derrière les exclusivités du pool.
-          </p>
-          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 mt-5 text-xs text-muted-foreground font-mono">
-            <span className="inline-flex items-center gap-1.5"><Users className="h-3.5 w-3.5 text-primary" /> {artists.length} remixeurs</span>
-            <span className="inline-flex items-center gap-1.5"><Disc3 className="h-3.5 w-3.5 text-accent" /> {totalTracks} titres</span>
-          </div>
-        </div>
-      </section>
+      <PageHero
+        eyebrow="Remixeurs en vedette"
+        title="Les"
+        highlight="Remixeurs"
+        description="Découvrez les producteurs et DJs derrière les exclusivités du pool."
+        stats={[
+          { icon: <Users className="h-3.5 w-3.5 text-primary" />, label: `${artists.length} remixeurs` },
+          { icon: <Disc3 className="h-3.5 w-3.5 text-accent" />, label: `${totalTracks} titres` },
+        ]}
+      />
+
 
       <div className="container py-6">
         {/* Search */}
