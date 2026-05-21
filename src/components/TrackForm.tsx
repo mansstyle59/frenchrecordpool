@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  Upload, Link as LinkIcon, Sparkles, Wand2, Play, Pause, RefreshCw, X, Tag as TagIcon, Music2, FileAudio, Image as ImageIcon, Disc3,
+  Upload, Link as LinkIcon, Sparkles, Wand2, Play, Pause, RefreshCw, X, Tag as TagIcon, Music2, FileAudio, Image as ImageIcon, Disc3, Cloud, Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,6 +14,7 @@ import { extractAudioMetadataFast, needsBpmAnalysis, analyzeBpmAsync } from "@/l
 import { generateAudioPreview, type PreviewStartMode } from "@/lib/audioPreview";
 import { trackSchema, validateAudioFile, validateImageFile } from "@/lib/trackSchema";
 import { toast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import type { DbTrack } from "@/hooks/useTracks";
 
 const VERSIONS = ["Original", "Intro Edit", "Clean", "Dirty", "Extended", "Short Edit", "Acapella", "Instrumental", "Quick Hit", "Transition"];
