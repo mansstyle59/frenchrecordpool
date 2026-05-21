@@ -17,7 +17,18 @@ import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import type { DbTrack } from "@/hooks/useTracks";
 
-const VERSIONS = ["Original", "Intro Edit", "Clean", "Dirty", "Extended", "Short Edit", "Acapella", "Instrumental", "Quick Hit", "Transition"];
+const VERSIONS = [
+  "Original", "Extended", "Extended Mix", "Radio Edit", "Club Mix", "Club Edit",
+  "Intro Edit", "Intro Outro", "Short Edit", "Quick Hit", "Quick Edit",
+  "Clean", "Dirty", "Super Clean",
+  "Acapella", "Instrumental", "Dub", "Bonus Beats",
+  "Remix", "VIP Mix", "Bootleg", "Mashup", "Flip", "Rework", "Edit",
+  "Transition", "Transition In", "Transition Out",
+  "Hype Intro", "Hype Edit", "Aca In", "Aca Out",
+  "Starter", "Re-Drum", "Redrum", "Segue",
+  "Slowed", "Sped Up", "Tech Edit", "House Edit",
+  "Dancehall Mix", "Afro Mix", "Latin Mix",
+];
 const MUSICAL_KEYS = [
   "C", "Cm", "C#", "C#m", "Db", "Dbm", "D", "Dm", "D#", "D#m", "Eb", "Ebm",
   "E", "Em", "F", "Fm", "F#", "F#m", "Gb", "Gbm", "G", "Gm", "G#", "G#m",
@@ -608,10 +619,17 @@ export default function TrackForm({ initialData, saving, onSubmit, existingGenre
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div className="space-y-1">
               <Label>Version</Label>
-              <Select value={version} onValueChange={setVersion}>
-                <SelectTrigger className="bg-secondary border-border"><SelectValue /></SelectTrigger>
-                <SelectContent>{VERSIONS.map((v) => <SelectItem key={v} value={v}>{v}</SelectItem>)}</SelectContent>
-              </Select>
+              <Input
+                list="track-versions-list"
+                value={version}
+                onChange={(e) => setVersion(e.target.value)}
+                placeholder="Original, Extended, Remix, Clean…"
+                className="bg-secondary border-border"
+              />
+              <datalist id="track-versions-list">
+                {VERSIONS.map((v) => <option key={v} value={v} />)}
+              </datalist>
+              <p className="text-[10px] text-muted-foreground">Choisis dans la liste ou saisis ta propre version</p>
             </div>
             <div className="space-y-1">
               <Label>Label</Label>
