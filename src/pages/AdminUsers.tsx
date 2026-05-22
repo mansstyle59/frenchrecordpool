@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import {
   KeyRound, Search, Shield, ShieldOff, UserCheck, X, Ban, CheckCircle2, Trash2,
-  Unlock, Lock, Users, Crown, Pencil, Eye, Download as DownloadIcon,
+  Unlock, Lock, Users, Crown, Pencil, Eye, Download as DownloadIcon, Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
