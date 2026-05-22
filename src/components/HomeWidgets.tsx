@@ -36,7 +36,7 @@ import { resolveCover } from "@/lib/trackCover";
 import { usePlayer } from "@/contexts/PlayerContext";
 import { titleStyle, bodyStyle } from "@/lib/widgetTypography";
 import {
-  ANIM_VARIANTS, CONTAINER_CLASS, PAD_X, PAD_Y, bgStyle,
+  ANIM_VARIANTS, CONTAINER_CLASS, PAD_X, padYClasses, bgStyle,
   type WidgetCommon,
 } from "@/lib/widgetCommon";
 
