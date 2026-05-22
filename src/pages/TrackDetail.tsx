@@ -256,8 +256,8 @@ export default function TrackDetail() {
           </div>
         </div>
 
-        {/* ===== RELATED ===== */}
-        {related && (related.versions.length + related.remixes.length + related.similar.length) > 0 && (
+        {/* ===== RELATED (grid) ===== */}
+        {related && (related.versions.length + related.remixes.length) > 0 && (
           <div className="space-y-6">
             {related.versions.length > 0 && (
               <RelatedSection title="Autres versions" icon={Disc3} tracks={related.versions} />
@@ -265,10 +265,15 @@ export default function TrackDetail() {
             {related.remixes.length > 0 && (
               <RelatedSection title="Remix associés" icon={Mic2} tracks={related.remixes} />
             )}
-            {related.similar.length > 0 && (
-              <RelatedSection title={`Tracks similaires${track.genre ? ` · ${track.genre}` : ""}`} icon={Users} tracks={related.similar} />
-            )}
           </div>
+        )}
+
+        {/* ===== SIMILAR (DJ-style list) ===== */}
+        {related && related.similar.length > 0 && (
+          <SimilarTracksList
+            tracks={related.similar}
+            label={track.genre ? `Titres similaires · ${track.genre}` : "Titres similaires"}
+          />
         )}
       </div>
 
