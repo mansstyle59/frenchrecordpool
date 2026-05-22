@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
+import UrlPicker from "@/components/cms/UrlPicker";
 
 type Variant = "default" | "secondary" | "outline" | "ghost" | "hero";
 
@@ -68,8 +69,8 @@ export default function CmsButton({
             <Input value={draft.label} onChange={(e) => setDraft({ ...draft, label: e.target.value })} />
           </div>
           <div>
-            <Label className="text-xs">URL</Label>
-            <Input value={draft.url} onChange={(e) => setDraft({ ...draft, url: e.target.value })} placeholder="/route ou https://…" />
+            <Label className="text-xs">Destination</Label>
+            <UrlPicker value={draft.url} onChange={(url) => setDraft({ ...draft, url })} />
           </div>
           <div>
             <Label className="text-xs">Style</Label>
