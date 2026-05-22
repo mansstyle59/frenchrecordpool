@@ -224,7 +224,7 @@ export default function AdminQueue() {
           {reviewing && (
             <div className="space-y-4">
               <div className="flex gap-4">
-                {reviewing.cover_url && <img src={reviewing.cover_url} alt="" className="h-32 w-32 rounded-lg object-cover shrink-0" />}
+                <img src={resolveCover(reviewing)} alt="" className="h-32 w-32 rounded-lg object-cover shrink-0" />
                 <div className="flex-1 space-y-2 text-sm">
                   <p className="text-muted-foreground">
                     Soumis {formatDistanceToNow(new Date(reviewing.created_at), { addSuffix: true, locale: fr })}
