@@ -241,7 +241,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 </div>
                 <div className="flex gap-6 text-sm text-muted-foreground">
                   <CmsLink editKey="footer.link.new" defaultLabel="Nouveautés" defaultUrl="/new" className="hover:text-foreground transition-colors" />
-                  <CmsLink editKey="footer.link.genres" defaultLabel="Genres" defaultUrl="/genres" className="hover:text-foreground transition-colors" />
+                  
                   <CmsLink editKey="footer.link.artists" defaultLabel="Remixers" defaultUrl="/remixers" className="hover:text-foreground transition-colors" />
                 </div>
                 <p className="text-xs text-muted-foreground">
