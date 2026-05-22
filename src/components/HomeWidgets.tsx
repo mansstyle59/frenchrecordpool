@@ -85,7 +85,7 @@ function WidgetWrapper({ widget, preview }: { widget: Widget; preview: boolean }
   // Hero defaults to full width without container
   const isHero = widget.type === "hero";
   const containerKey = (common.container ?? (isHero ? "full" : "default")) as keyof typeof CONTAINER_CLASS;
-  const padY = PAD_Y[common.pad_y ?? "none"];
+  const padY = padYClasses(common);
   const padX = PAD_X[common.pad_x ?? "none"];
 
   const hasBg = common.bg_kind && common.bg_kind !== "none";
