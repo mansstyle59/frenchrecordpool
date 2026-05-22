@@ -27,6 +27,8 @@ import AdminUsers from "./pages/AdminUsers";
 import AdminSubscriptions from "./pages/AdminSubscriptions";
 import AdminBranding from "./pages/AdminBranding";
 import AdminScreenshotStudio from "./pages/AdminScreenshotStudio";
+import AdminPopups from "./pages/AdminPopups";
+import PopupHost from "@/components/PopupHost";
 import AdminAuditLog from "./pages/AdminAuditLog";
 import AdminPlans from "./pages/AdminPlans";
 import AdminPromoCodes from "./pages/AdminPromoCodes";
@@ -78,6 +80,7 @@ const App = () => (
               <Route path="/admin/promo-codes" element={<AdminPromoCodes />} />
               <Route path="/admin/branding" element={<AdminBranding />} />
               <Route path="/admin/screenshot-studio" element={<AdminScreenshotStudio />} />
+              <Route path="/admin/popups" element={<AdminPopups />} />
               <Route path="/admin/audit" element={<AdminAuditLog />} />
               <Route path="/admin/queue" element={<AdminQueue />} />
               <Route path="/dj" element={<DjDashboard />} />
@@ -100,6 +103,7 @@ const App = () => (
             <SubscriptionRequiredDialog />
             <CmsEditBar />
             <CmsAutoEditor />
+            <PopupHost />
           </BrowserRouter>
           </TooltipProvider>
           </CmsProvider>
