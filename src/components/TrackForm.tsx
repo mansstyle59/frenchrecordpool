@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import FileDropzone from "@/components/FileDropzone";
+import RemixerPicker from "@/components/RemixerPicker";
 import CoverPicker from "@/components/CoverPicker";
 import { extractAudioMetadataFast, needsBpmAnalysis, analyzeBpmAsync } from "@/lib/audioMetadata";
 import { generateAudioPreview, type PreviewStartMode } from "@/lib/audioPreview";
@@ -674,8 +675,10 @@ export default function TrackForm({ initialData, saving, onSubmit, existingGenre
               </div>
               <div className="space-y-1">
                 <Label className="text-xs">Remixers</Label>
-                <TagsInput value={remixers} onChange={setRemixers} placeholder="Nom puis Entrée…" />
-                <p className="text-[10px] text-muted-foreground">Chaque remixer aura sa page dédiée /remixers/...</p>
+                <RemixerPicker value={remixers} onChange={setRemixers} placeholder="Rechercher ou ajouter un remixer…" />
+                <p className="text-[10px] text-muted-foreground">
+                  Choisis un remixer existant ou ajoute-le. Chaque remixer aura sa page dédiée <code>/remixers/...</code> (distinct des artistes principaux).
+                </p>
               </div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
