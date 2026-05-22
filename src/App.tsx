@@ -11,6 +11,7 @@ import { CmsProvider } from "@/contexts/CmsContext";
 import MiniPlayer from "@/components/MiniPlayer";
 import SubscriptionRequiredDialog from "@/components/SubscriptionRequiredDialog";
 import CmsEditBar from "@/components/cms/CmsEditBar";
+import CmsAutoEditor from "@/components/cms/CmsAutoEditor";
 import Index from "./pages/Index";
 
 import TrackDetail from "./pages/TrackDetail";
@@ -95,6 +96,7 @@ const App = () => (
             <MiniPlayer />
             <SubscriptionRequiredDialog />
             <CmsEditBar />
+            <CmsAutoEditor />
           </BrowserRouter>
           </TooltipProvider>
           </CmsProvider>
