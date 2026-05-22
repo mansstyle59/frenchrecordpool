@@ -4,7 +4,9 @@ import {
   Plus, Trash2, Save, X, Mail, Clock, Megaphone, Users, Code as CodeIcon,
   GripVertical, Image as ImageIcon, ListMusic, Sparkles, MousePointerClick,
   Type, Video, Eye, EyeOff, Smartphone, Monitor, Pencil, Undo2, CheckCircle2,
-  BarChart3, Tag, Star, HelpCircle, Minus, Quote, Columns,
+  BarChart3, Tag, Star, HelpCircle, Minus, Quote, Columns, Copy, Layout,
+  Palette, Wand2, TrendingUp, Disc3, Radio, Download, Newspaper, Instagram,
+  Images, Megaphone as MegaphoneIcon, Repeat, Music2,
 } from "lucide-react";
 
 
@@ -128,7 +130,108 @@ const TYPE_META: Record<string, { label: string; icon: any; desc: string; defaul
     label: "HTML libre", icon: CodeIcon, group: "Avancé",
     desc: "HTML personnalisé", defaults: { html: "<h2>Mon bloc</h2><p>Texte libre.</p>" },
   },
+  /* ── Catalogue pack ── */
+  top_downloads: {
+    label: "Top téléchargements", icon: TrendingUp, group: "Catalogue",
+    desc: "Classement par téléchargements (auto)",
+    defaults: { title: "Top téléchargements", limit: 8 },
+  },
+  new_releases: {
+    label: "Nouveautés", icon: Sparkles, group: "Catalogue",
+    desc: "Derniers morceaux ajoutés",
+    defaults: { title: "Nouveautés", limit: 8 },
+  },
+  top_genre: {
+    label: "Top par genre", icon: ListMusic, group: "Catalogue",
+    desc: "Meilleurs morceaux d'un genre (auto si vide)",
+    defaults: { title: "", genre: "", limit: 6 },
+  },
+  top_label: {
+    label: "Labels en vogue", icon: Disc3, group: "Catalogue",
+    desc: "Labels les plus téléchargés",
+    defaults: { title: "Labels en vogue", limit: 8 },
+  },
+  top_artists: {
+    label: "Top artistes", icon: Users, group: "Catalogue",
+    desc: "Classement automatique par téléchargements cumulés",
+    defaults: { title: "Top artistes", limit: 6 },
+  },
+  /* ── Engagement pack ── */
+  slides_carousel: {
+    label: "Carrousel slides", icon: Images, group: "Mise en avant",
+    desc: "Carrousel plein largeur avec autoplay",
+    defaults: { autoplay: true, duration: 5, slides: [{ title: "Slide 1", body: "", image_url: "", cta_label: "Découvrir", cta_url: "/new" }] },
+  },
+  image_gallery: {
+    label: "Galerie d'images", icon: ImageIcon, group: "Contenu",
+    desc: "Grille masonry d'images",
+    defaults: { title: "Galerie", images: [] },
+  },
+  marquee: {
+    label: "Bandeau marquee", icon: Repeat, group: "Mise en avant",
+    desc: "Texte défilant en boucle",
+    defaults: { items: "FRESH · NEW · HOT · EXCLUSIVE · 100% DJ" },
+  },
+  live_counter: {
+    label: "Compteur live (inscrits)", icon: Radio, group: "Mise en avant",
+    desc: "Compteur d'inscrits en temps réel",
+    defaults: { label: "DJs inscrits", cta_label: "Rejoindre", cta_url: "/signup" },
+  },
+  /* ── Conversion pack ── */
+  plans_compare: {
+    label: "Comparatif de plans", icon: BarChart3, group: "Marketing",
+    desc: "Affiche les plans avec mise en avant",
+    defaults: { title: "Choisis ton plan", subtitle: "Sans engagement, résiliable à tout moment.", highlight_slug: "premium" },
+  },
+  features_grid: {
+    label: "Grille de features", icon: Layout, group: "Marketing",
+    desc: "Ic\u00f4nes + titre + description en grille",
+    defaults: { title: "Pourquoi nous", subtitle: "", items: [
+      { icon: "Download", title: "Téléchargements illimités", body: "Récupère tout en haute qualité." },
+      { icon: "Sparkles", title: "Mises à jour hebdo", body: "Les exclus de la semaine direct dans ton pool." },
+      { icon: "Radio", title: "100% DJ-ready", body: "BPM, key, version : tout est prêt à mixer." },
+    ]},
+  },
+  video_testimonial: {
+    label: "Témoignage vidéo", icon: Video, group: "Marketing",
+    desc: "Vidéo + citation côte à côte",
+    defaults: { quote: "Le pool indispensable de mes sets.", author: "DJ Example", role: "Résident, Paris", video_url: "" },
+  },
+  sticky_promo: {
+    label: "Bandeau promo sticky", icon: MegaphoneIcon, group: "Marketing",
+    desc: "Fin bandeau au-dessus du contenu (dismiss)",
+    defaults: { title: "-50 % le premier mois", cta_label: "En profiter", cta_url: "/pricing", bg_color: "220 80% 25%", text_color: "0 0% 100%" },
+  },
+  /* ── Content pack ── */
+  blog_cards: {
+    label: "Cartes blog / news", icon: Newspaper, group: "Contenu",
+    desc: "Articles avec image, catégorie et extrait",
+    defaults: { title: "Actus", items: [] },
+  },
+  team_grid: {
+    label: "Équipe / Résidents", icon: Users, group: "Contenu",
+    desc: "Grille de membres avec rôle",
+    defaults: { title: "L'équipe", items: [] },
+  },
+  audio_embed: {
+    label: "Player Spotify / SoundCloud", icon: Music2, group: "Contenu",
+    desc: "Embed audio externe",
+    defaults: { title: "", url: "" },
+  },
+  instagram_feed: {
+    label: "Instagram (cartes statiques)", icon: Instagram, group: "Contenu",
+    desc: "Grille de visuels Instagram (sans API)",
+    defaults: { title: "Sur Instagram", handle: "", items: [] },
+  },
 };
+
+/* ─── Presets : ready-to-use widget recipes ─── */
+const PRESETS: { id: string; label: string; desc: string; types: string[] }[] = [
+  { id: "landing-classic", label: "Landing classique", desc: "Hero + stats + features + plans + FAQ + CTA", types: ["hero", "stats", "features_grid", "plans_compare", "faq", "cta"] },
+  { id: "dj-home", label: "Home DJ", desc: "Hero + nouveautés + top + artistes + newsletter", types: ["hero", "new_releases", "top_downloads", "artist_carousel", "newsletter"] },
+  { id: "promo-launch", label: "Lancement promo", desc: "Sticky promo + hero + countdown + featured track + CTA", types: ["sticky_promo", "hero", "countdown", "featured_track", "cta"] },
+  { id: "editorial", label: "Éditorial", desc: "Hero + 2 colonnes + carrousel slides + blog + témoignages", types: ["hero", "two_columns", "slides_carousel", "blog_cards", "testimonials"] },
+];
 
 
 export default function AdminHomeWidgets() {
@@ -620,13 +723,45 @@ function TypeFields({ w, setC }: { w: Widget; setC: (k: string, v: any) => void 
             <Field label="Mot surligné"><Input value={c.highlight ?? ""} onChange={(e) => setC("highlight", e.target.value)} /></Field>
           </div>
           <Field label="Sous-titre"><Textarea rows={2} value={c.subtitle ?? ""} onChange={(e) => setC("subtitle", e.target.value)} /></Field>
-          <Field label="Image de fond (URL)"><Input value={c.bg_url ?? ""} onChange={(e) => setC("bg_url", e.target.value)} /></Field>
+          <Field label="Image de fond (URL)"><Input value={c.bg_url ?? ""} onChange={(e) => setC("bg_url", e.target.value)} placeholder="https://..." /></Field>
+          <div className="grid grid-cols-3 gap-3">
+            <Field label="Layout">
+              <Select value={c.layout ?? "center"} onValueChange={(v) => setC("layout", v)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="center">Centré</SelectItem>
+                  <SelectItem value="left">Aligné à gauche</SelectItem>
+                  <SelectItem value="split">Split (image à droite)</SelectItem>
+                </SelectContent>
+              </Select>
+            </Field>
+            <Field label="Hauteur">
+              <Select value={c.height ?? "standard"} onValueChange={(v) => setC("height", v)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="compact">Compact</SelectItem>
+                  <SelectItem value="standard">Standard</SelectItem>
+                  <SelectItem value="full">Plein écran</SelectItem>
+                </SelectContent>
+              </Select>
+            </Field>
+            <Field label={`Overlay (${c.overlay_opacity ?? 75}%)`}>
+              <Input type="number" min={0} max={100} value={c.overlay_opacity ?? 75} onChange={(e) => setC("overlay_opacity", parseInt(e.target.value) || 0)} />
+            </Field>
+          </div>
           <div className="grid grid-cols-2 gap-3">
             <Field label="CTA principal"><Input value={c.cta_primary_label ?? ""} onChange={(e) => setC("cta_primary_label", e.target.value)} /></Field>
             <Field label="URL"><Input value={c.cta_primary_url ?? ""} onChange={(e) => setC("cta_primary_url", e.target.value)} /></Field>
             <Field label="CTA secondaire"><Input value={c.cta_secondary_label ?? ""} onChange={(e) => setC("cta_secondary_label", e.target.value)} /></Field>
             <Field label="URL"><Input value={c.cta_secondary_url ?? ""} onChange={(e) => setC("cta_secondary_url", e.target.value)} /></Field>
           </div>
+          <Field label="Trust badges (séparés par virgule)">
+            <Input
+              value={(c.trust_badges ?? []).join(", ")}
+              onChange={(e) => setC("trust_badges", e.target.value.split(",").map((s) => s.trim()).filter(Boolean))}
+              placeholder="Sans engagement, +1200 tracks, Mise à jour hebdo"
+            />
+          </Field>
         </>
       );
     case "track_grid":
@@ -883,6 +1018,193 @@ function TypeFields({ w, setC }: { w: Widget; setC: (k: string, v: any) => void 
             <Field label="Texte CTA"><Input value={c.cta_label ?? ""} onChange={(e) => setC("cta_label", e.target.value)} /></Field>
           </div>
           <Field label="URL CTA"><Input value={c.cta_url ?? ""} onChange={(e) => setC("cta_url", e.target.value)} /></Field>
+        </>
+      );
+    case "top_downloads":
+    case "new_releases":
+      return (
+        <>
+          <Field label="Titre"><Input value={c.title ?? ""} onChange={(e) => setC("title", e.target.value)} /></Field>
+          <Field label="Nombre"><Input type="number" min={1} max={24} value={c.limit ?? 8} onChange={(e) => setC("limit", parseInt(e.target.value) || 8)} /></Field>
+          <Field label='URL "Tout voir"'><Input value={c.see_all_url ?? ""} onChange={(e) => setC("see_all_url", e.target.value)} /></Field>
+        </>
+      );
+    case "top_genre":
+      return (
+        <>
+          <Field label="Titre (vide = auto)"><Input value={c.title ?? ""} onChange={(e) => setC("title", e.target.value)} /></Field>
+          <Field label="Genre forcé (vide = top auto)"><Input value={c.genre ?? ""} onChange={(e) => setC("genre", e.target.value)} placeholder="House, Techno..." /></Field>
+          <Field label="Nombre"><Input type="number" min={1} max={20} value={c.limit ?? 6} onChange={(e) => setC("limit", parseInt(e.target.value) || 6)} /></Field>
+        </>
+      );
+    case "top_label":
+    case "top_artists":
+      return (
+        <>
+          <Field label="Titre"><Input value={c.title ?? ""} onChange={(e) => setC("title", e.target.value)} /></Field>
+          <Field label="Nombre"><Input type="number" min={2} max={24} value={c.limit ?? 8} onChange={(e) => setC("limit", parseInt(e.target.value) || 8)} /></Field>
+        </>
+      );
+    case "slides_carousel":
+      return (
+        <>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex items-center gap-2">
+              <Switch checked={!!c.autoplay} onCheckedChange={(v) => setC("autoplay", v)} />
+              <span className="text-sm">Autoplay</span>
+            </div>
+            <Field label="Durée (s)"><Input type="number" min={2} max={30} value={c.duration ?? 5} onChange={(e) => setC("duration", parseInt(e.target.value) || 5)} /></Field>
+          </div>
+          <RepeaterField label="Slides" items={c.slides ?? []} empty={{ title: "", body: "", image_url: "", cta_label: "", cta_url: "" }} onChange={(v) => setC("slides", v)}
+            render={(it, set) => (
+              <div className="space-y-2">
+                <Input placeholder="Eyebrow" value={it.eyebrow ?? ""} onChange={(e) => set({ ...it, eyebrow: e.target.value })} />
+                <Input placeholder="Titre" value={it.title ?? ""} onChange={(e) => set({ ...it, title: e.target.value })} />
+                <Textarea rows={2} placeholder="Texte" value={it.body ?? ""} onChange={(e) => set({ ...it, body: e.target.value })} />
+                <Input placeholder="Image URL" value={it.image_url ?? ""} onChange={(e) => set({ ...it, image_url: e.target.value })} />
+                <div className="grid grid-cols-2 gap-2">
+                  <Input placeholder="CTA label" value={it.cta_label ?? ""} onChange={(e) => set({ ...it, cta_label: e.target.value })} />
+                  <Input placeholder="CTA URL" value={it.cta_url ?? ""} onChange={(e) => set({ ...it, cta_url: e.target.value })} />
+                </div>
+              </div>
+            )} />
+        </>
+      );
+    case "image_gallery":
+      return (
+        <>
+          <Field label="Titre"><Input value={c.title ?? ""} onChange={(e) => setC("title", e.target.value)} /></Field>
+          <RepeaterField label="Images" items={c.images ?? []} empty={{ image_url: "", url: "", alt: "" }} onChange={(v) => setC("images", v)}
+            render={(it, set) => (
+              <div className="space-y-2">
+                <Input placeholder="Image URL" value={it.image_url ?? ""} onChange={(e) => set({ ...it, image_url: e.target.value })} />
+                <div className="grid grid-cols-2 gap-2">
+                  <Input placeholder="Lien (optionnel)" value={it.url ?? ""} onChange={(e) => set({ ...it, url: e.target.value })} />
+                  <Input placeholder="Alt" value={it.alt ?? ""} onChange={(e) => set({ ...it, alt: e.target.value })} />
+                </div>
+              </div>
+            )} />
+        </>
+      );
+    case "marquee":
+      return (
+        <Field label="Texte (séparé par ·)"><Input value={c.items ?? ""} onChange={(e) => setC("items", e.target.value)} placeholder="FRESH · NEW · HOT" /></Field>
+      );
+    case "live_counter":
+      return (
+        <>
+          <Field label="Libellé"><Input value={c.label ?? ""} onChange={(e) => setC("label", e.target.value)} /></Field>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="CTA"><Input value={c.cta_label ?? ""} onChange={(e) => setC("cta_label", e.target.value)} /></Field>
+            <Field label="URL"><Input value={c.cta_url ?? ""} onChange={(e) => setC("cta_url", e.target.value)} /></Field>
+          </div>
+        </>
+      );
+    case "plans_compare":
+      return (
+        <>
+          <Field label="Titre"><Input value={c.title ?? ""} onChange={(e) => setC("title", e.target.value)} /></Field>
+          <Field label="Sous-titre"><Textarea rows={2} value={c.subtitle ?? ""} onChange={(e) => setC("subtitle", e.target.value)} /></Field>
+          <Field label="Slug du plan mis en avant"><Input value={c.highlight_slug ?? ""} onChange={(e) => setC("highlight_slug", e.target.value)} placeholder="premium" /></Field>
+        </>
+      );
+    case "features_grid":
+      return (
+        <>
+          <Field label="Titre"><Input value={c.title ?? ""} onChange={(e) => setC("title", e.target.value)} /></Field>
+          <Field label="Sous-titre"><Textarea rows={2} value={c.subtitle ?? ""} onChange={(e) => setC("subtitle", e.target.value)} /></Field>
+          <RepeaterField label="Features" items={c.items ?? []} empty={{ icon: "Sparkles", title: "", body: "" }} onChange={(v) => setC("items", v)}
+            render={(it, set) => (
+              <div className="space-y-2">
+                <div className="grid grid-cols-2 gap-2">
+                  <Input placeholder="Icône (Download, Music2, Star, Headphones, Sparkles, Radio, Disc3, Mail, Clock)" value={it.icon ?? ""} onChange={(e) => set({ ...it, icon: e.target.value })} />
+                  <Input placeholder="Titre" value={it.title ?? ""} onChange={(e) => set({ ...it, title: e.target.value })} />
+                </div>
+                <Textarea rows={2} placeholder="Description" value={it.body ?? ""} onChange={(e) => set({ ...it, body: e.target.value })} />
+              </div>
+            )} />
+        </>
+      );
+    case "video_testimonial":
+      return (
+        <>
+          <Field label="URL vidéo YouTube"><Input value={c.video_url ?? ""} onChange={(e) => setC("video_url", e.target.value)} /></Field>
+          <Field label="Citation"><Textarea rows={3} value={c.quote ?? ""} onChange={(e) => setC("quote", e.target.value)} /></Field>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Auteur"><Input value={c.author ?? ""} onChange={(e) => setC("author", e.target.value)} /></Field>
+            <Field label="Rôle"><Input value={c.role ?? ""} onChange={(e) => setC("role", e.target.value)} /></Field>
+          </div>
+          <Field label="Avatar URL"><Input value={c.avatar ?? ""} onChange={(e) => setC("avatar", e.target.value)} /></Field>
+        </>
+      );
+    case "sticky_promo":
+      return (
+        <>
+          <Field label="Titre / message"><Input value={c.title ?? ""} onChange={(e) => setC("title", e.target.value)} /></Field>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="CTA"><Input value={c.cta_label ?? ""} onChange={(e) => setC("cta_label", e.target.value)} /></Field>
+            <Field label="URL"><Input value={c.cta_url ?? ""} onChange={(e) => setC("cta_url", e.target.value)} /></Field>
+            <Field label="Fond (HSL)"><Input value={c.bg_color ?? ""} onChange={(e) => setC("bg_color", e.target.value)} placeholder="220 80% 25%" /></Field>
+            <Field label="Texte (HSL)"><Input value={c.text_color ?? ""} onChange={(e) => setC("text_color", e.target.value)} placeholder="0 0% 100%" /></Field>
+          </div>
+        </>
+      );
+    case "blog_cards":
+      return (
+        <>
+          <Field label="Titre"><Input value={c.title ?? ""} onChange={(e) => setC("title", e.target.value)} /></Field>
+          <RepeaterField label="Articles" items={c.items ?? []} empty={{ title: "", excerpt: "", image_url: "", category: "", date: "", url: "" }} onChange={(v) => setC("items", v)}
+            render={(it, set) => (
+              <div className="space-y-2">
+                <Input placeholder="Titre" value={it.title ?? ""} onChange={(e) => set({ ...it, title: e.target.value })} />
+                <Textarea rows={2} placeholder="Extrait" value={it.excerpt ?? ""} onChange={(e) => set({ ...it, excerpt: e.target.value })} />
+                <Input placeholder="Image URL" value={it.image_url ?? ""} onChange={(e) => set({ ...it, image_url: e.target.value })} />
+                <div className="grid grid-cols-3 gap-2">
+                  <Input placeholder="Catégorie" value={it.category ?? ""} onChange={(e) => set({ ...it, category: e.target.value })} />
+                  <Input placeholder="Date" value={it.date ?? ""} onChange={(e) => set({ ...it, date: e.target.value })} />
+                  <Input placeholder="Lien" value={it.url ?? ""} onChange={(e) => set({ ...it, url: e.target.value })} />
+                </div>
+              </div>
+            )} />
+        </>
+      );
+    case "team_grid":
+      return (
+        <>
+          <Field label="Titre"><Input value={c.title ?? ""} onChange={(e) => setC("title", e.target.value)} /></Field>
+          <RepeaterField label="Membres" items={c.items ?? []} empty={{ name: "", role: "", avatar: "" }} onChange={(v) => setC("items", v)}
+            render={(it, set) => (
+              <div className="space-y-2">
+                <div className="grid grid-cols-2 gap-2">
+                  <Input placeholder="Nom" value={it.name ?? ""} onChange={(e) => set({ ...it, name: e.target.value })} />
+                  <Input placeholder="Rôle" value={it.role ?? ""} onChange={(e) => set({ ...it, role: e.target.value })} />
+                </div>
+                <Input placeholder="Avatar URL" value={it.avatar ?? ""} onChange={(e) => set({ ...it, avatar: e.target.value })} />
+              </div>
+            )} />
+        </>
+      );
+    case "audio_embed":
+      return (
+        <>
+          <Field label="Titre (optionnel)"><Input value={c.title ?? ""} onChange={(e) => setC("title", e.target.value)} /></Field>
+          <Field label="URL Spotify ou SoundCloud"><Input value={c.url ?? ""} onChange={(e) => setC("url", e.target.value)} placeholder="https://open.spotify.com/..." /></Field>
+        </>
+      );
+    case "instagram_feed":
+      return (
+        <>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Titre"><Input value={c.title ?? ""} onChange={(e) => setC("title", e.target.value)} /></Field>
+            <Field label="@handle"><Input value={c.handle ?? ""} onChange={(e) => setC("handle", e.target.value)} placeholder="frenchrecordpool" /></Field>
+          </div>
+          <RepeaterField label="Posts" items={c.items ?? []} empty={{ image_url: "", url: "" }} onChange={(v) => setC("items", v)}
+            render={(it, set) => (
+              <div className="space-y-2">
+                <Input placeholder="Image URL" value={it.image_url ?? ""} onChange={(e) => set({ ...it, image_url: e.target.value })} />
+                <Input placeholder="Lien post" value={it.url ?? ""} onChange={(e) => set({ ...it, url: e.target.value })} />
+              </div>
+            )} />
         </>
       );
     default:
