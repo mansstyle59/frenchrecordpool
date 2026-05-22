@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { Search, SlidersHorizontal, X, Clock, Flame, ArrowUpDown, Disc3 } from "lucide-react";
 import Layout from "@/components/Layout";
 import PageHero from "@/components/PageHero";
-import TrackRow from "@/components/TrackRow";
+import TrackRow, { TrackListHeader } from "@/components/TrackRow";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
