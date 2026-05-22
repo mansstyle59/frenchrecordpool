@@ -39,11 +39,11 @@ export default function Index() {
 
   return (
     <Layout>
-      {/* Hero */}
+      {/* Hero — Pro Studio Glass */}
       <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-cover bg-center opacity-30" style={{ backgroundImage: `url(${heroBgUrl})` }} />
+        <div className="absolute inset-0 bg-cover bg-center opacity-25" style={{ backgroundImage: `url(${heroBgUrl})` }} />
         <HeroBgEditor src={heroBgUrl} />
-        <div className="absolute inset-0 bg-gradient-to-b from-background/70 via-background/85 to-background" />
+        <div className="absolute inset-0 bg-gradient-to-b from-background/75 via-background/90 to-background" />
 
         {/* Animated glow blobs */}
         <motion.div
@@ -62,14 +62,33 @@ export default function Index() {
           transition={{ duration: 60, repeat: Infinity, ease: "linear" }}
         />
 
+        {/* Animated waveform background */}
+        <div className="absolute inset-x-0 bottom-0 h-40 flex items-end justify-center gap-[3px] px-4 opacity-[0.18] pointer-events-none">
+          {Array.from({ length: 96 }).map((_, i) => (
+            <motion.span
+              key={i}
+              className="w-[3px] rounded-full bg-gradient-to-t from-primary via-primary to-accent"
+              animate={{ height: [`${10 + ((i * 7) % 35)}%`, `${40 + ((i * 13) % 55)}%`, `${15 + ((i * 11) % 30)}%`] }}
+              transition={{ duration: 1.4 + (i % 5) * 0.3, repeat: Infinity, ease: "easeInOut", delay: (i % 12) * 0.06 }}
+            />
+          ))}
+        </div>
+
         <div className="relative container py-20 md:py-32 text-center">
           <motion.span
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.3em] text-primary/90 mb-4 px-3 py-1 rounded-full border border-primary/30 bg-primary/5"
+            className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.3em] text-primary/90 mb-4 px-3 py-1.5 rounded-full border border-primary/30 bg-primary/5 backdrop-blur-md"
           >
+            <span className="relative flex h-1.5 w-1.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
+              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-primary" />
+            </span>
             <Sparkles className="h-3 w-3" /> <CmsText editKey="home.hero.badge">Pool exclusif · DJs francophones</CmsText>
+            {newTracks.length > 0 && (
+              <span className="ml-1 px-1.5 py-0.5 rounded-full bg-primary/20 text-primary text-[9px] font-bold">+{newTracks.length} NEW</span>
+            )}
           </motion.span>
 
           <motion.h1
@@ -85,16 +104,37 @@ export default function Index() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.2 }}
-            className="text-base md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10"
+            className="text-base md:text-xl text-muted-foreground max-w-2xl mx-auto mb-8"
           >
             <CmsText editKey="home.hero.subtitle">Edits, remixes & exclusivités. Mis à jour chaque semaine pour vos sets.</CmsText>
           </motion.p>
+
+          {/* CTAs éditables */}
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.3 }}
+            className="flex flex-wrap items-center justify-center gap-3 mb-10"
+          >
+            <Button asChild variant="hero" size="lg" className="font-bold uppercase tracking-wider text-xs shadow-lg shadow-primary/30">
+              <Link to="/new">
+                <Play className="h-4 w-4" />
+                <CmsText editKey="home.hero.cta.primary" as="span">Explorer les nouveautés</CmsText>
+              </Link>
+            </Button>
+            <Button asChild variant="outline" size="lg" className="font-bold uppercase tracking-wider text-xs backdrop-blur-md bg-card/40 border-border hover:border-primary/40">
+              <Link to="/pricing">
+                <CmsText editKey="home.hero.cta.secondary" as="span">Devenir membre</CmsText>
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </Button>
+          </motion.div>
 
           {/* Search + Stats — asymmetric grid */}
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.35 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
             className="w-full max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-3"
           >
             <form
@@ -110,7 +150,7 @@ export default function Index() {
                 <Search className="h-5 w-5 ml-3 text-muted-foreground shrink-0" />
                 <Input
                   name="q"
-                  placeholder="Titre, remixeur, BPM…"
+                  placeholder="Titre, remixer, BPM, tonalité…"
                   className="flex-1 bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 h-11 text-base placeholder:text-muted-foreground/60"
                 />
                 <Button type="submit" variant="hero" className="shrink-0 px-6 h-11 font-bold uppercase tracking-wider text-xs shadow-lg shadow-primary/30">
@@ -121,17 +161,21 @@ export default function Index() {
 
             <div className="lg:col-span-4 grid grid-cols-3 gap-2">
               {[
-                { icon: Headphones, label: "Tracks", value: tracks.length, color: "text-primary" },
-                { icon: Users, label: "Remixers", value: artistsCount, color: "text-foreground" },
-                { icon: TrendingUp, label: "Downloads", value: totalDownloads, color: "text-accent" },
+                { icon: Headphones, key: "home.hero.stat.tracks", label: "Tracks", value: tracks.length, color: "text-primary" },
+                { icon: Users, key: "home.hero.stat.remixers", label: "Remixers", value: artistsCount, color: "text-foreground" },
+                { icon: TrendingUp, key: "home.hero.stat.downloads", label: "Downloads", value: totalDownloads, color: "text-accent" },
               ].map((s) => (
-                <div
+                <motion.div
                   key={s.label}
-                  className="flex flex-col items-center justify-center rounded-2xl border border-border bg-card/40 backdrop-blur-md px-2 py-3 hover:bg-card/70 transition-colors"
+                  whileHover={{ y: -2 }}
+                  className="group flex flex-col items-center justify-center rounded-2xl border border-border bg-card/50 backdrop-blur-xl px-2 py-3 hover:bg-card/80 hover:border-primary/30 transition-all"
                 >
-                  <span className="text-[9px] uppercase tracking-[0.18em] font-bold text-muted-foreground/70 mb-0.5">{s.label}</span>
+                  <s.icon className={`h-3.5 w-3.5 mb-1 ${s.color} opacity-70 group-hover:opacity-100 transition-opacity`} />
+                  <span className="text-[9px] uppercase tracking-[0.18em] font-bold text-muted-foreground/70 mb-0.5">
+                    <CmsText editKey={s.key} as="span">{s.label}</CmsText>
+                  </span>
                   <span className={`font-display text-lg sm:text-xl font-bold ${s.color}`}>{s.value.toLocaleString("fr-FR")}</span>
-                </div>
+                </motion.div>
               ))}
             </div>
           </motion.div>
