@@ -58,7 +58,7 @@ export default function IconPicker({ value, onChange }: IconPickerProps) {
     return ICON_NAMES.filter((n) => n.toLowerCase().includes(q));
   }, [query]);
 
-  const SelectedIcon = value ? (ICONS[value] || Icons.Star) : null;
+  const SelectedIcon = value ? (ICONS[value] || Star) : null;
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
