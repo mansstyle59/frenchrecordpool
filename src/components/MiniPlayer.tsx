@@ -129,8 +129,9 @@ export default function MiniPlayer() {
     return () => window.removeEventListener("keydown", onKey);
   }, [currentTrack, toggle, setVolume, toggleMute, volume, audioRef]);
 
-  const bars = useMemo(() => buildBars(currentTrack?.id ?? "default"), [currentTrack?.id]);
+  const bars = useMemo(() => buildBars(currentTrack?.id ?? "default", 56), [currentTrack?.id]);
   const isFull = !!currentTrack?.isFull;
+  const { hasActiveSubscription } = useAuth();
 
   if (!currentTrack) return null;
 
@@ -138,8 +139,8 @@ export default function MiniPlayer() {
     <>
       <audio ref={audioRef} preload="auto" />
       <div className="fixed bottom-0 left-0 right-0 z-50 glass border-t border-border safe-bottom safe-x">
-        {/* Mobile progress bar (thin, full width, above the controls) */}
-        <div className="sm:hidden relative h-1 w-full bg-muted/40 cursor-pointer"
+        {/* Mobile progress bar */}
+        <div className="sm:hidden relative h-0.5 w-full bg-muted/40 cursor-pointer"
           onClick={(e) => {
             const audio = audioRef.current;
             if (!audio?.duration) return;
@@ -151,45 +152,55 @@ export default function MiniPlayer() {
           <div ref={mobilePlayedRef} className="h-full bg-gradient-to-r from-primary to-accent" style={{ width: "0%" }} />
         </div>
 
-        <div className="container flex items-center gap-2 sm:gap-3 h-16">
+        <div className="container flex items-center gap-2 h-12 sm:h-14">
+          {/* Cover */}
           <div className="relative shrink-0">
             <img
               src={currentTrack.coverUrl || ""}
               alt=""
               loading="lazy"
               decoding="async"
-              className="h-10 w-10 sm:h-11 sm:w-11 rounded object-cover ring-1 ring-border"
+              className="h-9 w-9 sm:h-10 sm:w-10 rounded object-cover ring-1 ring-border"
             />
             {loading && (
               <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded">
-                <Loader2 className="h-4 w-4 animate-spin text-white" />
+                <Loader2 className="h-3.5 w-3.5 animate-spin text-white" />
               </div>
             )}
           </div>
 
-          <div className="min-w-0 flex-1 sm:flex-none sm:w-48 lg:w-56">
+          {/* Title + Artist + Badge */}
+          <div className="min-w-0 flex-1 sm:flex-none sm:w-44 lg:w-52">
             <div className="flex items-center gap-1.5">
-              <p className="text-sm font-medium truncate">{currentTrack.title}</p>
-              <Badge
-                variant="outline"
-                className={`text-[9px] px-1 py-0 h-4 font-bold uppercase tracking-wider shrink-0 ${
-                  isFull ? "border-emerald-500/40 text-emerald-500 bg-emerald-500/5" : "border-primary/40 text-primary bg-primary/5"
-                }`}
-              >
-                {isFull ? "Full" : "Extrait"}
-              </Badge>
+              <p className="text-[13px] font-medium truncate leading-tight">{currentTrack.title}</p>
+              {isFull ? (
+                <span
+                  className="shrink-0 inline-flex items-center gap-0.5 h-4 px-1 rounded text-[9px] font-bold uppercase tracking-wider bg-emerald-500/15 text-emerald-500 border border-emerald-500/30"
+                  title="Lecture du titre complet"
+                >
+                  <Crown className="h-2.5 w-2.5" /> Full
+                </span>
+              ) : (
+                <span
+                  className="shrink-0 inline-flex items-center gap-0.5 h-4 px-1 rounded text-[9px] font-bold uppercase tracking-wider bg-primary/10 text-primary border border-primary/30"
+                  title="Extrait limité — abonnez-vous pour le titre complet"
+                >
+                  <Lock className="h-2.5 w-2.5" /> Extrait
+                </span>
+              )}
             </div>
-            <p className="text-xs text-muted-foreground truncate">{currentTrack.artist}</p>
+            <p className="text-[11px] text-muted-foreground truncate leading-tight">{currentTrack.artist}</p>
           </div>
 
-          <Button variant="ghost" size="icon" className="shrink-0 hidden sm:inline-flex" onClick={prev} title="Précédent">
-            <SkipBack className="h-4 w-4" />
+          {/* Transport */}
+          <Button variant="ghost" size="icon" className="shrink-0 h-8 w-8 hidden sm:inline-flex" onClick={prev} title="Précédent">
+            <SkipBack className="h-3.5 w-3.5" />
           </Button>
-          <Button variant="ghost" size="icon" className="shrink-0" onClick={toggle} title={isPlaying ? "Pause (Espace)" : "Lecture (Espace)"}>
-            {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
+          <Button variant="ghost" size="icon" className="shrink-0 h-9 w-9" onClick={toggle} title={isPlaying ? "Pause (Espace)" : "Lecture (Espace)"}>
+            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
           </Button>
-          <Button variant="ghost" size="icon" className="shrink-0 hidden sm:inline-flex" onClick={next} title="Suivant">
-            <SkipForward className="h-4 w-4" />
+          <Button variant="ghost" size="icon" className="shrink-0 h-8 w-8 hidden sm:inline-flex" onClick={next} title="Suivant">
+            <SkipForward className="h-3.5 w-3.5" />
           </Button>
 
           {/* Waveform progress (desktop) — uses clip-path so the colored layer is a perfect mirror */}
