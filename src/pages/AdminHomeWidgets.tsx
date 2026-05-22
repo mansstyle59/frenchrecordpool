@@ -663,6 +663,8 @@ function Editor({ widget, onCancel, onSave, saving }: { widget: Widget; onCancel
   const meta = TYPE_META[w.type];
   const Icon = meta?.icon || CodeIcon;
   const setC = (k: string, v: any) => setW((s) => ({ ...s, config: { ...s.config, [k]: v } }));
+  const setCommon = (k: string, v: any) =>
+    setW((s) => ({ ...s, config: { ...s.config, common: { ...(s.config.common || {}), [k]: v } } }));
 
   return (
     <div className="grid lg:grid-cols-[480px_1fr] gap-6">
@@ -685,6 +687,7 @@ function Editor({ widget, onCancel, onSave, saving }: { widget: Widget; onCancel
           <TypographyEditor value={w.config.typo ?? {}} onChange={(v) => setC("typo", v)} />
         )}
 
+        <SpacingEditor value={w.config.common ?? {}} onChange={setCommon} />
 
         <div className="flex items-center gap-2 pt-2 border-t border-border">
           <Switch checked={w.is_active} onCheckedChange={(v) => setW((s) => ({ ...s, is_active: v }))} />
@@ -1253,6 +1256,88 @@ function Field({ label, children, className = "" }: { label: string; children: R
       <Label className="text-xs text-muted-foreground">{label}</Label>
       {children}
     </div>
+  );
+}
+
+/* ─── Spacing editor (responsive top/bottom padding) ─── */
+const PAD_SIZES: Array<{ value: string; label: string }> = [
+  { value: "none", label: "Aucun" },
+  { value: "sm",   label: "Petit" },
+  { value: "md",   label: "Moyen" },
+  { value: "lg",   label: "Grand" },
+  { value: "xl",   label: "Très grand" },
+];
+
+function SpacingEditor({ value, onChange }: { value: any; onChange: (k: string, v: any) => void }) {
+  const fallback = value.pad_y ?? "none";
+  const row = (
+    bp: "mobile" | "tablet" | "desktop",
+    label: string,
+    icon: any,
+  ) => {
+    const Icon = icon;
+    const topKey = `pad_top_${bp}`;
+    const bottomKey = `pad_bottom_${bp}`;
+    return (
+      <div className="grid grid-cols-[auto_1fr_1fr] items-center gap-2">
+        <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground w-20">
+          <Icon className="h-3.5 w-3.5" /> {label}
+        </div>
+        <Select value={value[topKey] ?? fallback} onValueChange={(v) => onChange(topKey, v)}>
+          <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Haut" /></SelectTrigger>
+          <SelectContent>
+            {PAD_SIZES.map((s) => <SelectItem key={s.value} value={s.value}>↑ {s.label}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <Select value={value[bottomKey] ?? fallback} onValueChange={(v) => onChange(bottomKey, v)}>
+          <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Bas" /></SelectTrigger>
+          <SelectContent>
+            {PAD_SIZES.map((s) => <SelectItem key={s.value} value={s.value}>↓ {s.label}</SelectItem>)}
+          </SelectContent>
+        </Select>
+      </div>
+    );
+  };
+
+  return (
+    <details className="group rounded-lg border border-border/60 bg-card/40">
+      <summary className="cursor-pointer list-none flex items-center justify-between px-3 py-2 text-sm font-medium">
+        <span className="flex items-center gap-2">
+          <Layout className="h-4 w-4 text-primary" />
+          Espacement (responsive)
+        </span>
+        <span className="text-xs text-muted-foreground group-open:hidden">Régler</span>
+      </summary>
+      <div className="px-3 pb-3 pt-1 space-y-3">
+        <p className="text-[11px] text-muted-foreground">
+          Définis le padding haut/bas pour chaque format. Une valeur vide hérite du palier précédent
+          (ou de l'espacement global ci-dessous).
+        </p>
+        <Field label="Espacement global (fallback)">
+          <Select value={value.pad_y ?? "none"} onValueChange={(v) => onChange("pad_y", v)}>
+            <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {PAD_SIZES.map((s) => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </Field>
+        <div className="space-y-2">
+          {row("mobile",  "Mobile",  Smartphone)}
+          {row("tablet",  "Tablette", Layout)}
+          {row("desktop", "Desktop", Monitor)}
+        </div>
+        <Button
+          variant="ghost" size="sm" className="text-xs h-7"
+          onClick={() => {
+            ["pad_top_mobile","pad_top_tablet","pad_top_desktop",
+             "pad_bottom_mobile","pad_bottom_tablet","pad_bottom_desktop"]
+              .forEach((k) => onChange(k, undefined));
+          }}
+        >
+          Réinitialiser
+        </Button>
+      </div>
+    </details>
   );
 }
 
