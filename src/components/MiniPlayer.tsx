@@ -302,8 +302,8 @@ export default function MiniPlayer() {
               />
             </div>
 
-          <span ref={timeRef} className="text-[11px] text-muted-foreground shrink-0 w-16 text-right hidden sm:block tabular-nums font-mono">
-            0:00 / 0:00
+          <span className="text-[11px] text-muted-foreground shrink-0 w-20 text-right hidden sm:block tabular-nums font-mono">
+            {formatTime(currentTime)} / {formatTime(duration)}
           </span>
 
           {/* Upgrade CTA when listening to an extract while not subscribed */}
