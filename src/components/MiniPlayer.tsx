@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Play, Pause, Volume2, VolumeX, SkipBack, SkipForward, ListMusic, X, Loader2 } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Play, Pause, Volume2, VolumeX, SkipBack, SkipForward, ListMusic, X, Loader2, Lock, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { usePlayer } from "@/contexts/PlayerContext";
+import { useAuth } from "@/contexts/AuthContext";
 
 // Deterministic pseudo-waveform shape per track id
 function buildBars(seed: string, count = 64): number[] {
@@ -127,8 +129,9 @@ export default function MiniPlayer() {
     return () => window.removeEventListener("keydown", onKey);
   }, [currentTrack, toggle, setVolume, toggleMute, volume, audioRef]);
 
-  const bars = useMemo(() => buildBars(currentTrack?.id ?? "default"), [currentTrack?.id]);
+  const bars = useMemo(() => buildBars(currentTrack?.id ?? "default", 56), [currentTrack?.id]);
   const isFull = !!currentTrack?.isFull;
+  const { hasActiveSubscription } = useAuth();
 
   if (!currentTrack) return null;
 
@@ -136,8 +139,8 @@ export default function MiniPlayer() {
     <>
       <audio ref={audioRef} preload="auto" />
       <div className="fixed bottom-0 left-0 right-0 z-50 glass border-t border-border safe-bottom safe-x">
-        {/* Mobile progress bar (thin, full width, above the controls) */}
-        <div className="sm:hidden relative h-1 w-full bg-muted/40 cursor-pointer"
+        {/* Mobile progress bar */}
+        <div className="sm:hidden relative h-0.5 w-full bg-muted/40 cursor-pointer"
           onClick={(e) => {
             const audio = audioRef.current;
             if (!audio?.duration) return;
@@ -149,49 +152,59 @@ export default function MiniPlayer() {
           <div ref={mobilePlayedRef} className="h-full bg-gradient-to-r from-primary to-accent" style={{ width: "0%" }} />
         </div>
 
-        <div className="container flex items-center gap-2 sm:gap-3 h-16">
+        <div className="container flex items-center gap-2 h-12 sm:h-14">
+          {/* Cover */}
           <div className="relative shrink-0">
             <img
               src={currentTrack.coverUrl || ""}
               alt=""
               loading="lazy"
               decoding="async"
-              className="h-10 w-10 sm:h-11 sm:w-11 rounded object-cover ring-1 ring-border"
+              className="h-9 w-9 sm:h-10 sm:w-10 rounded object-cover ring-1 ring-border"
             />
             {loading && (
               <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded">
-                <Loader2 className="h-4 w-4 animate-spin text-white" />
+                <Loader2 className="h-3.5 w-3.5 animate-spin text-white" />
               </div>
             )}
           </div>
 
-          <div className="min-w-0 flex-1 sm:flex-none sm:w-48 lg:w-56">
+          {/* Title + Artist + Badge */}
+          <div className="min-w-0 flex-1 sm:flex-none sm:w-44 lg:w-52">
             <div className="flex items-center gap-1.5">
-              <p className="text-sm font-medium truncate">{currentTrack.title}</p>
-              <Badge
-                variant="outline"
-                className={`text-[9px] px-1 py-0 h-4 font-bold uppercase tracking-wider shrink-0 ${
-                  isFull ? "border-emerald-500/40 text-emerald-500 bg-emerald-500/5" : "border-primary/40 text-primary bg-primary/5"
-                }`}
-              >
-                {isFull ? "Full" : "Extrait"}
-              </Badge>
+              <p className="text-[13px] font-medium truncate leading-tight">{currentTrack.title}</p>
+              {isFull ? (
+                <span
+                  className="shrink-0 inline-flex items-center gap-0.5 h-4 px-1 rounded text-[9px] font-bold uppercase tracking-wider bg-emerald-500/15 text-emerald-500 border border-emerald-500/30"
+                  title="Lecture du titre complet"
+                >
+                  <Crown className="h-2.5 w-2.5" /> Full
+                </span>
+              ) : (
+                <span
+                  className="shrink-0 inline-flex items-center gap-0.5 h-4 px-1 rounded text-[9px] font-bold uppercase tracking-wider bg-primary/10 text-primary border border-primary/30"
+                  title="Extrait limité — abonnez-vous pour le titre complet"
+                >
+                  <Lock className="h-2.5 w-2.5" /> Extrait
+                </span>
+              )}
             </div>
-            <p className="text-xs text-muted-foreground truncate">{currentTrack.artist}</p>
+            <p className="text-[11px] text-muted-foreground truncate leading-tight">{currentTrack.artist}</p>
           </div>
 
-          <Button variant="ghost" size="icon" className="shrink-0 hidden sm:inline-flex" onClick={prev} title="Précédent">
-            <SkipBack className="h-4 w-4" />
+          {/* Transport */}
+          <Button variant="ghost" size="icon" className="shrink-0 h-8 w-8 hidden sm:inline-flex" onClick={prev} title="Précédent">
+            <SkipBack className="h-3.5 w-3.5" />
           </Button>
-          <Button variant="ghost" size="icon" className="shrink-0" onClick={toggle} title={isPlaying ? "Pause (Espace)" : "Lecture (Espace)"}>
-            {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
+          <Button variant="ghost" size="icon" className="shrink-0 h-9 w-9" onClick={toggle} title={isPlaying ? "Pause (Espace)" : "Lecture (Espace)"}>
+            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
           </Button>
-          <Button variant="ghost" size="icon" className="shrink-0 hidden sm:inline-flex" onClick={next} title="Suivant">
-            <SkipForward className="h-4 w-4" />
+          <Button variant="ghost" size="icon" className="shrink-0 h-8 w-8 hidden sm:inline-flex" onClick={next} title="Suivant">
+            <SkipForward className="h-3.5 w-3.5" />
           </Button>
 
-          {/* Waveform progress (desktop) — uses clip-path so the colored layer is a perfect mirror */}
-          <div className="flex-1 hidden sm:block relative h-10 group select-none">
+          {/* Waveform progress (desktop) */}
+          <div className="flex-1 hidden sm:block relative h-8 group select-none">
             <div className="absolute inset-0 flex items-center justify-between gap-[2px] px-0.5">
               {bars.map((b, i) => (
                 <div
@@ -235,20 +248,34 @@ export default function MiniPlayer() {
             />
           </div>
 
-
-          <span ref={timeRef} className="text-xs text-muted-foreground shrink-0 w-20 text-right hidden sm:block tabular-nums">
+          <span ref={timeRef} className="text-[11px] text-muted-foreground shrink-0 w-16 text-right hidden sm:block tabular-nums font-mono">
             0:00 / 0:00
           </span>
 
+          {/* Upgrade CTA when listening to an extract while not subscribed */}
+          {!isFull && !hasActiveSubscription && (
+            <Button
+              asChild
+              size="sm"
+              variant="hero"
+              className="shrink-0 hidden md:inline-flex h-7 px-2.5 text-[11px] gap-1"
+              title="Abonnez-vous pour écouter le titre complet"
+            >
+              <Link to="/pricing">
+                <Crown className="h-3 w-3" /> Débloquer
+              </Link>
+            </Button>
+          )}
+
           {/* Volume + Mute */}
-          <div className="hidden md:flex items-center gap-2 w-28 shrink-0">
+          <div className="hidden lg:flex items-center gap-1.5 w-24 shrink-0">
             <button
               type="button"
               onClick={toggleMute}
               className="text-muted-foreground hover:text-foreground transition-colors"
               title={muted ? "Réactiver le son (M)" : "Couper le son (M)"}
             >
-              {muted ? <VolumeX className="h-4 w-4 text-destructive" /> : <Volume2 className="h-4 w-4" />}
+              {muted ? <VolumeX className="h-3.5 w-3.5 text-destructive" /> : <Volume2 className="h-3.5 w-3.5" />}
             </button>
             <input
               type="range"
@@ -264,10 +291,10 @@ export default function MiniPlayer() {
           {/* Queue */}
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="ghost" size="icon" className="shrink-0 relative" title="File d'attente">
-                <ListMusic className="h-4 w-4" />
+              <Button variant="ghost" size="icon" className="shrink-0 relative h-8 w-8" title="File d'attente">
+                <ListMusic className="h-3.5 w-3.5" />
                 {queue.length > 0 && (
-                  <span className="absolute -top-1 -right-1 h-4 min-w-4 px-1 rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center">
+                  <span className="absolute -top-0.5 -right-0.5 h-3.5 min-w-3.5 px-1 rounded-full bg-primary text-primary-foreground text-[9px] font-bold flex items-center justify-center">
                     {queue.length}
                   </span>
                 )}
@@ -310,8 +337,8 @@ export default function MiniPlayer() {
           </Popover>
 
           {/* Close player */}
-          <Button variant="ghost" size="icon" className="shrink-0 text-muted-foreground hover:text-destructive" onClick={clear} title="Fermer le lecteur">
-            <X className="h-4 w-4" />
+          <Button variant="ghost" size="icon" className="shrink-0 h-8 w-8 text-muted-foreground hover:text-destructive" onClick={clear} title="Fermer le lecteur">
+            <X className="h-3.5 w-3.5" />
           </Button>
         </div>
       </div>

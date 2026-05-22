@@ -40,6 +40,39 @@ const SUGGESTED_TAG_BANK = [
   "bigroom", "afterhours", "warmup", "peaktime", "drive", "chill",
 ];
 
+// Curated reference lists for dropdown helpers (DJ-friendly)
+const GENRE_PRESETS = [
+  "House", "Deep House", "Tech House", "Afro House", "Techno",
+  "Hip-Hop", "Rap FR", "R&B", "Trap", "Drill",
+  "Reggaeton", "Latin", "Dancehall", "Afrobeats", "Amapiano",
+  "EDM", "Big Room", "Future House", "Bass House", "Drum & Bass",
+  "Pop", "Dance Pop", "Electro", "Disco", "Funk",
+  "Moombahton", "Baile Funk", "Kuduro", "Kompa", "Zouk",
+];
+const SUBGENRE_BY_GENRE: Record<string, string[]> = {
+  House: ["Deep House", "Tech House", "Afro House", "Soulful", "Tribal", "Progressive"],
+  Techno: ["Melodic", "Peak Time", "Hard Techno", "Minimal", "Dub Techno"],
+  "Hip-Hop": ["Boom Bap", "Trap", "Drill", "Cloud Rap", "Lo-Fi"],
+  "Rap FR": ["Conscient", "Égo Trip", "Mélodique", "Drill FR", "Cloud"],
+  Reggaeton: ["Perreo", "Old School", "Romantic", "Trap Latino"],
+  Afrobeats: ["Afro Pop", "Afro Fusion", "Afro House", "Amapiano"],
+  EDM: ["Big Room", "Future House", "Bass House", "Electro House", "Festival"],
+  Pop: ["Dance Pop", "Synth Pop", "Indie Pop", "Electro Pop"],
+};
+const MOOD_PRESETS = [
+  "Énergique", "Euphorique", "Dark", "Mélancolique", "Chill",
+  "Romantique", "Festif", "Agressif", "Sensuel", "Hypnotique",
+  "Groovy", "Triomphant", "Mystérieux", "Nostalgique", "Estival",
+];
+
+// ISRC generator: FR-XXX-YY-NNNNN  (FR + 3-char registrant + 2-digit year + 5-digit incremental)
+function generateIsrc(prefix = "FRP"): string {
+  const yy = String(new Date().getFullYear()).slice(-2);
+  const rand = Math.floor(Math.random() * 100000).toString().padStart(5, "0");
+  const reg = prefix.toUpperCase().replace(/[^A-Z0-9]/g, "").padEnd(3, "X").slice(0, 3);
+  return `FR${reg}${yy}${rand}`;
+}
+
 interface TrackFormProps {
   initialData?: DbTrack | null;
   saving: boolean;
@@ -638,7 +671,26 @@ export default function TrackForm({ initialData, saving, onSubmit, existingGenre
               </div>
               <div className="space-y-1">
                 <Label className="text-xs">ISRC</Label>
-                <Input value={isrc} onChange={(e) => setIsrc(e.target.value)} placeholder="FRXXX2500001" className="bg-secondary border-border font-mono uppercase" />
+                <div className="flex gap-1">
+                  <Input
+                    value={isrc}
+                    onChange={(e) => setIsrc(e.target.value.toUpperCase())}
+                    placeholder="FRP250012345"
+                    maxLength={12}
+                    className="bg-secondary border-border font-mono uppercase"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    className="shrink-0"
+                    title="Générer un ISRC (FR + registrant + année + n°)"
+                    onClick={() => setIsrc(generateIsrc())}
+                  >
+                    <Wand2 className="h-4 w-4" />
+                  </Button>
+                </div>
+                <p className="text-[10px] text-muted-foreground">12 caractères, format FR-XXX-AA-NNNNN</p>
               </div>
             </div>
           </div>
@@ -650,29 +702,27 @@ export default function TrackForm({ initialData, saving, onSubmit, existingGenre
               <Input
                 value={genre}
                 onChange={(e) => setGenre(e.target.value)}
-                placeholder="House, Hip-Hop, Reggaeton…"
+                placeholder="Choisir ou taper…"
                 list="track-genres-suggest"
                 className="bg-secondary border-border"
               />
               <datalist id="track-genres-suggest">
-                {existingGenres.map((g) => <option key={g} value={g} />)}
+                {[...new Set([...GENRE_PRESETS, ...existingGenres])].map((g) => <option key={g} value={g} />)}
               </datalist>
-              {existingGenres.length > 0 && (
-                <div className="flex gap-1 flex-wrap pt-1">
-                  {existingGenres.slice(0, 6).map((g) => (
-                    <button
-                      key={g}
-                      type="button"
-                      onClick={() => setGenre(g)}
-                      className={`text-[10px] px-2 py-0.5 rounded-full border transition-colors ${
-                        genre === g ? "bg-primary text-primary-foreground border-primary" : "bg-muted/40 text-muted-foreground border-border hover:text-foreground"
-                      }`}
-                    >
-                      {g}
-                    </button>
-                  ))}
-                </div>
-              )}
+              <div className="flex gap-1 flex-wrap pt-1">
+                {[...new Set([...existingGenres.slice(0, 4), ...GENRE_PRESETS])].slice(0, 8).map((g) => (
+                  <button
+                    key={g}
+                    type="button"
+                    onClick={() => setGenre(g)}
+                    className={`text-[10px] px-2 py-0.5 rounded-full border transition-colors ${
+                      genre === g ? "bg-primary text-primary-foreground border-primary" : "bg-muted/40 text-muted-foreground border-border hover:text-foreground"
+                    }`}
+                  >
+                    {g}
+                  </button>
+                ))}
+              </div>
             </div>
 
             <div className="space-y-1">
@@ -722,11 +772,61 @@ export default function TrackForm({ initialData, saving, onSubmit, existingGenre
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1">
               <Label className="text-xs">Sous-genre</Label>
-              <Input value={subgenre} onChange={(e) => setSubgenre(e.target.value)} placeholder="Deep House, Afro Tech…" className="bg-secondary border-border" />
+              <Input
+                value={subgenre}
+                onChange={(e) => setSubgenre(e.target.value)}
+                placeholder="Deep House, Afro Tech…"
+                list="track-subgenre-suggest"
+                className="bg-secondary border-border"
+              />
+              <datalist id="track-subgenre-suggest">
+                {(SUBGENRE_BY_GENRE[genre] || Object.values(SUBGENRE_BY_GENRE).flat()).map((s) => (
+                  <option key={s} value={s} />
+                ))}
+              </datalist>
+              {(SUBGENRE_BY_GENRE[genre] || []).length > 0 && (
+                <div className="flex gap-1 flex-wrap pt-1">
+                  {SUBGENRE_BY_GENRE[genre].slice(0, 6).map((s) => (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => setSubgenre(s)}
+                      className={`text-[10px] px-2 py-0.5 rounded-full border transition-colors ${
+                        subgenre === s ? "bg-primary text-primary-foreground border-primary" : "bg-muted/40 text-muted-foreground border-border hover:text-foreground"
+                      }`}
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
             <div className="space-y-1">
               <Label className="text-xs">Mood / Ambiance</Label>
-              <Input value={mood} onChange={(e) => setMood(e.target.value)} placeholder="Energetic, Chill, Dark…" className="bg-secondary border-border" />
+              <Input
+                value={mood}
+                onChange={(e) => setMood(e.target.value)}
+                placeholder="Énergique, Chill, Dark…"
+                list="track-mood-suggest"
+                className="bg-secondary border-border"
+              />
+              <datalist id="track-mood-suggest">
+                {MOOD_PRESETS.map((m) => <option key={m} value={m} />)}
+              </datalist>
+              <div className="flex gap-1 flex-wrap pt-1">
+                {MOOD_PRESETS.slice(0, 8).map((m) => (
+                  <button
+                    key={m}
+                    type="button"
+                    onClick={() => setMood(m)}
+                    className={`text-[10px] px-2 py-0.5 rounded-full border transition-colors ${
+                      mood === m ? "bg-primary text-primary-foreground border-primary" : "bg-muted/40 text-muted-foreground border-border hover:text-foreground"
+                    }`}
+                  >
+                    {m}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 
