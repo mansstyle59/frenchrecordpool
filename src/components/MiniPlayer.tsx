@@ -29,7 +29,7 @@ export default function MiniPlayer() {
     toggle, next, prev, play, setVolume, toggleMute, clear, audioRef,
   } = usePlayer();
   const progressRef = useRef<HTMLInputElement>(null);
-  const playedRef = useRef<HTMLDivElement>(null);
+  const playedMirrorRef = useRef<HTMLDivElement>(null);
   const mobilePlayedRef = useRef<HTMLDivElement>(null);
   const timeRef = useRef<HTMLSpanElement>(null);
   const [loading, setLoading] = useState(false);
