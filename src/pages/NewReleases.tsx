@@ -1,7 +1,6 @@
 import { useState, useMemo } from "react";
-import { Search, SlidersHorizontal, X, Clock, Flame, ArrowUpDown, Disc3 } from "lucide-react";
+import { Search, SlidersHorizontal, X, ArrowUpDown, Disc3, Calendar } from "lucide-react";
 import Layout from "@/components/Layout";
-import PageHero from "@/components/PageHero";
 import TrackRow, { TrackListHeader } from "@/components/TrackRow";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -9,13 +8,38 @@ import { Slider } from "@/components/ui/slider";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useTracks } from "@/hooks/useTracks";
-import { groupTracks } from "@/lib/groupTracks";
+import { useTracks, type DbTrack } from "@/hooks/useTracks";
+import { groupTracks, type TrackGroup } from "@/lib/groupTracks";
 import TrackGroupRow from "@/components/TrackGroupRow";
 
 type SortOption = "newest" | "popular" | "az" | "bpm";
 
-const PAGE_SIZE = 40;
+const PAGE_SIZE = 60;
+
+/* ── Group track-groups by release day (DJCity-style date sections) ── */
+function groupByDay(groups: TrackGroup[]): { day: string; label: string; items: TrackGroup[] }[] {
+  const map = new Map<string, TrackGroup[]>();
+  for (const g of groups) {
+    const raw = g.primary.release_date || g.primary.created_at || "";
+    const day = raw ? raw.slice(0, 10) : "unknown";
+    const arr = map.get(day) ?? [];
+    arr.push(g);
+    map.set(day, arr);
+  }
+  const fmt = new Intl.DateTimeFormat("fr-FR", {
+    weekday: "long", day: "2-digit", month: "long", year: "numeric",
+  });
+  return Array.from(map.entries())
+    .sort((a, b) => b[0].localeCompare(a[0]))
+    .map(([day, items]) => {
+      let label = "Date inconnue";
+      if (day !== "unknown") {
+        const d = new Date(day);
+        if (!isNaN(d.getTime())) label = fmt.format(d).toUpperCase();
+      }
+      return { day, label, items };
+    });
+}
 
 export default function NewReleases() {
   const { data: tracks = [], isLoading } = useTracks();
@@ -67,6 +91,12 @@ export default function NewReleases() {
 
   const visibleTracks = filtered.slice(0, visible);
   const groupedVisible = useMemo(() => groupTracks(visibleTracks), [visibleTracks]);
+  // Only show day-sections when sorted by newest; otherwise show a single section
+  const daySections = useMemo(
+    () => (sort === "newest" ? groupByDay(groupedVisible) : [{ day: "all", label: "", items: groupedVisible }]),
+    [groupedVisible, sort],
+  );
+
   const activeFiltersCount =
     (genre !== "all" ? 1 : 0) +
     (version !== "all" ? 1 : 0) +
@@ -81,31 +111,53 @@ export default function NewReleases() {
 
   return (
     <Layout>
-      <PageHero
-        eyebrow="Mis à jour quotidiennement"
-        title=""
-        highlight="Nouveautés"
-        description="Les derniers edits, remixes et exclusivités pour vos sets. Filtrez par genre, version, BPM ou tonalité."
-        stats={[
-          { icon: <Disc3 className="h-3.5 w-3.5 text-primary" />, label: `${tracks.length} titres` },
-          { icon: <Flame className="h-3.5 w-3.5 text-accent" />, label: `${genres.length} genres` },
-          { icon: <Clock className="h-3.5 w-3.5 text-primary" />, label: `${filtered.length} résultats` },
-        ]}
-      />
-
+      {/* ── DJCity-style title block ── */}
+      <div className="border-b border-border/40 bg-gradient-to-b from-secondary/30 to-transparent">
+        <div className="container py-8 md:py-12">
+          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.25em] text-primary mb-2">
+                Record Pool
+              </p>
+              <h1 className="text-4xl md:text-6xl font-black uppercase tracking-tight leading-none">
+                Nouveautés
+              </h1>
+              <div className="mt-3 h-1 w-12 bg-primary rounded-full" />
+              <p className="text-sm text-muted-foreground mt-4 max-w-xl">
+                Découvrez les dernières sorties, edits et remixes ajoutés au pool — mis à jour quotidiennement.
+              </p>
+            </div>
+            <div className="flex items-center gap-3 text-xs text-muted-foreground">
+              <span className="inline-flex items-center gap-1.5">
+                <Disc3 className="h-3.5 w-3.5 text-primary" />
+                <span className="font-mono tabular-nums">{tracks.length}</span> titres
+              </span>
+              <span className="h-3 w-px bg-border" />
+              <span className="inline-flex items-center gap-1.5">
+                <Calendar className="h-3.5 w-3.5 text-accent" />
+                <span className="font-mono tabular-nums">{filtered.length}</span> résultats
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <div className="container py-6">
-        {/* Genre pills row — djcity style */}
+        {/* ── Genre tabs (DJCity-style underlined pills) ── */}
         {genres.length > 0 && (
-          <div className="flex gap-2 overflow-x-auto pb-3 mb-4 -mx-2 px-2 scrollbar-thin">
-            <Chip active={genre === "all"} onClick={() => setGenre("all")}>Tous les genres</Chip>
+          <div className="flex gap-1 overflow-x-auto pb-2 mb-5 -mx-2 px-2 border-b border-border/40 scrollbar-thin">
+            <Tab active={genre === "all"} onClick={() => { setGenre("all"); setVisible(PAGE_SIZE); }}>
+              Tous
+            </Tab>
             {genres.map((g) => (
-              <Chip key={g} active={genre === g} onClick={() => setGenre(g)}>{g}</Chip>
+              <Tab key={g} active={genre === g} onClick={() => { setGenre(g); setVisible(PAGE_SIZE); }}>
+                {g}
+              </Tab>
             ))}
           </div>
         )}
 
-        {/* Filter dock */}
+        {/* ── Filter dock ── */}
         <div className="rounded-2xl border border-border bg-card/40 backdrop-blur-xl p-3 mb-4 shadow-xl shadow-primary/5">
           <div className="flex flex-col lg:flex-row gap-2">
             <div className="relative flex-1 min-w-[200px]">
@@ -219,13 +271,30 @@ export default function NewReleases() {
           </div>
         ) : (
           <>
-            <div className="rounded-2xl border border-border bg-card/40 backdrop-blur overflow-hidden shadow-lg shadow-primary/5">
-              <TrackListHeader />
-              {groupedVisible.map((g, i) => <TrackGroupRow key={g.key} group={g} index={i} />)}
+            <div className="space-y-8">
+              {daySections.map((section) => (
+                <section key={section.day}>
+                  {section.label && (
+                    <div className="flex items-baseline justify-between mb-2 px-1">
+                      <h2 className="text-sm font-bold uppercase tracking-[0.2em] text-foreground/90 flex items-center gap-2">
+                        <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+                        {section.label}
+                      </h2>
+                      <span className="text-[10px] uppercase tracking-wider font-mono text-muted-foreground">
+                        {section.items.length} titre{section.items.length > 1 ? "s" : ""}
+                      </span>
+                    </div>
+                  )}
+                  <div className="rounded-2xl border border-border bg-card/40 backdrop-blur overflow-hidden shadow-lg shadow-primary/5">
+                    <TrackListHeader />
+                    {section.items.map((g, i) => <TrackGroupRow key={g.key} group={g} index={i} />)}
+                  </div>
+                </section>
+              ))}
             </div>
 
             {visible < filtered.length && (
-              <div className="flex justify-center mt-6">
+              <div className="flex justify-center mt-8">
                 <Button variant="outline" size="lg" onClick={() => setVisible((v) => v + PAGE_SIZE)}>
                   Charger plus ({filtered.length - visible} restant{filtered.length - visible > 1 ? "s" : ""})
                 </Button>
@@ -242,17 +311,21 @@ export default function NewReleases() {
   );
 }
 
-function Chip({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
+/* DJCity-like underlined tab */
+function Tab({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
   return (
     <button
       onClick={onClick}
-      className={`shrink-0 px-3.5 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wider border transition-all ${
-        active
-          ? "bg-primary text-primary-foreground border-primary shadow-md shadow-primary/30"
-          : "bg-secondary/40 text-muted-foreground border-border/50 hover:border-primary/40 hover:text-foreground"
+      className={`relative shrink-0 px-4 py-2.5 text-xs font-bold uppercase tracking-[0.15em] transition-colors ${
+        active ? "text-primary" : "text-muted-foreground hover:text-foreground"
       }`}
     >
       {children}
+      <span
+        className={`absolute left-2 right-2 -bottom-px h-[3px] rounded-full transition-all ${
+          active ? "bg-primary opacity-100" : "bg-transparent opacity-0"
+        }`}
+      />
     </button>
   );
 }
