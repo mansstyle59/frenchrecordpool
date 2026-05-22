@@ -73,11 +73,7 @@ export default function DjDashboard() {
                 const st = STATUS_LABEL[t.status ?? "pending"];
                 return (
                   <li key={t.id} className="flex items-center gap-3">
-                    {t.cover_url ? (
-                      <img src={t.cover_url} alt="" className="h-10 w-10 rounded object-cover shrink-0" />
-                    ) : (
-                      <div className="h-10 w-10 rounded bg-secondary shrink-0" />
-                    )}
+                    <img src={resolveCover(t)} alt="" className="h-10 w-10 rounded object-cover shrink-0" />
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-medium truncate">{t.title}</p>
                       <p className="text-xs text-muted-foreground truncate">{t.artist}</p>
