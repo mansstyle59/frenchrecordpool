@@ -348,7 +348,10 @@ function TrackGridWidget({ config, preview }: { config: any; preview: boolean })
             Aucun titre {activeGenre ? `pour le genre "${activeGenre}"` : "à afficher"}.
           </div>
         ) : (
-          tracks.map((t, i) => <TrackRow key={t.id} track={t} index={i} />)
+          <>
+            <TrackListHeader />
+            {tracks.map((t, i) => <TrackRow key={t.id} track={t} index={i} />)}
+          </>
         )}
       </div>
     </div>
