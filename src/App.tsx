@@ -27,6 +27,8 @@ import AdminUsers from "./pages/AdminUsers";
 import AdminSubscriptions from "./pages/AdminSubscriptions";
 import AdminBranding from "./pages/AdminBranding";
 import AdminScreenshotStudio from "./pages/AdminScreenshotStudio";
+import AdminPopups from "./pages/AdminPopups";
+import PopupHost from "@/components/PopupHost";
 import AdminAuditLog from "./pages/AdminAuditLog";
 import AdminPlans from "./pages/AdminPlans";
 import AdminPromoCodes from "./pages/AdminPromoCodes";
