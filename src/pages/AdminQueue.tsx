@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { resolveCover } from "@/lib/trackCover";
 import type { DbTrack } from "@/hooks/useTracks";
 import { logAdminAction } from "@/lib/auditLog";
 import { formatDistanceToNow } from "date-fns";
