@@ -36,9 +36,7 @@ export default function Index() {
           </Button>
         </section>
       ) : (
-        <div className="py-2 md:py-4">
-          <HomeWidgets />
-        </div>
+        <HomeWidgets />
       )}
     </Layout>
   );
