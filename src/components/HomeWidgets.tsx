@@ -1045,8 +1045,7 @@ function PlansCompareWidget({ config }: { config: any }) {
   );
 }
 
-/* Need Badge */
-import { Badge } from "@/components/ui/badge";
+/* Badge imported at top */
 
 /* ─── FEATURES GRID ─── */
 function FeaturesGridWidget({ config }: { config: any }) {
