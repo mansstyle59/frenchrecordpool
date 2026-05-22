@@ -1,7 +1,7 @@
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
   Search, Disc3, LogIn, LogOut, Shield, Mic2, Eye, EyeOff, User,
-  Home, Sparkles, Layers, Music2, Download, CreditCard, Users as UsersIcon,
+  Home, Sparkles, Music2, Download, CreditCard, Users as UsersIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,7 +22,6 @@ import {
 const NAV_MAIN = [
   { key: "nav.home", to: "/", label: "Accueil", icon: Home, end: true },
   { key: "nav.new", to: "/new", label: "Nouveautés", icon: Sparkles },
-  { key: "nav.genres", to: "/genres", label: "Genres", icon: Layers },
   { key: "nav.artists", to: "/remixers", label: "Remixers", icon: Mic2 },
   { key: "nav.stems", to: "/stems", label: "Stems", icon: Music2 },
 ];
@@ -242,7 +241,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 </div>
                 <div className="flex gap-6 text-sm text-muted-foreground">
                   <CmsLink editKey="footer.link.new" defaultLabel="Nouveautés" defaultUrl="/new" className="hover:text-foreground transition-colors" />
-                  <CmsLink editKey="footer.link.genres" defaultLabel="Genres" defaultUrl="/genres" className="hover:text-foreground transition-colors" />
+                  
                   <CmsLink editKey="footer.link.artists" defaultLabel="Remixers" defaultUrl="/remixers" className="hover:text-foreground transition-colors" />
                 </div>
                 <p className="text-xs text-muted-foreground">

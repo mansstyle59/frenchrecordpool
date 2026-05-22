@@ -44,7 +44,7 @@ import DjEdit from "./pages/DjEdit";
 import Pricing from "./pages/Pricing";
 import ArtistDetail from "./pages/ArtistDetail";
 import Remixers from "./pages/Remixers";
-import Genres from "./pages/Genres";
+
 
 import NewReleases from "./pages/NewReleases";
 import Stems from "./pages/Stems";
@@ -98,7 +98,7 @@ const App = () => (
               <Route path="/remixers" element={<Remixers />} />
               <Route path="/remixers/:slug" element={<ArtistDetail kind="remixer" />} />
 
-              <Route path="/genres" element={<Genres />} />
+              <Route path="/genres" element={<Navigate to="/new" replace />} />
               <Route path="/top" element={<Navigate to="/new" replace />} />
               <Route path="/new" element={<NewReleases />} />
               <Route path="/stems" element={<Stems />} />

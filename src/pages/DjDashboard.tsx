@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
+import { resolveCover } from "@/lib/trackCover";
 
 const STATUS_LABEL: Record<string, { label: string; color: string }> = {
   pending: { label: "En attente", color: "bg-yellow-500/15 text-yellow-500 border-yellow-500/30" },
@@ -72,11 +73,7 @@ export default function DjDashboard() {
                 const st = STATUS_LABEL[t.status ?? "pending"];
                 return (
                   <li key={t.id} className="flex items-center gap-3">
-                    {t.cover_url ? (
-                      <img src={t.cover_url} alt="" className="h-10 w-10 rounded object-cover shrink-0" />
-                    ) : (
-                      <div className="h-10 w-10 rounded bg-secondary shrink-0" />
-                    )}
+                    <img src={resolveCover(t)} alt="" className="h-10 w-10 rounded object-cover shrink-0" />
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-medium truncate">{t.title}</p>
                       <p className="text-xs text-muted-foreground truncate">{t.artist}</p>

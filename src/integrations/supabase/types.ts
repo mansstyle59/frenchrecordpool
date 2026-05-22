@@ -49,7 +49,10 @@ export type Database = {
       }
       artists: {
         Row: {
+          banner_url: string | null
+          beatport_url: string | null
           bio: string | null
+          bio_long: string | null
           country: string | null
           created_at: string
           created_by: string | null
@@ -63,11 +66,19 @@ export type Database = {
           slug: string
           sort_order: number
           soundcloud_url: string | null
+          spotify_url: string | null
+          tagline: string | null
+          tiktok_url: string | null
           updated_at: string
+          user_id: string | null
           website_url: string | null
+          youtube_url: string | null
         }
         Insert: {
+          banner_url?: string | null
+          beatport_url?: string | null
           bio?: string | null
+          bio_long?: string | null
           country?: string | null
           created_at?: string
           created_by?: string | null
@@ -81,11 +92,19 @@ export type Database = {
           slug: string
           sort_order?: number
           soundcloud_url?: string | null
+          spotify_url?: string | null
+          tagline?: string | null
+          tiktok_url?: string | null
           updated_at?: string
+          user_id?: string | null
           website_url?: string | null
+          youtube_url?: string | null
         }
         Update: {
+          banner_url?: string | null
+          beatport_url?: string | null
           bio?: string | null
+          bio_long?: string | null
           country?: string | null
           created_at?: string
           created_by?: string | null
@@ -99,8 +118,13 @@ export type Database = {
           slug?: string
           sort_order?: number
           soundcloud_url?: string | null
+          spotify_url?: string | null
+          tagline?: string | null
+          tiktok_url?: string | null
           updated_at?: string
+          user_id?: string | null
           website_url?: string | null
+          youtube_url?: string | null
         }
         Relationships: []
       }

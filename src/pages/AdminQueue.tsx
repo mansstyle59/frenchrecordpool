@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { resolveCover } from "@/lib/trackCover";
 import type { DbTrack } from "@/hooks/useTracks";
 import { logAdminAction } from "@/lib/auditLog";
 import { formatDistanceToNow } from "date-fns";
@@ -182,11 +183,7 @@ export default function AdminQueue() {
         <div className="rounded-2xl border border-border bg-card/40 overflow-hidden divide-y divide-border">
           {filtered.map((t) => (
             <div key={t.id} className="flex items-center gap-3 p-3 hover:bg-secondary/30">
-              {t.cover_url ? (
-                <img src={t.cover_url} alt="" className="h-14 w-14 rounded object-cover shrink-0" />
-              ) : (
-                <div className="h-14 w-14 rounded bg-secondary shrink-0" />
-              )}
+              <img src={resolveCover(t)} alt="" className="h-14 w-14 rounded object-cover shrink-0" />
               <div className="min-w-0 flex-1">
                 <p className="font-medium truncate">{t.title}</p>
                 <p className="text-xs text-muted-foreground truncate">
@@ -227,7 +224,7 @@ export default function AdminQueue() {
           {reviewing && (
             <div className="space-y-4">
               <div className="flex gap-4">
-                {reviewing.cover_url && <img src={reviewing.cover_url} alt="" className="h-32 w-32 rounded-lg object-cover shrink-0" />}
+                <img src={resolveCover(reviewing)} alt="" className="h-32 w-32 rounded-lg object-cover shrink-0" />
                 <div className="flex-1 space-y-2 text-sm">
                   <p className="text-muted-foreground">
                     Soumis {formatDistanceToNow(new Date(reviewing.created_at), { addSuffix: true, locale: fr })}
