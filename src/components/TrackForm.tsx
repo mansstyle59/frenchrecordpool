@@ -671,7 +671,26 @@ export default function TrackForm({ initialData, saving, onSubmit, existingGenre
               </div>
               <div className="space-y-1">
                 <Label className="text-xs">ISRC</Label>
-                <Input value={isrc} onChange={(e) => setIsrc(e.target.value)} placeholder="FRXXX2500001" className="bg-secondary border-border font-mono uppercase" />
+                <div className="flex gap-1">
+                  <Input
+                    value={isrc}
+                    onChange={(e) => setIsrc(e.target.value.toUpperCase())}
+                    placeholder="FRP250012345"
+                    maxLength={12}
+                    className="bg-secondary border-border font-mono uppercase"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    className="shrink-0"
+                    title="Générer un ISRC (FR + registrant + année + n°)"
+                    onClick={() => setIsrc(generateIsrc())}
+                  >
+                    <Wand2 className="h-4 w-4" />
+                  </Button>
+                </div>
+                <p className="text-[10px] text-muted-foreground">12 caractères, format FR-XXX-AA-NNNNN</p>
               </div>
             </div>
           </div>
