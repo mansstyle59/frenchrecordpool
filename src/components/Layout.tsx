@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import ThemeToggle from "@/components/ThemeToggle";
 import NotificationBell from "@/components/NotificationBell";
+import SupportLauncher from "@/components/SupportLauncher";
 import ViewAsUserBanner from "@/components/ViewAsUserBanner";
 import CmsText from "@/components/cms/CmsText";
 import CmsLink from "@/components/cms/CmsLink";
@@ -251,7 +252,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             </div>
           </footer>
         </div>
+        <SupportLauncher />
       </div>
     </SidebarProvider>
   );
 }
+

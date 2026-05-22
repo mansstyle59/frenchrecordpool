@@ -34,6 +34,17 @@ const items = [
 
 function AdminSidebar() {
   const { pathname } = useLocation();
+  const { data: supportUnread = 0 } = useQuery({
+    queryKey: ["admin-support-unread-count"],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from("support_threads")
+        .select("id", { count: "exact", head: true })
+        .eq("unread_for_admin", true);
+      return count ?? 0;
+    },
+    refetchInterval: 15000,
+  });
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader>
@@ -51,12 +62,18 @@ function AdminSidebar() {
             <SidebarMenu>
               {items.map((item) => {
                 const active = item.end ? pathname === item.to : pathname.startsWith(item.to);
+                const badge = item.to === "/admin/support" && supportUnread > 0 ? supportUnread : 0;
                 return (
                   <SidebarMenuItem key={item.to}>
                     <SidebarMenuButton asChild isActive={active} tooltip={item.label}>
                       <NavLink to={item.to} end={item.end} className="flex items-center gap-2">
                         <item.icon className="h-4 w-4" />
-                        <span>{item.label}</span>
+                        <span className="flex-1">{item.label}</span>
+                        {badge > 0 && (
+                          <span className="ml-auto inline-flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold group-data-[collapsible=icon]:hidden">
+                            {badge > 99 ? "99+" : badge}
+                          </span>
+                        )}
                       </NavLink>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -66,6 +83,7 @@ function AdminSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
