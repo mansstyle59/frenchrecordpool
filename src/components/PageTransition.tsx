@@ -1,12 +1,15 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { Disc3 } from "lucide-react";
 
 export default function PageTransition() {
   const { pathname } = useLocation();
+  const prevPath = useRef(pathname);
   const [show, setShow] = useState(false);
 
   useEffect(() => {
+    if (prevPath.current === pathname) return;
+    prevPath.current = pathname;
     setShow(true);
     const t = setTimeout(() => setShow(false), 550);
     return () => clearTimeout(t);
