@@ -238,7 +238,7 @@ export default function Index() {
       {/* Featured editorial — cinematic 3-up */}
       {featured.length > 0 && (
         <section className="container py-16">
-          <SectionHeader icon={<Star className="h-4 w-4" />} title="À la une" subtitle="La sélection exclusive de la rédaction pour vos sets." href="/new" />
+          <SectionHeader icon={<Star className="h-4 w-4" />} title={<CmsText editKey="home.featured.title" as="span">À la une</CmsText>} subtitle={<CmsText editKey="home.featured.subtitle" as="span">La sélection exclusive de la rédaction pour vos sets.</CmsText>} href="/new" />
           <motion.div
             initial="hidden"
             whileInView="show"
