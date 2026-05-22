@@ -14,6 +14,8 @@ import { toast } from "sonner";
 import TrackRow from "@/components/TrackRow";
 import { resolveCover } from "@/lib/trackCover";
 import { usePlayer } from "@/contexts/PlayerContext";
+import { titleStyle, bodyStyle } from "@/lib/widgetTypography";
+
 
 export interface Widget {
   id: string;
