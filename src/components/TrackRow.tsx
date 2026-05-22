@@ -101,6 +101,7 @@ export default function TrackRow({ track, index }: TrackRowProps) {
       artist: track.artist,
       coverUrl: resolveCover(track),
       previewUrl: playbackSrc,
+      isFull: isFullPlayback,
     });
   };
 
