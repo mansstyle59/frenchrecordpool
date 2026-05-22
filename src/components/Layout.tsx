@@ -1,7 +1,7 @@
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
   Search, Disc3, LogIn, LogOut, Shield, Mic2, Eye, EyeOff, User,
-  Home, Sparkles, Layers, Music2, Download, CreditCard, Users as UsersIcon,
+  Home, Sparkles, Music2, Download, CreditCard, Users as UsersIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
