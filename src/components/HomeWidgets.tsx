@@ -21,7 +21,7 @@ import {
   Megaphone as MegaphoneIcon, Tv, Film, Clapperboard, CirclePlay,
   Aperture, Sun, Moon, Flame, Snowflake, Leaf, TreePine, Mountain,
   Anchor, Compass, Sailboat, Ship, Plane, Car, Bike, Bus, TrainFront,
-  Ticket, Map, Pin, Navigation, BookOpen, BookMarked, Library,
+  Ticket, Map as MapIcon, Pin as PinIcon, Navigation, BookOpen, BookMarked, Library,
   GraduationCap, School, PenTool, Ruler, Calculator, Scissors,
   Paintbrush, PencilRuler, Drum, Guitar, Piano, Mic, Speaker,
 } from "lucide-react";
