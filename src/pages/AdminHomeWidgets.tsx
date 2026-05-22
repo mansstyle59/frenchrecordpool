@@ -130,7 +130,108 @@ const TYPE_META: Record<string, { label: string; icon: any; desc: string; defaul
     label: "HTML libre", icon: CodeIcon, group: "Avancé",
     desc: "HTML personnalisé", defaults: { html: "<h2>Mon bloc</h2><p>Texte libre.</p>" },
   },
+  /* ── Catalogue pack ── */
+  top_downloads: {
+    label: "Top téléchargements", icon: TrendingUp, group: "Catalogue",
+    desc: "Classement par téléchargements (auto)",
+    defaults: { title: "Top téléchargements", limit: 8 },
+  },
+  new_releases: {
+    label: "Nouveautés", icon: Sparkles, group: "Catalogue",
+    desc: "Derniers morceaux ajoutés",
+    defaults: { title: "Nouveautés", limit: 8 },
+  },
+  top_genre: {
+    label: "Top par genre", icon: ListMusic, group: "Catalogue",
+    desc: "Meilleurs morceaux d'un genre (auto si vide)",
+    defaults: { title: "", genre: "", limit: 6 },
+  },
+  top_label: {
+    label: "Labels en vogue", icon: Disc3, group: "Catalogue",
+    desc: "Labels les plus téléchargés",
+    defaults: { title: "Labels en vogue", limit: 8 },
+  },
+  top_artists: {
+    label: "Top artistes", icon: Users, group: "Catalogue",
+    desc: "Classement automatique par téléchargements cumulés",
+    defaults: { title: "Top artistes", limit: 6 },
+  },
+  /* ── Engagement pack ── */
+  slides_carousel: {
+    label: "Carrousel slides", icon: Images, group: "Mise en avant",
+    desc: "Carrousel plein largeur avec autoplay",
+    defaults: { autoplay: true, duration: 5, slides: [{ title: "Slide 1", body: "", image_url: "", cta_label: "Découvrir", cta_url: "/new" }] },
+  },
+  image_gallery: {
+    label: "Galerie d'images", icon: ImageIcon, group: "Contenu",
+    desc: "Grille masonry d'images",
+    defaults: { title: "Galerie", images: [] },
+  },
+  marquee: {
+    label: "Bandeau marquee", icon: Repeat, group: "Mise en avant",
+    desc: "Texte défilant en boucle",
+    defaults: { items: "FRESH · NEW · HOT · EXCLUSIVE · 100% DJ" },
+  },
+  live_counter: {
+    label: "Compteur live (inscrits)", icon: Radio, group: "Mise en avant",
+    desc: "Compteur d'inscrits en temps réel",
+    defaults: { label: "DJs inscrits", cta_label: "Rejoindre", cta_url: "/signup" },
+  },
+  /* ── Conversion pack ── */
+  plans_compare: {
+    label: "Comparatif de plans", icon: BarChart3, group: "Marketing",
+    desc: "Affiche les plans avec mise en avant",
+    defaults: { title: "Choisis ton plan", subtitle: "Sans engagement, résiliable à tout moment.", highlight_slug: "premium" },
+  },
+  features_grid: {
+    label: "Grille de features", icon: Layout, group: "Marketing",
+    desc: "Ic\u00f4nes + titre + description en grille",
+    defaults: { title: "Pourquoi nous", subtitle: "", items: [
+      { icon: "Download", title: "Téléchargements illimités", body: "Récupère tout en haute qualité." },
+      { icon: "Sparkles", title: "Mises à jour hebdo", body: "Les exclus de la semaine direct dans ton pool." },
+      { icon: "Radio", title: "100% DJ-ready", body: "BPM, key, version : tout est prêt à mixer." },
+    ]},
+  },
+  video_testimonial: {
+    label: "Témoignage vidéo", icon: Video, group: "Marketing",
+    desc: "Vidéo + citation côte à côte",
+    defaults: { quote: "Le pool indispensable de mes sets.", author: "DJ Example", role: "Résident, Paris", video_url: "" },
+  },
+  sticky_promo: {
+    label: "Bandeau promo sticky", icon: MegaphoneIcon, group: "Marketing",
+    desc: "Fin bandeau au-dessus du contenu (dismiss)",
+    defaults: { title: "-50 % le premier mois", cta_label: "En profiter", cta_url: "/pricing", bg_color: "220 80% 25%", text_color: "0 0% 100%" },
+  },
+  /* ── Content pack ── */
+  blog_cards: {
+    label: "Cartes blog / news", icon: Newspaper, group: "Contenu",
+    desc: "Articles avec image, catégorie et extrait",
+    defaults: { title: "Actus", items: [] },
+  },
+  team_grid: {
+    label: "Équipe / Résidents", icon: Users, group: "Contenu",
+    desc: "Grille de membres avec rôle",
+    defaults: { title: "L'équipe", items: [] },
+  },
+  audio_embed: {
+    label: "Player Spotify / SoundCloud", icon: Music2, group: "Contenu",
+    desc: "Embed audio externe",
+    defaults: { title: "", url: "" },
+  },
+  instagram_feed: {
+    label: "Instagram (cartes statiques)", icon: Instagram, group: "Contenu",
+    desc: "Grille de visuels Instagram (sans API)",
+    defaults: { title: "Sur Instagram", handle: "", items: [] },
+  },
 };
+
+/* ─── Presets : ready-to-use widget recipes ─── */
+const PRESETS: { id: string; label: string; desc: string; types: string[] }[] = [
+  { id: "landing-classic", label: "Landing classique", desc: "Hero + stats + features + plans + FAQ + CTA", types: ["hero", "stats", "features_grid", "plans_compare", "faq", "cta"] },
+  { id: "dj-home", label: "Home DJ", desc: "Hero + nouveautés + top + artistes + newsletter", types: ["hero", "new_releases", "top_downloads", "artist_carousel", "newsletter"] },
+  { id: "promo-launch", label: "Lancement promo", desc: "Sticky promo + hero + countdown + featured track + CTA", types: ["sticky_promo", "hero", "countdown", "featured_track", "cta"] },
+  { id: "editorial", label: "Éditorial", desc: "Hero + 2 colonnes + carrousel slides + blog + témoignages", types: ["hero", "two_columns", "slides_carousel", "blog_cards", "testimonials"] },
+];
 
 
 export default function AdminHomeWidgets() {
