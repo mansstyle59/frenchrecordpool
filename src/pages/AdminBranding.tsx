@@ -281,19 +281,21 @@ export default function AdminBranding() {
     >
       <div className="grid lg:grid-cols-[440px_1fr] gap-6 pb-32">
         {/* ===================== EDITOR ===================== */}
-        <div className="space-y-4">
+        <div className="space-y-6">
           {/* PRESETS GALLERY */}
           <motion.section
             initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-            className="rounded-2xl border border-border bg-card/60 backdrop-blur p-4 shadow-sm"
+            className="space-y-4"
           >
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="font-display font-bold flex items-center gap-2 text-sm">
+            <div className="flex items-center justify-between">
+              <h2 className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 <Sparkles className="h-4 w-4 text-primary" /> Palettes signature
               </h2>
-              <Badge variant="outline" className="text-[10px]">{PRESETS.length} thèmes</Badge>
+              <span className="px-2 py-0.5 rounded-full bg-white/5 border border-border text-[10px] text-muted-foreground">
+                {PRESETS.length} thèmes
+              </span>
             </div>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-3">
               {PRESETS.map((p) => {
                 const active = draft.light_primary === p.patch.light_primary;
                 return (
@@ -301,23 +303,27 @@ export default function AdminBranding() {
                     key={p.name}
                     onClick={() => applyPreset(p)}
                     className={cn(
-                      "group relative text-left rounded-xl border p-2.5 transition-all overflow-hidden",
+                      "group relative text-left rounded-lg p-3 transition-all overflow-hidden",
                       active
-                        ? "border-primary bg-primary/5 ring-2 ring-primary/30"
-                        : "border-border hover:border-primary/50 hover:bg-secondary/50"
+                        ? "bg-white/5 border-2 border-primary ring-4 ring-primary/10"
+                        : "bg-white/5 border border-border hover:border-primary/40 hover:bg-white/10"
                     )}
                   >
-                    <div className="flex h-7 rounded-md overflow-hidden mb-2 ring-1 ring-black/5">
+                    <div className="flex h-10 w-full rounded-md overflow-hidden mb-3 ring-1 ring-black/10">
                       {p.swatch.map((c, i) => (
                         <div key={i} style={{ background: c }} className="flex-1" />
                       ))}
                     </div>
-                    <div className="flex items-start justify-between gap-1">
+                    <div className="flex items-center justify-between gap-2">
                       <div className="min-w-0">
-                        <p className="text-xs font-semibold truncate">{p.name}</p>
+                        <p className="text-[11px] font-bold text-foreground truncate">{p.name}</p>
                         <p className="text-[10px] text-muted-foreground truncate">{p.tag}</p>
                       </div>
-                      {active && <Check className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" />}
+                      {active && (
+                        <div className="w-4 h-4 bg-primary rounded-full flex items-center justify-center shrink-0">
+                          <Check className="h-2.5 w-2.5 text-primary-foreground" strokeWidth={3} />
+                        </div>
+                      )}
                     </div>
                   </button>
                 );
