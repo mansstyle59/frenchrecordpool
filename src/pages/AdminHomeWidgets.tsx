@@ -661,9 +661,162 @@ function TypeFields({ w, setC }: { w: Widget; setC: (k: string, v: any) => void 
       return (
         <Field label="HTML"><Textarea rows={10} className="font-mono text-xs" value={c.html ?? ""} onChange={(e) => setC("html", e.target.value)} /></Field>
       );
+    case "stats":
+      return (
+        <>
+          <Field label="Titre (optionnel)"><Input value={c.title ?? ""} onChange={(e) => setC("title", e.target.value)} /></Field>
+          <div className="flex items-center gap-2">
+            <Switch checked={!!c.auto_fetch} onCheckedChange={(v) => setC("auto_fetch", v)} />
+            <span className="text-sm">Calculer automatiquement depuis la base</span>
+          </div>
+          {!c.auto_fetch && (
+            <RepeaterField label="Compteurs" items={c.items ?? []} empty={{ label: "Nouveau", value: "0" }} onChange={(v) => setC("items", v)}
+              render={(it, set) => (
+                <div className="grid grid-cols-2 gap-2">
+                  <Input placeholder="Libellé" value={it.label ?? ""} onChange={(e) => set({ ...it, label: e.target.value })} />
+                  <Input placeholder="Valeur" value={it.value ?? ""} onChange={(e) => set({ ...it, value: e.target.value })} />
+                </div>
+              )}
+            />
+          )}
+        </>
+      );
+    case "genres_cloud":
+      return (
+        <>
+          <Field label="Titre"><Input value={c.title ?? ""} onChange={(e) => setC("title", e.target.value)} /></Field>
+          <Field label="Nombre max de genres"><Input type="number" min={4} max={40} value={c.limit ?? 16} onChange={(e) => setC("limit", parseInt(e.target.value) || 16)} /></Field>
+        </>
+      );
+    case "featured_track":
+      return (
+        <>
+          <Field label="Tag (badge)"><Input value={c.tag ?? ""} onChange={(e) => setC("tag", e.target.value)} placeholder="Track de la semaine" /></Field>
+          <Field label="ID du track (vide = plus populaire)"><Input value={c.track_id ?? ""} onChange={(e) => setC("track_id", e.target.value)} placeholder="uuid…" /></Field>
+        </>
+      );
+    case "testimonials":
+      return (
+        <>
+          <Field label="Titre"><Input value={c.title ?? ""} onChange={(e) => setC("title", e.target.value)} /></Field>
+          <RepeaterField label="Témoignages" items={c.items ?? []} empty={{ quote: "", author: "", role: "" }} onChange={(v) => setC("items", v)}
+            render={(it, set) => (
+              <div className="space-y-2">
+                <Textarea rows={2} placeholder="Citation" value={it.quote ?? ""} onChange={(e) => set({ ...it, quote: e.target.value })} />
+                <div className="grid grid-cols-2 gap-2">
+                  <Input placeholder="Auteur" value={it.author ?? ""} onChange={(e) => set({ ...it, author: e.target.value })} />
+                  <Input placeholder="Rôle / lieu" value={it.role ?? ""} onChange={(e) => set({ ...it, role: e.target.value })} />
+                </div>
+                <Input placeholder="URL avatar (optionnel)" value={it.avatar ?? ""} onChange={(e) => set({ ...it, avatar: e.target.value })} />
+              </div>
+            )}
+          />
+        </>
+      );
+    case "faq":
+      return (
+        <>
+          <Field label="Titre"><Input value={c.title ?? ""} onChange={(e) => setC("title", e.target.value)} /></Field>
+          <RepeaterField label="Questions" items={c.items ?? []} empty={{ question: "", answer: "" }} onChange={(v) => setC("items", v)}
+            render={(it, set) => (
+              <div className="space-y-2">
+                <Input placeholder="Question" value={it.question ?? ""} onChange={(e) => set({ ...it, question: e.target.value })} />
+                <Textarea rows={3} placeholder="Réponse" value={it.answer ?? ""} onChange={(e) => set({ ...it, answer: e.target.value })} />
+              </div>
+            )}
+          />
+        </>
+      );
+    case "logos_strip":
+      return (
+        <>
+          <Field label="Titre (optionnel)"><Input value={c.title ?? ""} onChange={(e) => setC("title", e.target.value)} /></Field>
+          <RepeaterField label="Logos" items={c.logos ?? []} empty={{ image_url: "", url: "", alt: "" }} onChange={(v) => setC("logos", v)}
+            render={(it, set) => (
+              <div className="space-y-2">
+                <Input placeholder="URL image" value={it.image_url ?? ""} onChange={(e) => set({ ...it, image_url: e.target.value })} />
+                <div className="grid grid-cols-2 gap-2">
+                  <Input placeholder="Lien (optionnel)" value={it.url ?? ""} onChange={(e) => set({ ...it, url: e.target.value })} />
+                  <Input placeholder="Texte alt" value={it.alt ?? ""} onChange={(e) => set({ ...it, alt: e.target.value })} />
+                </div>
+              </div>
+            )}
+          />
+        </>
+      );
+    case "divider":
+      return (
+        <>
+          <Field label="Style">
+            <Select value={c.style ?? "line"} onValueChange={(v) => setC("style", v)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="line">Ligne</SelectItem>
+                <SelectItem value="gradient">Dégradé</SelectItem>
+                <SelectItem value="spacer">Espace vide</SelectItem>
+              </SelectContent>
+            </Select>
+          </Field>
+          {c.style === "line" && (
+            <Field label="Libellé (optionnel)"><Input value={c.label ?? ""} onChange={(e) => setC("label", e.target.value)} /></Field>
+          )}
+          {c.style === "spacer" && (
+            <Field label="Hauteur (px)"><Input type="number" min={8} max={400} value={c.height ?? 40} onChange={(e) => setC("height", parseInt(e.target.value) || 40)} /></Field>
+          )}
+        </>
+      );
+    case "two_columns":
+      return (
+        <>
+          <Field label="Eyebrow (optionnel)"><Input value={c.eyebrow ?? ""} onChange={(e) => setC("eyebrow", e.target.value)} /></Field>
+          <Field label="Titre"><Input value={c.title ?? ""} onChange={(e) => setC("title", e.target.value)} /></Field>
+          <Field label="Texte"><Textarea rows={4} value={c.body ?? ""} onChange={(e) => setC("body", e.target.value)} /></Field>
+          <Field label="Image (URL)"><Input value={c.image_url ?? ""} onChange={(e) => setC("image_url", e.target.value)} /></Field>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Position image">
+              <Select value={c.image_position ?? "left"} onValueChange={(v) => setC("image_position", v)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="left">Gauche</SelectItem>
+                  <SelectItem value="right">Droite</SelectItem>
+                </SelectContent>
+              </Select>
+            </Field>
+            <Field label="Texte CTA"><Input value={c.cta_label ?? ""} onChange={(e) => setC("cta_label", e.target.value)} /></Field>
+          </div>
+          <Field label="URL CTA"><Input value={c.cta_url ?? ""} onChange={(e) => setC("cta_url", e.target.value)} /></Field>
+        </>
+      );
     default:
       return null;
   }
+}
+
+function RepeaterField({ label, items, empty, onChange, render }: {
+  label: string; items: any[]; empty: any; onChange: (items: any[]) => void;
+  render: (item: any, set: (v: any) => void) => React.ReactNode;
+}) {
+  return (
+    <div className="space-y-2">
+      <Label className="text-xs text-muted-foreground">{label}</Label>
+      <div className="space-y-2">
+        {items.map((it, i) => (
+          <div key={i} className="rounded-lg border border-border bg-background p-3 space-y-2">
+            {render(it, (v) => onChange(items.map((x, j) => (j === i ? v : x))))}
+            <div className="flex justify-end">
+              <Button type="button" variant="ghost" size="sm" className="h-7 text-xs"
+                onClick={() => onChange(items.filter((_, j) => j !== i))}>
+                <Trash2 className="h-3 w-3 mr-1" /> Retirer
+              </Button>
+            </div>
+          </div>
+        ))}
+      </div>
+      <Button type="button" variant="outline" size="sm" onClick={() => onChange([...items, { ...empty }])}>
+        <Plus className="h-3.5 w-3.5 mr-1" /> Ajouter
+      </Button>
+    </div>
+  );
 }
 
 function Field({ label, children, className = "" }: { label: string; children: React.ReactNode; className?: string }) {
