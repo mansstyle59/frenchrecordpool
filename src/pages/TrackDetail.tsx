@@ -18,6 +18,7 @@ import { downloadTrack } from "@/lib/downloadTrack";
 import { useFavorites } from "@/hooks/useFavorites";
 import { toast } from "sonner";
 import { resolveCover } from "@/lib/trackCover";
+import TrackRow, { TrackListHeader } from "@/components/TrackRow";
 
 function inferFormat(url: string | null | undefined): string {
   if (!url) return "—";
