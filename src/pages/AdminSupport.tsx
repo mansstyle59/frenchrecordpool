@@ -109,13 +109,80 @@ export default function AdminSupport() {
           </div>
         </div>
 
-        <div>
+        <div className="space-y-3">
           {selected ? (
-            <SupportChat
-              key={selected.id}
-              threadOverride={{ id: selected.id, user_id: selected.user_id }}
-              className="h-[600px]"
-            />
+            <>
+              <div className="flex items-center justify-between bg-card border border-border rounded-xl px-4 py-2">
+                <div className="text-sm">
+                  <span className="font-medium">{selected.profile?.dj_name || selected.profile?.email || "Utilisateur"}</span>
+                  {selected.profile?.email && (
+                    <span className="text-muted-foreground"> · {selected.profile.email}</span>
+                  )}
+                </div>
+                <div className="flex gap-2">
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="outline" size="sm" className="gap-1">
+                        <Eraser className="h-3.5 w-3.5" /> Vider
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Vider la conversation ?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Tous les messages de cette conversation seront supprimés. Le fil restera ouvert.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Annuler</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={async () => {
+                            const { error } = await supabase.rpc("admin_clear_support_thread", { _thread_id: selected.id });
+                            if (error) return toast({ title: "Erreur", description: error.message, variant: "destructive" });
+                            toast({ title: "Conversation vidée" });
+                            qc.invalidateQueries({ queryKey: ["admin-support-threads"] });
+                            setSelected({ ...selected });
+                          }}
+                        >Vider</AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="destructive" size="sm" className="gap-1">
+                        <Trash2 className="h-3.5 w-3.5" /> Supprimer
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Supprimer la conversation ?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Le fil entier sera supprimé. Cette action est irréversible.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Annuler</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={async () => {
+                            const { error } = await supabase.rpc("admin_delete_support_thread", { _thread_id: selected.id });
+                            if (error) return toast({ title: "Erreur", description: error.message, variant: "destructive" });
+                            toast({ title: "Conversation supprimée" });
+                            setSelected(null);
+                            qc.invalidateQueries({ queryKey: ["admin-support-threads"] });
+                          }}
+                        >Supprimer</AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
+              </div>
+              <SupportChat
+                key={selected.id}
+                threadOverride={{ id: selected.id, user_id: selected.user_id }}
+                className="h-[540px]"
+              />
+            </>
           ) : (
             <div className="h-[600px] flex items-center justify-center bg-card border border-border rounded-xl text-muted-foreground text-sm">
               <div className="text-center">
@@ -125,6 +192,7 @@ export default function AdminSupport() {
             </div>
           )}
         </div>
+
       </div>
     </AdminLayout>
   );
