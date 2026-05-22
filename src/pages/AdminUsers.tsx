@@ -45,6 +45,7 @@ export default function AdminUsers() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [editing, setEditing] = useState<ProfileRow | null>(null);
   const [viewing, setViewing] = useState<ProfileRow | null>(null);
+  const [assigning, setAssigning] = useState<ProfileRow | null>(null);
 
   const { data: profiles = [] } = useQuery({
     queryKey: ["admin-profiles"],
