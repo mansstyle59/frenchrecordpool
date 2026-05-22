@@ -401,7 +401,7 @@ export default function AdminBranding() {
             </TabsContent>
 
             {/* ---------- Colors ---------- */}
-            <TabsContent value="colors" className="space-y-5 mt-5">
+            <TabsContent value="colors" className="space-y-5 p-5 m-0">
               <ColorMode
                 title="Mode clair" icon={<Sun className="h-3 w-3" />}
                 draft={draft} update={update} mode="light"
@@ -412,16 +412,16 @@ export default function AdminBranding() {
               />
               <button
                 onClick={copyTokensCss}
-                className="w-full text-xs h-9 rounded-md border border-border hover:border-primary/40 hover:bg-secondary/50 transition-colors flex items-center justify-center gap-2"
+                className="w-full text-xs h-9 rounded-md border border-border hover:border-primary/40 hover:bg-white/5 transition-colors flex items-center justify-center gap-2"
               >
                 <Copy className="h-3 w-3" /> Copier les tokens CSS
               </button>
             </TabsContent>
 
             {/* ---------- Typo ---------- */}
-            <TabsContent value="typo" className="space-y-4 mt-5">
+            <TabsContent value="typo" className="space-y-4 p-5 m-0">
               <div>
-                <Label className="text-xs font-bold uppercase text-muted-foreground mb-2 block">Couples typographiques</Label>
+                <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2 block">Couples typographiques</Label>
                 <div className="grid grid-cols-2 gap-2">
                   {FONT_PAIRS.map((p) => {
                     const active = draft.font_display === p.display && draft.font_body === p.body;
@@ -430,11 +430,11 @@ export default function AdminBranding() {
                         key={p.label}
                         onClick={() => update({ font_display: p.display, font_body: p.body })}
                         className={cn(
-                          "rounded-xl border p-3 text-left transition-all",
-                          active ? "border-primary bg-primary/5 ring-2 ring-primary/30" : "border-border hover:border-primary/40"
+                          "rounded-lg border p-3 text-left transition-all bg-white/5",
+                          active ? "border-primary ring-4 ring-primary/10" : "border-border hover:border-primary/40 hover:bg-white/10"
                         )}
                       >
-                        <div style={{ fontFamily: `"${p.display}"` }} className="text-xl font-bold leading-tight">{p.display}</div>
+                        <div style={{ fontFamily: `"${p.display}"` }} className="text-xl font-bold leading-tight text-foreground">{p.display}</div>
                         <div style={{ fontFamily: `"${p.body}"` }} className="text-[11px] text-muted-foreground mt-0.5">{p.body} · {p.vibe}</div>
                       </button>
                     );
@@ -444,19 +444,19 @@ export default function AdminBranding() {
 
               <Field label="Police des titres">
                 <Select value={draft.font_display} onValueChange={(v) => update({ font_display: v })}>
-                  <SelectTrigger className="bg-secondary border-border"><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="bg-black/20 dark:bg-black/40 border-border"><SelectValue /></SelectTrigger>
                   <SelectContent>{FONTS.map((f) => <SelectItem key={f} value={f} style={{ fontFamily: f }}>{f}</SelectItem>)}</SelectContent>
                 </Select>
-                <div className="mt-2 p-3 rounded-md bg-secondary/50 border border-border">
+                <div className="mt-2 p-3 rounded-md bg-white/5 border border-border">
                   <p style={{ fontFamily: `"${draft.font_display}"` }} className="text-3xl font-bold leading-tight">{draft.site_name}</p>
                 </div>
               </Field>
               <Field label="Police du texte">
                 <Select value={draft.font_body} onValueChange={(v) => update({ font_body: v })}>
-                  <SelectTrigger className="bg-secondary border-border"><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="bg-black/20 dark:bg-black/40 border-border"><SelectValue /></SelectTrigger>
                   <SelectContent>{FONTS.map((f) => <SelectItem key={f} value={f} style={{ fontFamily: f }}>{f}</SelectItem>)}</SelectContent>
                 </Select>
-                <div className="mt-2 p-3 rounded-md bg-secondary/50 border border-border">
+                <div className="mt-2 p-3 rounded-md bg-white/5 border border-border">
                   <p style={{ fontFamily: `"${draft.font_body}"` }} className="text-sm">
                     The quick brown fox jumps over the lazy dog. — Le DJ mixe ses tracks tard dans la nuit. 1234567890
                   </p>
@@ -465,15 +465,15 @@ export default function AdminBranding() {
             </TabsContent>
 
             {/* ---------- Content ---------- */}
-            <TabsContent value="content" className="space-y-4 mt-5">
+            <TabsContent value="content" className="space-y-4 p-5 m-0">
               <Field label="Titre du Hero" hint={`${(draft.hero_title ?? "").length}/60`}>
-                <Input maxLength={60} value={draft.hero_title ?? ""} onChange={(e) => update({ hero_title: e.target.value })} className="bg-secondary border-border" />
+                <Input maxLength={60} value={draft.hero_title ?? ""} onChange={(e) => update({ hero_title: e.target.value })} className="bg-black/20 dark:bg-black/40 border-border focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary" />
               </Field>
               <Field label="Sous-titre du Hero" hint={`${(draft.hero_subtitle ?? "").length}/160`}>
-                <Textarea maxLength={160} value={draft.hero_subtitle ?? ""} onChange={(e) => update({ hero_subtitle: e.target.value })} className="bg-secondary border-border min-h-[80px]" />
+                <Textarea maxLength={160} value={draft.hero_subtitle ?? ""} onChange={(e) => update({ hero_subtitle: e.target.value })} className="bg-black/20 dark:bg-black/40 border-border min-h-[80px] focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary" />
               </Field>
               <Field label="Texte du footer">
-                <Input value={draft.footer_text ?? ""} onChange={(e) => update({ footer_text: e.target.value })} className="bg-secondary border-border" />
+                <Input value={draft.footer_text ?? ""} onChange={(e) => update({ footer_text: e.target.value })} className="bg-black/20 dark:bg-black/40 border-border focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary" />
               </Field>
             </TabsContent>
           </Tabs>
