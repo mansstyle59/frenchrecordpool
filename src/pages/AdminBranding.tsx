@@ -482,11 +482,11 @@ export default function AdminBranding() {
         {/* ===================== PREVIEW ===================== */}
         <div className="space-y-4">
           {/* Device toolbar */}
-          <div className="flex items-center justify-between rounded-2xl border border-border bg-card/60 backdrop-blur px-3 py-2">
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <Eye className="h-3.5 w-3.5" /> Aperçu en direct
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              <Eye className="h-4 w-4 text-emerald-400" /> Aperçu en direct
             </div>
-            <div className="flex items-center gap-1 bg-secondary rounded-lg p-0.5">
+            <div className="flex items-center gap-1 bg-white/5 border border-border rounded-md p-1">
               {([
                 { v: "desktop", icon: Monitor, label: "Desktop" },
                 { v: "tablet", icon: Tablet, label: "Tablet" },
@@ -496,8 +496,8 @@ export default function AdminBranding() {
                   key={d.v}
                   onClick={() => setDevice(d.v)}
                   className={cn(
-                    "h-7 px-2.5 rounded-md flex items-center gap-1 text-[11px] transition-all",
-                    device === d.v ? "bg-card shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
+                    "h-6 w-7 rounded flex items-center justify-center transition-all",
+                    device === d.v ? "bg-white/10 text-foreground" : "text-muted-foreground hover:text-foreground"
                   )}
                   title={d.label}
                 >
