@@ -155,115 +155,132 @@ export default function MiniPlayer() {
   return (
     <>
       <audio ref={audioRef} preload="auto" />
-      <div className="fixed bottom-0 left-0 right-0 z-50 glass border-t border-border safe-bottom safe-x">
-        {/* Mobile progress bar */}
-        <div className="sm:hidden relative h-0.5 w-full bg-muted/40 cursor-pointer"
-          onClick={(e) => {
-            const audio = audioRef.current;
-            if (!audio?.duration) return;
-            const rect = e.currentTarget.getBoundingClientRect();
-            const pct = (e.clientX - rect.left) / rect.width;
-            audio.currentTime = pct * audio.duration;
-          }}
-        >
-          <div ref={mobilePlayedRef} className="h-full bg-gradient-to-r from-primary to-accent" style={{ width: "0%" }} />
-        </div>
+      <div className="fixed bottom-0 left-0 right-0 z-50 safe-bottom safe-x">
+        {/* Top accent gradient line */}
+        <div className={`h-px w-full bg-gradient-to-r ${isFull ? "from-transparent via-emerald-500/70 to-transparent" : "from-transparent via-primary/70 to-transparent"}`} />
 
-        <div className="container flex items-center gap-2 h-12 sm:h-14">
-          {/* Cover */}
-          <div className="relative shrink-0">
-            <img
-              src={currentTrack.coverUrl || ""}
-              alt=""
-              loading="lazy"
-              decoding="async"
-              className="h-9 w-9 sm:h-10 sm:w-10 rounded object-cover ring-1 ring-border"
-            />
-            {loading && (
-              <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded">
-                <Loader2 className="h-3.5 w-3.5 animate-spin text-white" />
-              </div>
-            )}
+        {/* Player surface */}
+        <div className="relative backdrop-blur-2xl bg-background/80 border-t border-border/60 shadow-[0_-12px_40px_-12px_rgba(0,0,0,0.45)]">
+          {/* Ambient glow */}
+          <div
+            aria-hidden
+            className={`pointer-events-none absolute inset-0 opacity-60 ${isFull ? "bg-[radial-gradient(120%_80%_at_50%_120%,hsl(var(--accent)/0.18),transparent_60%)]" : "bg-[radial-gradient(120%_80%_at_50%_120%,hsl(var(--primary)/0.15),transparent_60%)]"}`}
+          />
+
+          {/* Mobile progress bar */}
+          <div className="sm:hidden relative h-0.5 w-full bg-muted/40 cursor-pointer"
+            onClick={(e) => {
+              const audio = audioRef.current;
+              if (!audio?.duration) return;
+              const rect = e.currentTarget.getBoundingClientRect();
+              const pct = (e.clientX - rect.left) / rect.width;
+              audio.currentTime = pct * audio.duration;
+            }}
+          >
+            <div ref={mobilePlayedRef} className="h-full bg-gradient-to-r from-primary via-accent to-primary" style={{ width: "0%" }} />
           </div>
 
-          {/* Title + Artist + Badge */}
-          <div className="min-w-0 flex-1 sm:flex-none sm:w-44 lg:w-52">
-            <div className="flex items-center gap-1.5">
-              <p className="text-[13px] font-medium truncate leading-tight">{currentTrack.title}</p>
-              {isFull ? (
-                <span
-                  className="shrink-0 inline-flex items-center gap-0.5 h-4 px-1 rounded text-[9px] font-bold uppercase tracking-wider bg-emerald-500/15 text-emerald-500 border border-emerald-500/30"
-                  title="Lecture du titre complet"
-                >
-                  <Crown className="h-2.5 w-2.5" /> Full
-                </span>
-              ) : (
-                <span
-                  className="shrink-0 inline-flex items-center gap-0.5 h-4 px-1 rounded text-[9px] font-bold uppercase tracking-wider bg-primary/10 text-primary border border-primary/30"
-                  title="Extrait limité — abonnez-vous pour le titre complet"
-                >
-                  <Lock className="h-2.5 w-2.5" /> Extrait
-                </span>
+          <div className="container relative flex items-center gap-2 sm:gap-3 h-14 sm:h-16">
+            {/* Cover */}
+            <div className="relative shrink-0">
+              <div className={`absolute -inset-0.5 rounded-md blur-md opacity-60 ${isFull ? "bg-gradient-to-br from-emerald-500/50 to-accent/40" : "bg-gradient-to-br from-primary/40 to-accent/30"} ${isPlaying ? "animate-pulse" : ""}`} />
+              <img
+                src={currentTrack.coverUrl || ""}
+                alt=""
+                loading="lazy"
+                decoding="async"
+                className="relative h-10 w-10 sm:h-12 sm:w-12 rounded-md object-cover ring-1 ring-border/80 shadow-lg"
+              />
+              {loading && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-md">
+                  <Loader2 className="h-3.5 w-3.5 animate-spin text-white" />
+                </div>
               )}
             </div>
-            <p className="text-[11px] text-muted-foreground truncate leading-tight">{currentTrack.artist}</p>
-          </div>
 
-          {/* Transport */}
-          <Button variant="ghost" size="icon" className="shrink-0 h-8 w-8 hidden sm:inline-flex" onClick={prev} title="Précédent">
-            <SkipBack className="h-3.5 w-3.5" />
-          </Button>
-          <Button variant="ghost" size="icon" className="shrink-0 h-9 w-9" onClick={toggle} title={isPlaying ? "Pause (Espace)" : "Lecture (Espace)"}>
-            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-          </Button>
-          <Button variant="ghost" size="icon" className="shrink-0 h-8 w-8 hidden sm:inline-flex" onClick={next} title="Suivant">
-            <SkipForward className="h-3.5 w-3.5" />
-          </Button>
-
-          {/* Waveform progress (desktop) */}
-          <div className="flex-1 hidden sm:block relative h-8 group select-none">
-            <div className="absolute inset-0 flex items-center justify-between gap-[2px] px-0.5">
-              {bars.map((b, i) => (
-                <div
-                  key={i}
-                  className="flex-1 rounded-full bg-muted-foreground/30 group-hover:bg-muted-foreground/50 transition-colors"
-                  style={{ height: `${Math.round(b * 100)}%` }}
-                />
-              ))}
+            {/* Title + Artist + Badge */}
+            <div className="min-w-0 flex-1 sm:flex-none sm:w-48 lg:w-56">
+              <div className="flex items-center gap-1.5">
+                <p className="text-[13px] font-semibold truncate leading-tight tracking-tight">{currentTrack.title}</p>
+                {isFull ? (
+                  <span
+                    className="shrink-0 inline-flex items-center gap-0.5 h-4 px-1.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-gradient-to-r from-emerald-500/20 to-emerald-400/10 text-emerald-500 border border-emerald-500/40"
+                    title="Lecture du titre complet"
+                  >
+                    <Crown className="h-2.5 w-2.5" /> Full
+                  </span>
+                ) : (
+                  <span
+                    className="shrink-0 inline-flex items-center gap-0.5 h-4 px-1.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-primary/15 text-primary border border-primary/40"
+                    title="Extrait limité — abonnez-vous pour le titre complet"
+                  >
+                    <Lock className="h-2.5 w-2.5" /> Extrait
+                  </span>
+                )}
+              </div>
+              <p className="text-[11px] text-muted-foreground truncate leading-tight">{currentTrack.artist}</p>
             </div>
-            <div
-              ref={playedMirrorRef}
-              aria-hidden
-              className="absolute inset-0 flex items-center justify-between gap-[2px] px-0.5 pointer-events-none transition-[clip-path] duration-100"
-              style={{ clipPath: "inset(0 100% 0 0)" }}
+
+            {/* Transport */}
+            <Button variant="ghost" size="icon" className="shrink-0 h-8 w-8 hidden sm:inline-flex rounded-full hover:bg-foreground/10" onClick={prev} title="Précédent">
+              <SkipBack className="h-3.5 w-3.5" />
+            </Button>
+            <Button
+              size="icon"
+              className={`shrink-0 h-10 w-10 rounded-full shadow-lg ${isFull ? "bg-gradient-to-br from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-white shadow-emerald-500/30" : "bg-gradient-to-br from-primary to-accent hover:opacity-90 text-primary-foreground shadow-primary/30"}`}
+              onClick={toggle}
+              title={isPlaying ? "Pause (Espace)" : "Lecture (Espace)"}
             >
-              {bars.map((b, i) => (
-                <div
-                  key={i}
-                  className="flex-1 rounded-full bg-gradient-to-t from-primary to-accent"
-                  style={{ height: `${Math.round(b * 100)}%` }}
-                />
-              ))}
+              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4 fill-current ml-0.5" />}
+            </Button>
+            <Button variant="ghost" size="icon" className="shrink-0 h-8 w-8 hidden sm:inline-flex rounded-full hover:bg-foreground/10" onClick={next} title="Suivant">
+              <SkipForward className="h-3.5 w-3.5" />
+            </Button>
+
+            {/* Waveform progress (desktop) */}
+            <div className="flex-1 hidden sm:block relative h-9 group select-none">
+              <div className="absolute inset-0 flex items-center justify-between gap-[2px] px-0.5">
+                {bars.map((b, i) => (
+                  <div
+                    key={i}
+                    className="flex-1 rounded-full bg-muted-foreground/25 group-hover:bg-muted-foreground/40 transition-colors"
+                    style={{ height: `${Math.round(b * 100)}%` }}
+                  />
+                ))}
+              </div>
+              <div
+                ref={playedMirrorRef}
+                aria-hidden
+                className="absolute inset-0 flex items-center justify-between gap-[2px] px-0.5 pointer-events-none transition-[clip-path] duration-100"
+                style={{ clipPath: "inset(0 100% 0 0)" }}
+              >
+                {bars.map((b, i) => (
+                  <div
+                    key={i}
+                    className={`flex-1 rounded-full ${isFull ? "bg-gradient-to-t from-emerald-500 via-emerald-400 to-accent" : "bg-gradient-to-t from-primary via-primary to-accent"} shadow-[0_0_8px_hsl(var(--primary)/0.4)]`}
+                    style={{ height: `${Math.round(b * 100)}%` }}
+                  />
+                ))}
+              </div>
+              <input
+                ref={progressRef}
+                type="range"
+                min={0}
+                max={100}
+                step={0.1}
+                defaultValue={0}
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                onChange={(e) => {
+                  const audio = audioRef.current;
+                  if (audio && audio.duration) audio.currentTime = (Number(e.target.value) / 100) * audio.duration;
+                }}
+                onInput={(e) => {
+                  const pct = Number((e.target as HTMLInputElement).value);
+                  if (playedMirrorRef.current) playedMirrorRef.current.style.clipPath = `inset(0 ${100 - pct}% 0 0)`;
+                }}
+                aria-label="Position de lecture"
+              />
             </div>
-            <input
-              ref={progressRef}
-              type="range"
-              min={0}
-              max={100}
-              step={0.1}
-              defaultValue={0}
-              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-              onChange={(e) => {
-                const audio = audioRef.current;
-                if (audio && audio.duration) audio.currentTime = (Number(e.target.value) / 100) * audio.duration;
-              }}
-              onInput={(e) => {
-                const pct = Number((e.target as HTMLInputElement).value);
-                if (playedMirrorRef.current) playedMirrorRef.current.style.clipPath = `inset(0 ${100 - pct}% 0 0)`;
-              }}
-              aria-label="Position de lecture"
-            />
-          </div>
 
           <span ref={timeRef} className="text-[11px] text-muted-foreground shrink-0 w-16 text-right hidden sm:block tabular-nums font-mono">
             0:00 / 0:00
@@ -357,9 +374,11 @@ export default function MiniPlayer() {
           <Button variant="ghost" size="icon" className="shrink-0 h-8 w-8 text-muted-foreground hover:text-destructive" onClick={clear} title="Fermer le lecteur">
             <X className="h-3.5 w-3.5" />
           </Button>
+          </div>
         </div>
       </div>
     </>
+
   );
 }
 

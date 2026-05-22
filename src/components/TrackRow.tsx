@@ -1,4 +1,4 @@
-import { Play, Heart, Download, ExternalLink, Headphones, Clock, Music2 } from "lucide-react";
+import { Play, Heart, Download, ExternalLink, Headphones, Clock, Music2, Lock, Crown } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -158,8 +158,9 @@ export default function TrackRow({ track }: TrackRowProps) {
         <button
           onClick={handlePlay}
           onDoubleClick={(e) => e.stopPropagation()}
-          className={`absolute inset-0 flex items-center justify-center bg-black/55 transition-opacity ${isActive ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}
-          aria-label="Lire"
+          className={`absolute inset-0 flex items-center justify-center bg-gradient-to-t from-black/80 via-black/50 to-black/30 transition-opacity ${isActive ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}
+          aria-label={isFullPlayback ? "Lire le titre complet" : "Lire l'extrait"}
+          title={isFullPlayback ? "Lire le titre complet" : "Lire l'extrait (30s)"}
         >
           {isActive ? (
             <span className="flex gap-0.5 items-end">
@@ -167,14 +168,21 @@ export default function TrackRow({ track }: TrackRowProps) {
               <span className="w-0.5 h-2 bg-primary animate-pulse [animation-delay:120ms]" />
               <span className="w-0.5 h-4 bg-primary animate-pulse [animation-delay:240ms]" />
             </span>
+          ) : isFullPlayback ? (
+            <Play className="h-4 w-4 fill-white text-white drop-shadow" />
           ) : (
-            <Play className="h-4 w-4 fill-white text-white" />
+            <Lock className="h-3.5 w-3.5 text-white/95 drop-shadow" />
           )}
         </button>
         {previewing && !isActive && (
           <div className="absolute top-0.5 right-0.5 p-0.5 rounded bg-primary/90">
             <Headphones className="h-2.5 w-2.5 text-primary-foreground" />
           </div>
+        )}
+        {!isFullPlayback && !isActive && (
+          <span className="pointer-events-none absolute bottom-0.5 left-0.5 right-0.5 text-center text-[8px] font-bold uppercase tracking-wider text-white/90 bg-black/40 rounded-sm opacity-0 group-hover:opacity-100 transition-opacity">
+            Extrait
+          </span>
         )}
       </div>
 
