@@ -158,10 +158,16 @@ function HeroWidget({ config, preview }: { config: any; preview: boolean }) {
       {config.bg_url && (
         <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${config.bg_url})` }} />
       )}
-      <div className="absolute inset-0" style={{ background: `linear-gradient(to bottom, hsl(var(--background)/${overlay / 100}), hsl(var(--background)/${(overlay + 20) / 100}), hsl(var(--background)))` }} />
-      <motion.div className="absolute -top-32 -left-32 w-[28rem] h-[28rem] rounded-full bg-primary/30 blur-3xl"
+      {/* Dégradé qui se fond dans le background du site (haut translucide → background plein en bas) */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background: `linear-gradient(to bottom, hsl(var(--background) / ${Math.max(0, overlay - 30) / 100}) 0%, hsl(var(--background) / ${overlay / 100}) 55%, hsl(var(--background)) 100%)`,
+        }}
+      />
+      <motion.div className="absolute -top-32 -left-32 w-[28rem] h-[28rem] rounded-full bg-primary/20 blur-3xl"
         animate={{ scale: [1, 1.15, 1] }} transition={{ duration: 8, repeat: Infinity }} />
-      <motion.div className="absolute -bottom-32 -right-32 w-[28rem] h-[28rem] rounded-full bg-accent/30 blur-3xl"
+      <motion.div className="absolute -bottom-32 -right-32 w-[28rem] h-[28rem] rounded-full bg-accent/20 blur-3xl"
         animate={{ scale: [1.1, 1, 1.1] }} transition={{ duration: 10, repeat: Infinity }} />
 
       <div className={`relative container ${preview ? "py-10" : height} ${layout === "left" ? "text-left" : layout === "split" ? "grid md:grid-cols-2 gap-10 items-center text-left" : "text-center"}`}>
@@ -171,12 +177,13 @@ function HeroWidget({ config, preview }: { config: any; preview: boolean }) {
               <Sparkles className="h-3 w-3" /> {config.eyebrow}
             </span>
           )}
-          <h1 className={`font-display font-black tracking-tight ${preview ? "text-3xl" : "text-5xl md:text-7xl"} mb-4`} style={titleStyle(config.typo)}>
-            {config.title || "Le pool de musique des DJs"}
-            {config.highlight && (
-              <> <span className="gradient-text">{config.highlight}</span></>
-            )}
-          </h1>
+          {(config.title || config.highlight) && (
+            <h1 className={`font-display font-black tracking-tight ${preview ? "text-3xl" : "text-5xl md:text-7xl"} mb-4`} style={titleStyle(config.typo)}>
+              {config.title}
+              {config.title && config.highlight && " "}
+              {config.highlight && <span className="gradient-text">{config.highlight}</span>}
+            </h1>
+          )}
           {config.subtitle && (
             <p className={`text-muted-foreground ${layout === "center" ? "mx-auto" : ""} ${preview ? "text-sm max-w-xl" : "text-lg md:text-xl max-w-2xl"} mb-8`} style={bodyStyle(config.typo)}>
               {config.subtitle}
