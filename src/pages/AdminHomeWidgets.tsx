@@ -9,6 +9,7 @@ import {
   Images, Megaphone as MegaphoneIcon, Repeat, Music2,
 } from "lucide-react";
 
+import IconPicker from "@/components/admin/IconPicker";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
