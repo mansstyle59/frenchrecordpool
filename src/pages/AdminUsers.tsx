@@ -580,6 +580,16 @@ export default function AdminUsers() {
         subscription={viewing ? subsByUser.get(viewing.user_id) : null}
       />
 
+      <AssignPlanDialog
+        open={!!assigning}
+        onOpenChange={(o) => !o && setAssigning(null)}
+        userId={assigning?.user_id ?? null}
+        userLabel={assigning?.email ?? assigning?.dj_name ?? null}
+        onAssigned={() => queryClient.invalidateQueries({ queryKey: ["admin-all-subs"] })}
+      />
+
+
+
       <AlertDialog open={!!confirmDelete} onOpenChange={(o) => !o && setConfirmDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
