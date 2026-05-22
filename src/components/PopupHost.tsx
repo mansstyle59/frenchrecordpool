@@ -132,7 +132,10 @@ export default function PopupHost() {
   }, [eligible, active]);
 
   const close = () => {
-    if (active) markSeen(active.id, active.frequency);
+    if (active) {
+      markSeen(active.id, active.frequency);
+      setDismissed((prev) => new Set(prev).add(active.id));
+    }
     setActive(null);
   };
 
