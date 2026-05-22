@@ -108,7 +108,7 @@ export function useRelatedTracks(track: DbTrack | null | undefined) {
         supabase.from("tracks").select("*").eq("status", "approved").eq("title", titleNorm).neq("id", track.id).limit(8),
         supabase.from("tracks").select("*").eq("status", "approved").ilike("title", `%${titleNorm}%`).neq("version", "Original").neq("id", track.id).limit(8),
         track.genre
-          ? supabase.from("tracks").select("*").eq("status", "approved").eq("genre", track.genre).gte("bpm", minBpm).lte("bpm", maxBpm).neq("id", track.id).order("downloads", { ascending: false }).limit(12)
+          ? supabase.from("tracks").select("*").eq("status", "approved").eq("genre", track.genre).gte("bpm", minBpm).lte("bpm", maxBpm).neq("id", track.id).order("downloads", { ascending: false }).limit(16)
           : Promise.resolve({ data: [], error: null } as any),
       ]);
 
@@ -116,8 +116,34 @@ export function useRelatedTracks(track: DbTrack | null | undefined) {
       const remixIds = new Set(versions.map((v) => v.id));
       const remixes = ((remixesRes.data ?? []) as DbTrack[]).filter((r) => !remixIds.has(r.id));
       const exclude = new Set([track.id, ...versions.map((v) => v.id), ...remixes.map((r) => r.id)]);
-      const similar = ((similarRes.data ?? []) as DbTrack[]).filter((s) => !exclude.has(s.id));
-      return { versions, remixes, similar };
+      let similar = ((similarRes.data ?? []) as DbTrack[]).filter((s) => !exclude.has(s.id));
+
+      const mergeIn = (current: DbTrack[], extra: DbTrack[] | null) => {
+        const merged = new Map(current.map((t) => [t.id, t]));
+        (extra ?? []).forEach((t) => { if (!exclude.has(t.id)) merged.set(t.id, t); });
+        return Array.from(merged.values());
+      };
+
+      if (similar.length < 6 && track.genre) {
+        const { data } = await supabase
+          .from("tracks").select("*").eq("status", "approved").eq("genre", track.genre).neq("id", track.id)
+          .order("downloads", { ascending: false }).limit(16);
+        similar = mergeIn(similar, data as DbTrack[] | null);
+      }
+      if (similar.length < 6 && track.artist) {
+        const { data } = await supabase
+          .from("tracks").select("*").eq("status", "approved").eq("artist", track.artist).neq("id", track.id)
+          .order("created_at", { ascending: false }).limit(12);
+        similar = mergeIn(similar, data as DbTrack[] | null);
+      }
+      if (similar.length < 6) {
+        const { data } = await supabase
+          .from("tracks").select("*").eq("status", "approved").neq("id", track.id)
+          .order("created_at", { ascending: false }).limit(12);
+        similar = mergeIn(similar, data as DbTrack[] | null);
+      }
+
+      return { versions, remixes, similar: similar.slice(0, 12) };
     },
   });
 }

@@ -18,6 +18,7 @@ import { downloadTrack } from "@/lib/downloadTrack";
 import { useFavorites } from "@/hooks/useFavorites";
 import { toast } from "sonner";
 import { resolveCover } from "@/lib/trackCover";
+import TrackRow, { TrackListHeader } from "@/components/TrackRow";
 
 function inferFormat(url: string | null | undefined): string {
   if (!url) return "—";
@@ -256,8 +257,8 @@ export default function TrackDetail() {
           </div>
         </div>
 
-        {/* ===== RELATED ===== */}
-        {related && (related.versions.length + related.remixes.length + related.similar.length) > 0 && (
+        {/* ===== RELATED (grid) ===== */}
+        {related && (related.versions.length + related.remixes.length) > 0 && (
           <div className="space-y-6">
             {related.versions.length > 0 && (
               <RelatedSection title="Autres versions" icon={Disc3} tracks={related.versions} />
@@ -265,10 +266,15 @@ export default function TrackDetail() {
             {related.remixes.length > 0 && (
               <RelatedSection title="Remix associés" icon={Mic2} tracks={related.remixes} />
             )}
-            {related.similar.length > 0 && (
-              <RelatedSection title={`Tracks similaires${track.genre ? ` · ${track.genre}` : ""}`} icon={Users} tracks={related.similar} />
-            )}
           </div>
+        )}
+
+        {/* ===== SIMILAR (DJ-style list) ===== */}
+        {related && related.similar.length > 0 && (
+          <SimilarTracksList
+            tracks={related.similar}
+            label={track.genre ? `Titres similaires · ${track.genre}` : "Titres similaires"}
+          />
         )}
       </div>
 
@@ -290,6 +296,27 @@ export default function TrackDetail() {
         </DialogContent>
       </Dialog>
     </Layout>
+  );
+}
+
+function SimilarTracksList({ tracks, label }: { tracks: DbTrack[]; label: string }) {
+  return (
+    <section className="space-y-3">
+      <div className="flex items-end justify-between gap-3">
+        <h2 className="font-display text-lg md:text-xl font-bold flex items-center gap-2">
+          <Users className="h-4 w-4 text-primary" /> {label}
+        </h2>
+        <span className="text-xs text-muted-foreground tabular-nums">{tracks.length} titres</span>
+      </div>
+      <div className="rounded-2xl border border-border bg-card/40 backdrop-blur-xl overflow-hidden">
+        <TrackListHeader />
+        <div className="divide-y divide-border/60">
+          {tracks.map((t) => (
+            <TrackRow key={t.id} track={t as any} />
+          ))}
+        </div>
+      </div>
+    </section>
   );
 }
 
