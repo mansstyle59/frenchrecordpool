@@ -785,6 +785,13 @@ function TypeFields({ w, setC }: { w: Widget; setC: (k: string, v: any) => void 
             <Field label="Filtre tag (optionnel)"><Input value={c.tag ?? ""} onChange={(e) => setC("tag", e.target.value)} /></Field>
           </div>
           <Field label='URL "Tout voir" (optionnel)'><Input value={c.see_all_url ?? ""} onChange={(e) => setC("see_all_url", e.target.value)} placeholder="/new" /></Field>
+          <div className="flex items-center gap-2 rounded-lg border border-border/60 bg-card/40 px-3 py-2">
+            <Switch checked={!!c.genre_tabs} onCheckedChange={(v) => setC("genre_tabs", v)} />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium">Menu roulant de genres</p>
+              <p className="text-xs text-muted-foreground">Affiche un sélecteur horizontal de genres au-dessus de la liste (filtrage en direct).</p>
+            </div>
+          </div>
         </>
       );
     case "artist_carousel":
