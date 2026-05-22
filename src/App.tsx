@@ -20,6 +20,7 @@ import Signup from "./pages/Signup";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import Dashboard from "./pages/Dashboard";
+import Downloads from "./pages/Downloads";
 import Admin from "./pages/Admin";
 import AdminTracks from "./pages/AdminTracks";
 import AdminUsers from "./pages/AdminUsers";
@@ -66,6 +67,7 @@ const App = () => (
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/downloads" element={<Downloads />} />
               <Route path="/admin" element={<Admin />} />
               <Route path="/admin/tracks" element={<AdminTracks />} />
               <Route path="/admin/users" element={<AdminUsers />} />

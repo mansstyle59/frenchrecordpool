@@ -18,6 +18,7 @@ const NAV_DEFAULTS = [
   { key: "nav.genres", to: "/genres", label: "Genres" },
   { key: "nav.artists", to: "/remixers", label: "Remixers" },
   { key: "nav.stems", to: "/stems", label: "Stems" },
+  { key: "nav.downloads", to: "/downloads", label: "Téléchargements" },
 ];
 
 
