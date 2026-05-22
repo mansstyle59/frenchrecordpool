@@ -80,6 +80,7 @@ export default function PopupHost() {
   const eligible = useMemo(() => {
     const mobile = isMobile();
     return popups.filter((p) => {
+      if (dismissed.has(p.id)) return false;
       if (alreadySeen(p.id, p.frequency)) return false;
       if (p.devices === "desktop" && mobile) return false;
       if (p.devices === "mobile" && !mobile) return false;
