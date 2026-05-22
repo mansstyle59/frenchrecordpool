@@ -28,6 +28,7 @@ import AdminSubscriptions from "./pages/AdminSubscriptions";
 import AdminBranding from "./pages/AdminBranding";
 import AdminScreenshotStudio from "./pages/AdminScreenshotStudio";
 import AdminPopups from "./pages/AdminPopups";
+import AdminHomeWidgets from "./pages/AdminHomeWidgets";
 import PopupHost from "@/components/PopupHost";
 import AdminAuditLog from "./pages/AdminAuditLog";
 import AdminPlans from "./pages/AdminPlans";
@@ -81,6 +82,7 @@ const App = () => (
               <Route path="/admin/branding" element={<AdminBranding />} />
               <Route path="/admin/screenshot-studio" element={<AdminScreenshotStudio />} />
               <Route path="/admin/popups" element={<AdminPopups />} />
+              <Route path="/admin/widgets" element={<AdminHomeWidgets />} />
               <Route path="/admin/audit" element={<AdminAuditLog />} />
               <Route path="/admin/queue" element={<AdminQueue />} />
               <Route path="/dj" element={<DjDashboard />} />
