@@ -84,11 +84,52 @@ const TYPE_META: Record<string, { label: string; icon: any; desc: string; defaul
     desc: "Bandeau avec image et CTA",
     defaults: { title: "Offre limitée", body: "-50 % le premier mois", tag: "Promo", cta_label: "En profiter", cta_url: "/pricing", bg_color: "220 80% 25%", text_color: "0 0% 100%" },
   },
+  stats: {
+    label: "Statistiques / Compteurs", icon: BarChart3, group: "Mise en avant",
+    desc: "Bandeau de chiffres clés (auto ou manuel)",
+    defaults: { title: "La plateforme en chiffres", auto_fetch: true, items: [] },
+  },
+  genres_cloud: {
+    label: "Nuage de genres", icon: Tag, group: "Catalogue",
+    desc: "Liens cliquables vers les genres les plus actifs",
+    defaults: { title: "Explore par genre", limit: 16 },
+  },
+  featured_track: {
+    label: "Track vedette", icon: Star, group: "Catalogue",
+    desc: "Un morceau mis en avant avec cover XL",
+    defaults: { tag: "Track de la semaine", track_id: "" },
+  },
+  testimonials: {
+    label: "Témoignages", icon: Quote, group: "Marketing",
+    desc: "Citations de DJs / clients",
+    defaults: { title: "Ils nous font confiance", items: [{ quote: "Top !", author: "DJ X", role: "Paris" }] },
+  },
+  faq: {
+    label: "FAQ", icon: HelpCircle, group: "Contenu",
+    desc: "Accordéon de questions / réponses",
+    defaults: { title: "Questions fréquentes", items: [{ question: "Comment ça marche ?", answer: "Inscris-toi puis souscris un plan." }] },
+  },
+  logos_strip: {
+    label: "Logos partenaires", icon: ImageIcon, group: "Marketing",
+    desc: "Bande de logos en niveaux de gris",
+    defaults: { title: "Ils nous suivent", logos: [] },
+  },
+  divider: {
+    label: "Séparateur / Espacement", icon: Minus, group: "Avancé",
+    desc: "Ligne ou espace vide entre deux blocs",
+    defaults: { style: "line", label: "" },
+  },
+  two_columns: {
+    label: "2 colonnes (image + texte)", icon: Columns, group: "Contenu",
+    desc: "Bloc split avec une image et un texte CTA",
+    defaults: { title: "Une histoire à raconter", body: "Texte court qui appuie l'image.", image_position: "left", cta_label: "En savoir plus", cta_url: "/about" },
+  },
   html_block: {
     label: "HTML libre", icon: CodeIcon, group: "Avancé",
     desc: "HTML personnalisé", defaults: { html: "<h2>Mon bloc</h2><p>Texte libre.</p>" },
   },
 };
+
 
 export default function AdminHomeWidgets() {
   const qc = useQueryClient();
