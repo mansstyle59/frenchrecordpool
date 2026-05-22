@@ -6,6 +6,8 @@ export interface PlayerTrack {
   artist: string;
   coverUrl: string | null;
   previewUrl: string | null;
+  /** True if the source is the full track, false if only a short preview is streamed. */
+  isFull?: boolean;
 }
 
 interface PlayerContextType {
