@@ -118,7 +118,7 @@ export default function MiniPlayer() {
       audio.removeEventListener("playing", onReady);
       audio.removeEventListener("error", onError);
     };
-  }, [audioRef, next]);
+  }, [audioRef, currentTrack?.id, currentTrack?.previewUrl, next]);
 
   // ----- Media Session API (OS / lock-screen controls) -----
   useEffect(() => {
