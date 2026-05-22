@@ -484,6 +484,11 @@ function Editor({ widget, onCancel, onSave, saving }: { widget: Widget; onCancel
 
         <TypeFields w={w} setC={setC} />
 
+        {TYPES_WITH_TYPOGRAPHY.has(w.type) && (
+          <TypographyEditor value={w.config.typo ?? {}} onChange={(v) => setC("typo", v)} />
+        )}
+
+
         <div className="flex items-center gap-2 pt-2 border-t border-border">
           <Switch checked={w.is_active} onCheckedChange={(v) => setW((s) => ({ ...s, is_active: v }))} />
           <span className="text-sm">Actif</span>
