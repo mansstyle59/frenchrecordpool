@@ -2,7 +2,7 @@ import { ReactNode, useEffect } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
   Disc3, LayoutDashboard, Music, Users, CreditCard, Palette, ScrollText,
-  ArrowLeft, ExternalLink, Layers, Ticket, Mic2, Inbox, Camera, MessageSquare,
+  ArrowLeft, ExternalLink, Layers, Ticket, Mic2, Inbox, Camera, MessageSquare, Blocks,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
