@@ -25,14 +25,15 @@ export default function TrackRow({ track, index }: TrackRowProps) {
   const previewRef = useRef<HTMLAudioElement | null>(null);
   const hoverTimer = useRef<number | null>(null);
   const [previewing, setPreviewing] = useState(false);
-  // For audio playback: subscribers get the full audio_url, others get the short preview_url
+  // For audio playback: subscribers get the full audio_url, others ONLY get the short preview_url.
+  // Non-subscribers must never stream the full file, even if no preview is uploaded.
   const fullSrc = track.audio_url || null;
   const shortSrc = track.preview_url || null;
-  const playbackSrc = hasActiveSubscription ? (fullSrc || shortSrc) : (shortSrc || fullSrc);
+  const playbackSrc = hasActiveSubscription ? (fullSrc || shortSrc) : shortSrc;
   const isFullPlayback = hasActiveSubscription && !!fullSrc;
-  // Hover preview ALWAYS prefers the short clip; falls back to full but capped at 30s.
-  const previewSrc = shortSrc || fullSrc;
-  const previewIsFull = !shortSrc && !!fullSrc;
+  // Hover preview ALWAYS prefers the short clip; if missing and user is NOT subscribed, no hover preview.
+  const previewSrc = shortSrc || (hasActiveSubscription ? fullSrc : null);
+  const previewIsFull = !shortSrc && !!fullSrc && hasActiveSubscription;
   const stopAtRef = useRef<number | null>(null);
 
   useEffect(() => {
@@ -89,11 +90,12 @@ export default function TrackRow({ track, index }: TrackRowProps) {
       return;
     }
     if (!playbackSrc) {
-      toast.error("Aucun extrait audio disponible pour ce titre.");
+      if (!hasActiveSubscription && fullSrc) {
+        toast.info("Aucun extrait disponible. Abonnez-vous pour écouter le titre complet.");
+      } else {
+        toast.error("Aucun extrait audio disponible pour ce titre.");
+      }
       return;
-    }
-    if (!hasActiveSubscription && !shortSrc && fullSrc) {
-      toast.info("Lecture de l'extrait. Abonnez-vous pour le titre complet.");
     }
     play({
       id: track.id,
