@@ -58,7 +58,7 @@ export default function MiniPlayer() {
       const c = audio.currentTime || 0;
       const pct = d ? (c / d) * 100 : 0;
       if (progressRef.current) progressRef.current.value = String(pct);
-      if (playedRef.current) playedRef.current.style.width = `${pct}%`;
+      if (playedMirrorRef.current) playedMirrorRef.current.style.clipPath = `inset(0 ${100 - pct}% 0 0)`;
       if (mobilePlayedRef.current) mobilePlayedRef.current.style.width = `${pct}%`;
       if (timeRef.current) timeRef.current.textContent = `${formatTime(c)} / ${formatTime(d)}`;
       raf = requestAnimationFrame(tick);
