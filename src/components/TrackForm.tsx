@@ -175,31 +175,42 @@ export default function TrackForm({ initialData, saving, onSubmit, existingGenre
   const [previewPlaying, setPreviewPlaying] = useState(false);
   const previewAudioRef = useRef<HTMLAudioElement | null>(null);
 
-  // Auto-fill metadata when audio file selected
+  // Auto-fill metadata when audio file selected (tags first, filename second)
   useEffect(() => {
     if (!audioFile) return;
     let cancelled = false;
     setExtracting(true);
+
+    // Parse the filename immediately (cheap & sync) and merge what's missing.
+    const fromName = parseFilenameMeta(audioFile.name);
+    if (fromName.title)   setTitle((v) => v || fromName.title!);
+    if (fromName.artist)  setArtist((v) => v || fromName.artist!);
+    if (fromName.bpm)     setBpm((v) => v || String(fromName.bpm));
+    if (fromName.key)     setMusicalKey((v) => v || fromName.key!);
+    if (fromName.version) setVersion((cur) => (cur && cur !== "Original" ? cur : fromName.version!));
+    if (fromName.remixers?.length) setRemixers((cur) => (cur.length ? cur : fromName.remixers!));
+
     extractAudioMetadataFast(audioFile)
       .then((meta) => {
         if (cancelled) return;
-        setTitle((v) => v || meta.title || "");
-        setArtist((v) => v || meta.artist || "");
-        setGenre((v) => v || meta.genre || "");
-        setDuration((v) => v || meta.duration || "");
-        if (meta.bpm) setBpm((v) => v || String(meta.bpm));
-        if (meta.key) setMusicalKey((v) => v || meta.key!);
+        // Tag metadata wins over filename for fields it provides.
+        if (meta.title)    setTitle(meta.title);
+        if (meta.artist)   setArtist(meta.artist);
+        if (meta.genre)    setGenre((v) => v || meta.genre || "");
+        if (meta.duration) setDuration((v) => v || meta.duration || "");
+        if (meta.bpm)      setBpm(String(meta.bpm));
+        if (meta.key)      setMusicalKey(meta.key);
         if (meta.version) {
           const matched = VERSIONS.find((v) => meta.version!.toLowerCase().includes(v.toLowerCase()))
             || (meta.version.toLowerCase().includes("remix") ? "Extended" : null);
-          if (matched) setVersion((cur) => (cur && cur !== "Original" ? cur : matched));
+          if (matched) setVersion(matched);
         }
         // Auto-set cover from embedded artwork if none provided
         if (meta.pictureFile && !coverFile && !coverUrl && !initialData?.cover_url) {
           setCoverFile(meta.pictureFile);
           toast({ title: "Pochette détectée", description: "Image intégrée extraite du fichier." });
         }
-        if (meta.title || meta.artist || meta.bpm) {
+        if (meta.title || meta.artist || meta.bpm || fromName.title) {
           toast({ title: "Métadonnées détectées", description: "Champs pré-remplis depuis le fichier." });
         }
         setExtracting(false);
