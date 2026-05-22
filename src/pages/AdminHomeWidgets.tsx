@@ -663,6 +663,8 @@ function Editor({ widget, onCancel, onSave, saving }: { widget: Widget; onCancel
   const meta = TYPE_META[w.type];
   const Icon = meta?.icon || CodeIcon;
   const setC = (k: string, v: any) => setW((s) => ({ ...s, config: { ...s.config, [k]: v } }));
+  const setCommon = (k: string, v: any) =>
+    setW((s) => ({ ...s, config: { ...s.config, common: { ...(s.config.common || {}), [k]: v } } }));
 
   return (
     <div className="grid lg:grid-cols-[480px_1fr] gap-6">
@@ -685,6 +687,7 @@ function Editor({ widget, onCancel, onSave, saving }: { widget: Widget; onCancel
           <TypographyEditor value={w.config.typo ?? {}} onChange={(v) => setC("typo", v)} />
         )}
 
+        <SpacingEditor value={w.config.common ?? {}} onChange={setCommon} />
 
         <div className="flex items-center gap-2 pt-2 border-t border-border">
           <Switch checked={w.is_active} onCheckedChange={(v) => setW((s) => ({ ...s, is_active: v }))} />
