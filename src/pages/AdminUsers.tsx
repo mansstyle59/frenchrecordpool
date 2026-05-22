@@ -514,6 +514,11 @@ export default function AdminUsers() {
                             <Shield className="h-3 w-3" /> Promouvoir
                           </Button>
                         )}
+                        {!isAdminRole && (
+                          <Button variant="ghost" size="sm" className="gap-1 text-primary" onClick={() => setAssigning(p)} title="Attribuer un plan">
+                            <Sparkles className="h-3 w-3" /> Plan
+                          </Button>
+                        )}
                         <Button variant="ghost" size="sm" className="gap-1" onClick={() => handlePasswordReset(p)}>
                           <KeyRound className="h-3 w-3" /> Mdp
                         </Button>
