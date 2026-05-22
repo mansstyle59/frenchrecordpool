@@ -299,6 +299,27 @@ export default function TrackDetail() {
   );
 }
 
+function SimilarTracksList({ tracks, label }: { tracks: DbTrack[]; label: string }) {
+  return (
+    <section className="space-y-3">
+      <div className="flex items-end justify-between gap-3">
+        <h2 className="font-display text-lg md:text-xl font-bold flex items-center gap-2">
+          <Users className="h-4 w-4 text-primary" /> {label}
+        </h2>
+        <span className="text-xs text-muted-foreground tabular-nums">{tracks.length} titres</span>
+      </div>
+      <div className="rounded-2xl border border-border bg-card/40 backdrop-blur-xl overflow-hidden">
+        <TrackListHeader />
+        <div className="divide-y divide-border/60">
+          {tracks.map((t) => (
+            <TrackRow key={t.id} track={t as any} />
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function InfoItem({ icon: Icon, label, value }: { icon?: any; label: string; value: string }) {
   return (
     <div className="space-y-0.5">
