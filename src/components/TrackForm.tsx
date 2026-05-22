@@ -189,6 +189,8 @@ export default function TrackForm({ initialData, saving, onSubmit, existingGenre
     if (fromName.key)     setMusicalKey((v) => v || fromName.key!);
     if (fromName.version) setVersion((cur) => (cur && cur !== "Original" ? cur : fromName.version!));
     if (fromName.remixers?.length) setRemixers((cur) => (cur.length ? cur : fromName.remixers!));
+    if (fromName.year)    setReleaseYear((v) => v || String(fromName.year));
+    if (fromName.mood)    setMood((v) => v || fromName.mood!);
 
     extractAudioMetadataFast(audioFile)
       .then((meta) => {
