@@ -112,107 +112,104 @@ export default function TrackRow({ track, index }: TrackRowProps) {
   const isExternalLink = resolvedUrl && !resolvedUrl.includes("/object/public/track-audio/");
   const DownloadIcon = isExternalLink ? ExternalLink : Download;
 
+  const isActive = isCurrentTrack && isPlaying;
+
   return (
     <div
-      className="group flex items-center gap-3 px-4 py-3 border-b border-border/40 last:border-0 hover:bg-secondary/40 transition-colors cursor-pointer"
+      className="group grid items-center gap-3 px-3 sm:px-5 py-2.5 border-b border-border/30 last:border-0 hover:bg-foreground/[0.03] transition-colors cursor-pointer"
+      style={{ gridTemplateColumns: "auto 1fr auto auto auto" }}
       onDoubleClick={handlePlay}
       title="Double-cliquez pour lire"
     >
-      <div className="w-8 text-center shrink-0 font-mono">
-        <span className="text-xs text-muted-foreground">
-          {index !== undefined ? String(index + 1).padStart(2, "0") : ""}
-        </span>
-      </div>
-
+      {/* Cover + play button */}
       <div
-        className="relative h-14 w-14 shrink-0 rounded-lg overflow-hidden ring-1 ring-border/60 shadow-md shadow-black/20 group-hover:ring-primary/50 group-hover:shadow-primary/20 transition-all"
+        className="relative h-12 w-12 shrink-0 rounded-md overflow-hidden bg-secondary/50"
         onMouseEnter={startPreview}
         onMouseLeave={stopPreview}
       >
         <img
           src={resolveCover(track)}
           alt={track.title}
-          className={`h-full w-full object-cover transition-transform duration-500 ${previewing || (isCurrentTrack && isPlaying) ? "scale-110" : "group-hover:scale-105"}`}
+          className={`h-full w-full object-cover transition-transform duration-500 ${previewing || isActive ? "scale-110" : "group-hover:scale-105"}`}
           loading="lazy"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent opacity-70 pointer-events-none" />
-        {previewing && !(isCurrentTrack && isPlaying) && (
-          <div className="absolute top-1 right-1 flex items-center gap-0.5 px-1 py-0.5 rounded-sm bg-primary/90 backdrop-blur-sm">
-            <Headphones className="h-2.5 w-2.5 text-primary-foreground" />
-          </div>
-        )}
         <button
           onClick={handlePlay}
           onDoubleClick={(e) => e.stopPropagation()}
-          className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity"
+          className={`absolute inset-0 flex items-center justify-center bg-black/55 transition-opacity ${isActive ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}
           aria-label="Lire"
         >
-          {isCurrentTrack && isPlaying ? (
+          {isActive ? (
             <span className="flex gap-0.5 items-end">
-              <span className="w-0.5 h-3 bg-white animate-pulse" />
-              <span className="w-0.5 h-2 bg-white animate-pulse [animation-delay:120ms]" />
-              <span className="w-0.5 h-4 bg-white animate-pulse [animation-delay:240ms]" />
+              <span className="w-0.5 h-3 bg-primary animate-pulse" />
+              <span className="w-0.5 h-2 bg-primary animate-pulse [animation-delay:120ms]" />
+              <span className="w-0.5 h-4 bg-primary animate-pulse [animation-delay:240ms]" />
             </span>
           ) : (
-            <Play className="h-5 w-5 fill-white text-white drop-shadow" />
+            <Play className="h-4 w-4 fill-white text-white" />
           )}
         </button>
+        {previewing && !isActive && (
+          <div className="absolute top-0.5 right-0.5 p-0.5 rounded bg-primary/90">
+            <Headphones className="h-2.5 w-2.5 text-primary-foreground" />
+          </div>
+        )}
       </div>
 
-      <div className="flex-1 min-w-0">
+      {/* Title + artist */}
+      <div className="min-w-0">
+        <div className="flex items-center gap-2 min-w-0">
+          <Link
+            to={`/tracks/${track.id}`}
+            onDoubleClick={(e) => e.stopPropagation()}
+            className={`text-sm font-semibold truncate hover:text-primary transition-colors ${isCurrentTrack ? "text-primary" : "text-foreground"}`}
+          >
+            {track.title}
+          </Link>
+          {track.version && (
+            <span className="hidden sm:inline text-[11px] font-medium text-muted-foreground/70 truncate">
+              · {track.version}
+            </span>
+          )}
+        </div>
         <Link
-          to={`/tracks/${track.id}`}
+          to={`/artists/${encodeURIComponent(track.artist)}`}
           onDoubleClick={(e) => e.stopPropagation()}
-          className={`text-sm font-semibold truncate block hover:text-primary transition-colors ${isCurrentTrack ? "text-primary" : ""}`}
+          className="text-xs text-muted-foreground hover:text-foreground transition-colors truncate block"
         >
-          {track.title}
+          {track.artist}
         </Link>
-        <p className="text-xs text-muted-foreground truncate">{track.artist}</p>
       </div>
 
-      {track.version && (
-        <Badge
-          variant="outline"
-          className="hidden sm:inline-flex text-[10px] font-bold uppercase tracking-wider shrink-0 border-primary/30 text-primary bg-primary/5"
-        >
-          {track.version}
-        </Badge>
-      )}
+      {/* BPM */}
+      <div className="hidden md:flex w-12 justify-end text-sm font-mono tabular-nums text-foreground/90">
+        {track.bpm || ""}
+      </div>
 
-      <span className="hidden md:block text-xs text-muted-foreground/80 w-28 truncate">
-        {track.genre}
-      </span>
-
-      {track.bpm ? (
-        <span className="hidden lg:inline-flex items-center justify-center w-14 text-[11px] font-mono font-bold tabular-nums px-2 py-0.5 rounded bg-secondary text-foreground/90">
-          {track.bpm}
+      {/* Genre / Key */}
+      <div className="hidden lg:flex flex-col items-end w-24 leading-tight">
+        <span className="text-xs font-semibold text-primary truncate max-w-full">
+          {track.genre || ""}
         </span>
-      ) : (
-        <span className="hidden lg:block w-14" />
-      )}
+        {track.musical_key && (
+          <span className="text-[10px] font-mono text-muted-foreground/80">
+            {track.musical_key} · {track.duration}
+          </span>
+        )}
+      </div>
 
-      {track.musical_key ? (
-        <span className="hidden lg:inline-flex items-center justify-center w-12 text-[11px] font-mono font-bold px-2 py-0.5 rounded bg-accent/10 text-accent border border-accent/20">
-          {track.musical_key}
-        </span>
-      ) : (
-        <span className="hidden lg:block w-12" />
-      )}
-
-      <span className="text-xs text-muted-foreground/70 w-12 text-right shrink-0 font-mono tabular-nums">
-        {track.duration}
-      </span>
-
-      <div className="flex items-center gap-1 shrink-0">
+      {/* Actions */}
+      <div className="flex items-center gap-0.5 shrink-0">
         <Button
           variant="ghost"
           size="icon"
-          className={`h-8 w-8 ${isFavorite(track.id) ? "text-accent hover:text-accent" : "text-muted-foreground hover:text-accent"}`}
+          className={`h-8 w-8 ${isFavorite(track.id) ? "text-accent hover:text-accent" : "text-muted-foreground/70 hover:text-accent opacity-0 group-hover:opacity-100 transition-opacity"}`}
           onClick={() => {
             if (!user) { toast.error("Connectez-vous pour ajouter aux favoris"); return; }
             toggleFavorite(track.id);
           }}
           onDoubleClick={(e) => e.stopPropagation()}
+          aria-label="Favori"
         >
           <Heart className={`h-4 w-4 ${isFavorite(track.id) ? "fill-current" : ""}`} />
         </Button>
@@ -224,6 +221,7 @@ export default function TrackRow({ track, index }: TrackRowProps) {
               className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
               onClick={handleDownload}
               onDoubleClick={(e) => e.stopPropagation()}
+              aria-label="Télécharger"
             >
               <DownloadIcon className="h-4 w-4" />
             </Button>
