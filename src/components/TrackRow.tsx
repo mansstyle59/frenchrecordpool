@@ -90,11 +90,12 @@ export default function TrackRow({ track, index }: TrackRowProps) {
       return;
     }
     if (!playbackSrc) {
-      toast.error("Aucun extrait audio disponible pour ce titre.");
+      if (!hasActiveSubscription && fullSrc) {
+        toast.info("Aucun extrait disponible. Abonnez-vous pour écouter le titre complet.");
+      } else {
+        toast.error("Aucun extrait audio disponible pour ce titre.");
+      }
       return;
-    }
-    if (!hasActiveSubscription && !shortSrc && fullSrc) {
-      toast.info("Lecture de l'extrait. Abonnez-vous pour le titre complet.");
     }
     play({
       id: track.id,
