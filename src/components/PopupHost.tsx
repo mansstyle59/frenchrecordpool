@@ -92,7 +92,7 @@ export default function PopupHost() {
       }
       return true;
     });
-  }, [popups, user, hasActiveSubscription, pathname]);
+  }, [popups, user, hasActiveSubscription, pathname, dismissed]);
 
   useEffect(() => {
     if (active || eligible.length === 0) return;
