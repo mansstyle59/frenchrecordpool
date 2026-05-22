@@ -202,32 +202,18 @@ export default function MiniPlayer() {
               ))}
             </div>
             <div
-              ref={playedRef}
-              className="absolute inset-y-0 left-0 pointer-events-none overflow-hidden"
-              style={{ width: "0%" }}
+              ref={playedMirrorRef}
+              aria-hidden
+              className="absolute inset-0 flex items-center justify-between gap-[2px] px-0.5 pointer-events-none transition-[clip-path] duration-100"
+              style={{ clipPath: "inset(0 100% 0 0)" }}
             >
-              <div className="absolute inset-y-0 left-0 right-0 w-[calc(var(--full,100%))]"
-                style={{ width: "var(--full-w, 100%)" }}
-              />
-            </div>
-            {/* Colored mirror — width matches the container, masked by playedRef using sibling overflow trick */}
-            <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden>
-              <div
-                ref={(el) => {
-                  // mirror width to playedRef via CSS variable update on tick — simpler: use clip-path
-                }}
-                className="absolute inset-0 flex items-center justify-between gap-[2px] px-0.5 transition-[clip-path] duration-100"
-                style={{ clipPath: "inset(0 100% 0 0)" }}
-                id="mp-played-mirror"
-              >
-                {bars.map((b, i) => (
-                  <div
-                    key={i}
-                    className="flex-1 rounded-full bg-gradient-to-t from-primary to-accent"
-                    style={{ height: `${Math.round(b * 100)}%` }}
-                  />
-                ))}
-              </div>
+              {bars.map((b, i) => (
+                <div
+                  key={i}
+                  className="flex-1 rounded-full bg-gradient-to-t from-primary to-accent"
+                  style={{ height: `${Math.round(b * 100)}%` }}
+                />
+              ))}
             </div>
             <input
               ref={progressRef}
@@ -243,12 +229,12 @@ export default function MiniPlayer() {
               }}
               onInput={(e) => {
                 const pct = Number((e.target as HTMLInputElement).value);
-                const mirror = document.getElementById("mp-played-mirror");
-                if (mirror) mirror.style.clipPath = `inset(0 ${100 - pct}% 0 0)`;
+                if (playedMirrorRef.current) playedMirrorRef.current.style.clipPath = `inset(0 ${100 - pct}% 0 0)`;
               }}
               aria-label="Position de lecture"
             />
           </div>
+
 
           <span ref={timeRef} className="text-xs text-muted-foreground shrink-0 w-20 text-right hidden sm:block tabular-nums">
             0:00 / 0:00
