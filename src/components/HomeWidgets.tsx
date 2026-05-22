@@ -173,17 +173,9 @@ function TrackGridWidget({ config, preview }: { config: any; preview: boolean })
       </div>
       <div className="rounded-2xl border border-border bg-card/40 backdrop-blur-sm overflow-hidden">
         {tracks.map((t, i) => (
-          <TrackRow
-            key={t.id}
-            track={t}
-            onPlay={() => play(
-              { id: t.id, title: t.title, artist: t.artist, coverUrl: resolveCover(t), previewUrl: t.preview_url || t.audio_url },
-              tracks.map((x) => ({ id: x.id, title: x.title, artist: x.artist, coverUrl: resolveCover(x), previewUrl: x.preview_url || x.audio_url })),
-            )}
-            isFirst={i === 0}
-            isLast={i === tracks.length - 1}
-          />
+          <TrackRow key={t.id} track={t} index={i} />
         ))}
+
       </div>
     </div>
   );
