@@ -79,7 +79,7 @@ export default function AdminPopups() {
   const { data: popups = [], isLoading } = useQuery({
     queryKey: ["admin-popups"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("popups").select("*").order("priority", { ascending: false }).order("created_at", { ascending: false });
       if (error) throw error;
       return data as Popup[];
