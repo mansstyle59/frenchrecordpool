@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { usePlayer } from "@/contexts/PlayerContext";
 import { useAuth } from "@/contexts/AuthContext";
-import { downloadTrack } from "@/lib/downloadTrack";
+import { downloadTrack, getFullStreamUrl } from "@/lib/downloadTrack";
 import { useFavorites } from "@/hooks/useFavorites";
 import type { DbTrack } from "@/hooks/useTracks";
 import { resolveCover } from "@/lib/trackCover";
