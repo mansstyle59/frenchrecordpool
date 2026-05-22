@@ -40,6 +40,39 @@ const SUGGESTED_TAG_BANK = [
   "bigroom", "afterhours", "warmup", "peaktime", "drive", "chill",
 ];
 
+// Curated reference lists for dropdown helpers (DJ-friendly)
+const GENRE_PRESETS = [
+  "House", "Deep House", "Tech House", "Afro House", "Techno",
+  "Hip-Hop", "Rap FR", "R&B", "Trap", "Drill",
+  "Reggaeton", "Latin", "Dancehall", "Afrobeats", "Amapiano",
+  "EDM", "Big Room", "Future House", "Bass House", "Drum & Bass",
+  "Pop", "Dance Pop", "Electro", "Disco", "Funk",
+  "Moombahton", "Baile Funk", "Kuduro", "Kompa", "Zouk",
+];
+const SUBGENRE_BY_GENRE: Record<string, string[]> = {
+  House: ["Deep House", "Tech House", "Afro House", "Soulful", "Tribal", "Progressive"],
+  Techno: ["Melodic", "Peak Time", "Hard Techno", "Minimal", "Dub Techno"],
+  "Hip-Hop": ["Boom Bap", "Trap", "Drill", "Cloud Rap", "Lo-Fi"],
+  "Rap FR": ["Conscient", "Égo Trip", "Mélodique", "Drill FR", "Cloud"],
+  Reggaeton: ["Perreo", "Old School", "Romantic", "Trap Latino"],
+  Afrobeats: ["Afro Pop", "Afro Fusion", "Afro House", "Amapiano"],
+  EDM: ["Big Room", "Future House", "Bass House", "Electro House", "Festival"],
+  Pop: ["Dance Pop", "Synth Pop", "Indie Pop", "Electro Pop"],
+};
+const MOOD_PRESETS = [
+  "Énergique", "Euphorique", "Dark", "Mélancolique", "Chill",
+  "Romantique", "Festif", "Agressif", "Sensuel", "Hypnotique",
+  "Groovy", "Triomphant", "Mystérieux", "Nostalgique", "Estival",
+];
+
+// ISRC generator: FR-XXX-YY-NNNNN  (FR + 3-char registrant + 2-digit year + 5-digit incremental)
+function generateIsrc(prefix = "FRP"): string {
+  const yy = String(new Date().getFullYear()).slice(-2);
+  const rand = Math.floor(Math.random() * 100000).toString().padStart(5, "0");
+  const reg = prefix.toUpperCase().replace(/[^A-Z0-9]/g, "").padEnd(3, "X").slice(0, 3);
+  return `FR${reg}${yy}${rand}`;
+}
+
 interface TrackFormProps {
   initialData?: DbTrack | null;
   saving: boolean;
