@@ -2,7 +2,7 @@ import { ReactNode, useEffect } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
   Disc3, LayoutDashboard, Music, Users, CreditCard, Palette, ScrollText,
-  ArrowLeft, ExternalLink, Layers, Ticket, Mic2, Inbox,
+  ArrowLeft, ExternalLink, Layers, Ticket, Mic2, Inbox, Camera,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -24,6 +24,7 @@ const items = [
   { to: "/admin/subscriptions", label: "Abonnements", icon: CreditCard },
   { to: "/admin/promo-codes", label: "Codes promo", icon: Ticket },
   { to: "/admin/branding", label: "Branding", icon: Palette },
+  { to: "/admin/screenshot-studio", label: "Screenshot Studio", icon: Camera },
   { to: "/admin/audit", label: "Journal", icon: ScrollText },
 ];
 
