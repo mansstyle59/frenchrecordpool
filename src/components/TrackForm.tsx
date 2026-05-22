@@ -772,11 +772,61 @@ export default function TrackForm({ initialData, saving, onSubmit, existingGenre
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1">
               <Label className="text-xs">Sous-genre</Label>
-              <Input value={subgenre} onChange={(e) => setSubgenre(e.target.value)} placeholder="Deep House, Afro Tech…" className="bg-secondary border-border" />
+              <Input
+                value={subgenre}
+                onChange={(e) => setSubgenre(e.target.value)}
+                placeholder="Deep House, Afro Tech…"
+                list="track-subgenre-suggest"
+                className="bg-secondary border-border"
+              />
+              <datalist id="track-subgenre-suggest">
+                {(SUBGENRE_BY_GENRE[genre] || Object.values(SUBGENRE_BY_GENRE).flat()).map((s) => (
+                  <option key={s} value={s} />
+                ))}
+              </datalist>
+              {(SUBGENRE_BY_GENRE[genre] || []).length > 0 && (
+                <div className="flex gap-1 flex-wrap pt-1">
+                  {SUBGENRE_BY_GENRE[genre].slice(0, 6).map((s) => (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => setSubgenre(s)}
+                      className={`text-[10px] px-2 py-0.5 rounded-full border transition-colors ${
+                        subgenre === s ? "bg-primary text-primary-foreground border-primary" : "bg-muted/40 text-muted-foreground border-border hover:text-foreground"
+                      }`}
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
             <div className="space-y-1">
               <Label className="text-xs">Mood / Ambiance</Label>
-              <Input value={mood} onChange={(e) => setMood(e.target.value)} placeholder="Energetic, Chill, Dark…" className="bg-secondary border-border" />
+              <Input
+                value={mood}
+                onChange={(e) => setMood(e.target.value)}
+                placeholder="Énergique, Chill, Dark…"
+                list="track-mood-suggest"
+                className="bg-secondary border-border"
+              />
+              <datalist id="track-mood-suggest">
+                {MOOD_PRESETS.map((m) => <option key={m} value={m} />)}
+              </datalist>
+              <div className="flex gap-1 flex-wrap pt-1">
+                {MOOD_PRESETS.slice(0, 8).map((m) => (
+                  <button
+                    key={m}
+                    type="button"
+                    onClick={() => setMood(m)}
+                    className={`text-[10px] px-2 py-0.5 rounded-full border transition-colors ${
+                      mood === m ? "bg-primary text-primary-foreground border-primary" : "bg-muted/40 text-muted-foreground border-border hover:text-foreground"
+                    }`}
+                  >
+                    {m}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 
