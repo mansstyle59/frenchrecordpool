@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Mail, Clock, Megaphone, Users, Code as CodeIcon, Sparkles, Play,
   Music2, Headphones, ArrowRight, BarChart3, Tag, Star, HelpCircle,
-  ChevronDown, Minus, Quote, Download, TrendingUp, Disc3, Radio,
+  ChevronDown, Minus, Quote, Download, TrendingUp, Disc, Disc3, DiscAlbum, Radio,
   Image as ImageIcon, Check, Instagram, Newspaper, X as XIcon,
   Music, Pause, ListMusic, Mic2, Volume2, Volume1, VolumeX,
   CheckCircle, CheckCircle2, Heart, Globe, Lock, Unlock, User,
