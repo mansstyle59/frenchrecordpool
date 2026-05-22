@@ -1,10 +1,11 @@
-import { useState } from "react";
-import { motion } from "framer-motion";
+import { useEffect, useMemo, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Plus, Trash2, Save, X, Mail, Clock, Megaphone, Users, Code as CodeIcon,
   GripVertical, Image as ImageIcon, ListMusic, Sparkles, MousePointerClick,
-  Type, Video, Eye, EyeOff, Smartphone, Monitor,
+  Type, Video, Eye, EyeOff, Smartphone, Monitor, Pencil, Undo2, CheckCircle2,
 } from "lucide-react";
+
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import AdminLayout from "@/components/admin/AdminLayout";
