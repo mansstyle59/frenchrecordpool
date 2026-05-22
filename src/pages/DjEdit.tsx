@@ -34,6 +34,8 @@ export default function DjEdit() {
     }
   }, [isLoading, track, user, navigate]);
 
+  const isApproved = track?.status === "approved";
+
   const handleSubmit = async (data: TrackFormData) => {
     if (!id) return;
     setSaving(true);
@@ -50,9 +52,15 @@ export default function DjEdit() {
           instrumental_url: (track as any)?.instrumental_url ?? null,
         },
       });
-      const { error } = await supabase.rpc("dj_update_own_track" as any, { _id: id, _track: payload as any });
-      if (error) throw error;
-      toast({ title: "Morceau mis à jour", description: "Il repasse en attente de validation." });
+      if (isApproved) {
+        const { error } = await supabase.rpc("dj_submit_track_revision" as any, { _track_id: id, _payload: payload as any });
+        if (error) throw error;
+        toast({ title: "Demande envoyée", description: "Tes modifications attendent la validation d'un admin." });
+      } else {
+        const { error } = await supabase.rpc("dj_update_own_track" as any, { _id: id, _track: payload as any });
+        if (error) throw error;
+        toast({ title: "Morceau mis à jour", description: "Il repasse en attente de validation." });
+      }
       qc.invalidateQueries({ queryKey: ["my-tracks", user?.id] });
       navigate("/dj/tracks");
     } catch (err: any) {
