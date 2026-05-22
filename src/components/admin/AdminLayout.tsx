@@ -25,6 +25,7 @@ const items = [
   { to: "/admin/promo-codes", label: "Codes promo", icon: Ticket },
   { to: "/admin/branding", label: "Branding", icon: Palette },
   { to: "/admin/screenshot-studio", label: "Screenshot Studio", icon: Camera },
+  { to: "/admin/popups", label: "Popup Studio", icon: MessageSquare },
   { to: "/admin/audit", label: "Journal", icon: ScrollText },
 ];
 
