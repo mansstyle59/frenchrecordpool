@@ -76,11 +76,7 @@ export default function DjTracks() {
             const editable = t.status === "pending" || t.status === "rejected";
             return (
               <div key={t.id} className="flex items-center gap-3 p-3 hover:bg-secondary/30">
-                {t.cover_url ? (
-                  <img src={t.cover_url} alt="" className="h-12 w-12 rounded object-cover shrink-0" />
-                ) : (
-                  <div className="h-12 w-12 rounded bg-secondary shrink-0" />
-                )}
+                <img src={resolveCover(t)} alt="" className="h-12 w-12 rounded object-cover shrink-0" />
                 <div className="min-w-0 flex-1">
                   <p className="font-medium truncate">{t.title}</p>
                   <p className="text-xs text-muted-foreground truncate">
