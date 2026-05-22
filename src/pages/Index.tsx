@@ -340,7 +340,7 @@ export default function Index() {
   );
 }
 
-function SectionHeader({ icon, title, subtitle, href, accent }: { icon: React.ReactNode; title: string; subtitle?: string; href?: string; accent?: boolean }) {
+function SectionHeader({ icon, title, subtitle, href, accent }: { icon: React.ReactNode; title: React.ReactNode; subtitle?: React.ReactNode; href?: string; accent?: boolean }) {
   return (
     <div className="flex items-end justify-between mb-6 gap-4">
       <div className="flex items-start gap-3 min-w-0">
