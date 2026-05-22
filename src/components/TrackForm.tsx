@@ -448,10 +448,14 @@ export default function TrackForm({ initialData, saving, onSubmit, existingGenre
       toast({ title: "Audio requis", description: "Ajoute un fichier ou une URL audio.", variant: "destructive" });
       return;
     }
+    // Smart defaults filled silently at submission time
+    const finalReleaseYear = releaseYear || String(new Date().getFullYear());
+    const finalIsrc = isrc || generateIsrc();
     onSubmit({
       title, artist, genre, bpm, musicalKey, version, label, duration,
       tags: tagsStr,
-      featuredArtists, remixers, producer, releaseYear, isrc, subgenre, mood,
+      featuredArtists, remixers, producer,
+      releaseYear: finalReleaseYear, isrc: finalIsrc, subgenre, mood,
       audioFile, audioUrl, previewFile, previewUrl, coverFile, coverUrl,
       downloadUrl, acapellaUrl, instrumentalUrl,
     });
