@@ -98,7 +98,7 @@ const App = () => (
               <Route path="/remixers" element={<Remixers />} />
               <Route path="/remixers/:slug" element={<ArtistDetail kind="remixer" />} />
 
-              <Route path="/genres" element={<Genres />} />
+              <Route path="/genres" element={<Navigate to="/new" replace />} />
               <Route path="/top" element={<Navigate to="/new" replace />} />
               <Route path="/new" element={<NewReleases />} />
               <Route path="/stems" element={<Stems />} />
