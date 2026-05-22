@@ -368,16 +368,16 @@ function SectionHeader({ icon, title, subtitle, href, accent }: { icon: React.Re
 function TrackListShell({ isLoading, empty, emptyText, children }: { isLoading: boolean; empty: boolean; emptyText: string; children: React.ReactNode }) {
   return (
     <div className="rounded-2xl border border-border bg-card/40 backdrop-blur overflow-hidden shadow-lg shadow-primary/5">
-      <div className="hidden md:grid grid-cols-[32px_44px_1fr_auto_112px_56px_48px_48px_auto] gap-3 px-4 py-2.5 border-b border-border/60 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70 bg-secondary/30">
-        <span>#</span>
-        <span></span>
-        <span>Titre · Remixeur</span>
-        <span className="hidden sm:block">Version</span>
-        <span className="hidden md:block">Genre</span>
-        <span className="hidden lg:block text-center">BPM</span>
-        <span className="hidden lg:block text-center">Key</span>
-        <span className="text-right">Time</span>
-        <span></span>
+      <div className="hidden md:flex items-center gap-3 px-4 py-2.5 border-b border-border/60 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70 bg-secondary/30">
+        <span className="w-8 text-center shrink-0">#</span>
+        <span className="w-14 shrink-0" aria-hidden />
+        <span className="flex-1 min-w-0">Titre · Remixeur</span>
+        <span className="hidden sm:inline-block shrink-0">Version</span>
+        <span className="hidden md:block w-28 truncate">Genre</span>
+        <span className="hidden lg:block w-14 text-center">BPM</span>
+        <span className="hidden lg:block w-12 text-center">Key</span>
+        <span className="w-12 text-right shrink-0">Time</span>
+        <span className="w-[76px] shrink-0" aria-hidden />
       </div>
       {isLoading ? (
         <p className="py-12 text-center text-muted-foreground">Chargement...</p>
