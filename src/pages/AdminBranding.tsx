@@ -281,19 +281,21 @@ export default function AdminBranding() {
     >
       <div className="grid lg:grid-cols-[440px_1fr] gap-6 pb-32">
         {/* ===================== EDITOR ===================== */}
-        <div className="space-y-4">
+        <div className="space-y-6">
           {/* PRESETS GALLERY */}
           <motion.section
             initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-            className="rounded-2xl border border-border bg-card/60 backdrop-blur p-4 shadow-sm"
+            className="space-y-4"
           >
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="font-display font-bold flex items-center gap-2 text-sm">
+            <div className="flex items-center justify-between">
+              <h2 className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 <Sparkles className="h-4 w-4 text-primary" /> Palettes signature
               </h2>
-              <Badge variant="outline" className="text-[10px]">{PRESETS.length} thèmes</Badge>
+              <span className="px-2 py-0.5 rounded-full bg-white/5 border border-border text-[10px] text-muted-foreground">
+                {PRESETS.length} thèmes
+              </span>
             </div>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-3">
               {PRESETS.map((p) => {
                 const active = draft.light_primary === p.patch.light_primary;
                 return (
@@ -301,23 +303,27 @@ export default function AdminBranding() {
                     key={p.name}
                     onClick={() => applyPreset(p)}
                     className={cn(
-                      "group relative text-left rounded-xl border p-2.5 transition-all overflow-hidden",
+                      "group relative text-left rounded-lg p-3 transition-all overflow-hidden",
                       active
-                        ? "border-primary bg-primary/5 ring-2 ring-primary/30"
-                        : "border-border hover:border-primary/50 hover:bg-secondary/50"
+                        ? "bg-white/5 border-2 border-primary ring-4 ring-primary/10"
+                        : "bg-white/5 border border-border hover:border-primary/40 hover:bg-white/10"
                     )}
                   >
-                    <div className="flex h-7 rounded-md overflow-hidden mb-2 ring-1 ring-black/5">
+                    <div className="flex h-10 w-full rounded-md overflow-hidden mb-3 ring-1 ring-black/10">
                       {p.swatch.map((c, i) => (
                         <div key={i} style={{ background: c }} className="flex-1" />
                       ))}
                     </div>
-                    <div className="flex items-start justify-between gap-1">
+                    <div className="flex items-center justify-between gap-2">
                       <div className="min-w-0">
-                        <p className="text-xs font-semibold truncate">{p.name}</p>
+                        <p className="text-[11px] font-bold text-foreground truncate">{p.name}</p>
                         <p className="text-[10px] text-muted-foreground truncate">{p.tag}</p>
                       </div>
-                      {active && <Check className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" />}
+                      {active && (
+                        <div className="w-4 h-4 bg-primary rounded-full flex items-center justify-center shrink-0">
+                          <Check className="h-2.5 w-2.5 text-primary-foreground" strokeWidth={3} />
+                        </div>
+                      )}
                     </div>
                   </button>
                 );
@@ -326,21 +332,31 @@ export default function AdminBranding() {
           </motion.section>
 
           {/* TABS */}
-          <Tabs defaultValue="identity" className="rounded-2xl border border-border bg-card/60 backdrop-blur p-4 shadow-sm">
-            <TabsList className="grid grid-cols-4 w-full bg-secondary/50">
-              <TabsTrigger value="identity" className="text-xs"><ImageIcon className="h-3 w-3 mr-1" />Identité</TabsTrigger>
-              <TabsTrigger value="colors" className="text-xs"><Palette className="h-3 w-3 mr-1" />Couleurs</TabsTrigger>
-              <TabsTrigger value="typo" className="text-xs"><Type className="h-3 w-3 mr-1" />Typo</TabsTrigger>
-              <TabsTrigger value="content" className="text-xs"><Layout className="h-3 w-3 mr-1" />Contenu</TabsTrigger>
+          <Tabs defaultValue="identity" className="rounded-xl border border-border bg-white/5 backdrop-blur-md overflow-hidden shadow-sm">
+            <TabsList className="grid grid-cols-4 w-full bg-black/20 dark:bg-black/30 rounded-none h-auto p-0 border-b border-border">
+              {[
+                { v: "identity", icon: ImageIcon, label: "Identité" },
+                { v: "colors", icon: Palette, label: "Couleurs" },
+                { v: "typo", icon: Type, label: "Typo" },
+                { v: "content", icon: Layout, label: "Contenu" },
+              ].map((t) => (
+                <TabsTrigger
+                  key={t.v}
+                  value={t.v}
+                  className="py-3 text-xs font-medium text-muted-foreground rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:font-bold data-[state=active]:bg-transparent data-[state=active]:shadow-none flex items-center justify-center gap-1.5 transition-colors"
+                >
+                  <t.icon className="h-3.5 w-3.5" />{t.label}
+                </TabsTrigger>
+              ))}
             </TabsList>
 
             {/* ---------- Identity ---------- */}
-            <TabsContent value="identity" className="space-y-4 mt-5">
+            <TabsContent value="identity" className="space-y-5 p-5 m-0">
               <Field label="Nom du site">
-                <Input value={draft.site_name} onChange={(e) => update({ site_name: e.target.value })} className="bg-secondary border-border" />
+                <Input value={draft.site_name} onChange={(e) => update({ site_name: e.target.value })} className="bg-black/20 dark:bg-black/40 border-border focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary" />
               </Field>
               <Field label="Slogan" hint={`${(draft.tagline ?? "").length}/80`}>
-                <Input value={draft.tagline ?? ""} maxLength={80} onChange={(e) => update({ tagline: e.target.value })} className="bg-secondary border-border" />
+                <Input value={draft.tagline ?? ""} maxLength={80} onChange={(e) => update({ tagline: e.target.value })} className="bg-black/20 dark:bg-black/40 border-border focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary" />
               </Field>
 
               <AssetDropzone
@@ -385,7 +401,7 @@ export default function AdminBranding() {
             </TabsContent>
 
             {/* ---------- Colors ---------- */}
-            <TabsContent value="colors" className="space-y-5 mt-5">
+            <TabsContent value="colors" className="space-y-5 p-5 m-0">
               <ColorMode
                 title="Mode clair" icon={<Sun className="h-3 w-3" />}
                 draft={draft} update={update} mode="light"
@@ -396,16 +412,16 @@ export default function AdminBranding() {
               />
               <button
                 onClick={copyTokensCss}
-                className="w-full text-xs h-9 rounded-md border border-border hover:border-primary/40 hover:bg-secondary/50 transition-colors flex items-center justify-center gap-2"
+                className="w-full text-xs h-9 rounded-md border border-border hover:border-primary/40 hover:bg-white/5 transition-colors flex items-center justify-center gap-2"
               >
                 <Copy className="h-3 w-3" /> Copier les tokens CSS
               </button>
             </TabsContent>
 
             {/* ---------- Typo ---------- */}
-            <TabsContent value="typo" className="space-y-4 mt-5">
+            <TabsContent value="typo" className="space-y-4 p-5 m-0">
               <div>
-                <Label className="text-xs font-bold uppercase text-muted-foreground mb-2 block">Couples typographiques</Label>
+                <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2 block">Couples typographiques</Label>
                 <div className="grid grid-cols-2 gap-2">
                   {FONT_PAIRS.map((p) => {
                     const active = draft.font_display === p.display && draft.font_body === p.body;
@@ -414,11 +430,11 @@ export default function AdminBranding() {
                         key={p.label}
                         onClick={() => update({ font_display: p.display, font_body: p.body })}
                         className={cn(
-                          "rounded-xl border p-3 text-left transition-all",
-                          active ? "border-primary bg-primary/5 ring-2 ring-primary/30" : "border-border hover:border-primary/40"
+                          "rounded-lg border p-3 text-left transition-all bg-white/5",
+                          active ? "border-primary ring-4 ring-primary/10" : "border-border hover:border-primary/40 hover:bg-white/10"
                         )}
                       >
-                        <div style={{ fontFamily: `"${p.display}"` }} className="text-xl font-bold leading-tight">{p.display}</div>
+                        <div style={{ fontFamily: `"${p.display}"` }} className="text-xl font-bold leading-tight text-foreground">{p.display}</div>
                         <div style={{ fontFamily: `"${p.body}"` }} className="text-[11px] text-muted-foreground mt-0.5">{p.body} · {p.vibe}</div>
                       </button>
                     );
@@ -428,19 +444,19 @@ export default function AdminBranding() {
 
               <Field label="Police des titres">
                 <Select value={draft.font_display} onValueChange={(v) => update({ font_display: v })}>
-                  <SelectTrigger className="bg-secondary border-border"><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="bg-black/20 dark:bg-black/40 border-border"><SelectValue /></SelectTrigger>
                   <SelectContent>{FONTS.map((f) => <SelectItem key={f} value={f} style={{ fontFamily: f }}>{f}</SelectItem>)}</SelectContent>
                 </Select>
-                <div className="mt-2 p-3 rounded-md bg-secondary/50 border border-border">
+                <div className="mt-2 p-3 rounded-md bg-white/5 border border-border">
                   <p style={{ fontFamily: `"${draft.font_display}"` }} className="text-3xl font-bold leading-tight">{draft.site_name}</p>
                 </div>
               </Field>
               <Field label="Police du texte">
                 <Select value={draft.font_body} onValueChange={(v) => update({ font_body: v })}>
-                  <SelectTrigger className="bg-secondary border-border"><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="bg-black/20 dark:bg-black/40 border-border"><SelectValue /></SelectTrigger>
                   <SelectContent>{FONTS.map((f) => <SelectItem key={f} value={f} style={{ fontFamily: f }}>{f}</SelectItem>)}</SelectContent>
                 </Select>
-                <div className="mt-2 p-3 rounded-md bg-secondary/50 border border-border">
+                <div className="mt-2 p-3 rounded-md bg-white/5 border border-border">
                   <p style={{ fontFamily: `"${draft.font_body}"` }} className="text-sm">
                     The quick brown fox jumps over the lazy dog. — Le DJ mixe ses tracks tard dans la nuit. 1234567890
                   </p>
@@ -449,15 +465,15 @@ export default function AdminBranding() {
             </TabsContent>
 
             {/* ---------- Content ---------- */}
-            <TabsContent value="content" className="space-y-4 mt-5">
+            <TabsContent value="content" className="space-y-4 p-5 m-0">
               <Field label="Titre du Hero" hint={`${(draft.hero_title ?? "").length}/60`}>
-                <Input maxLength={60} value={draft.hero_title ?? ""} onChange={(e) => update({ hero_title: e.target.value })} className="bg-secondary border-border" />
+                <Input maxLength={60} value={draft.hero_title ?? ""} onChange={(e) => update({ hero_title: e.target.value })} className="bg-black/20 dark:bg-black/40 border-border focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary" />
               </Field>
               <Field label="Sous-titre du Hero" hint={`${(draft.hero_subtitle ?? "").length}/160`}>
-                <Textarea maxLength={160} value={draft.hero_subtitle ?? ""} onChange={(e) => update({ hero_subtitle: e.target.value })} className="bg-secondary border-border min-h-[80px]" />
+                <Textarea maxLength={160} value={draft.hero_subtitle ?? ""} onChange={(e) => update({ hero_subtitle: e.target.value })} className="bg-black/20 dark:bg-black/40 border-border min-h-[80px] focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary" />
               </Field>
               <Field label="Texte du footer">
-                <Input value={draft.footer_text ?? ""} onChange={(e) => update({ footer_text: e.target.value })} className="bg-secondary border-border" />
+                <Input value={draft.footer_text ?? ""} onChange={(e) => update({ footer_text: e.target.value })} className="bg-black/20 dark:bg-black/40 border-border focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary" />
               </Field>
             </TabsContent>
           </Tabs>
@@ -466,11 +482,11 @@ export default function AdminBranding() {
         {/* ===================== PREVIEW ===================== */}
         <div className="space-y-4">
           {/* Device toolbar */}
-          <div className="flex items-center justify-between rounded-2xl border border-border bg-card/60 backdrop-blur px-3 py-2">
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <Eye className="h-3.5 w-3.5" /> Aperçu en direct
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              <Eye className="h-4 w-4 text-emerald-400" /> Aperçu en direct
             </div>
-            <div className="flex items-center gap-1 bg-secondary rounded-lg p-0.5">
+            <div className="flex items-center gap-1 bg-white/5 border border-border rounded-md p-1">
               {([
                 { v: "desktop", icon: Monitor, label: "Desktop" },
                 { v: "tablet", icon: Tablet, label: "Tablet" },
@@ -480,8 +496,8 @@ export default function AdminBranding() {
                   key={d.v}
                   onClick={() => setDevice(d.v)}
                   className={cn(
-                    "h-7 px-2.5 rounded-md flex items-center gap-1 text-[11px] transition-all",
-                    device === d.v ? "bg-card shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
+                    "h-6 w-7 rounded flex items-center justify-center transition-all",
+                    device === d.v ? "bg-white/10 text-foreground" : "text-muted-foreground hover:text-foreground"
                   )}
                   title={d.label}
                 >
@@ -555,10 +571,10 @@ export default function AdminBranding() {
 /* --------------------------- SUBCOMPONENTS --------------------------- */
 function Field({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
   return (
-    <div>
-      <div className="flex items-baseline justify-between mb-1">
-        <Label className="text-xs font-semibold">{label}</Label>
-        {hint && <span className="text-[10px] text-muted-foreground">{hint}</span>}
+    <div className="space-y-1.5">
+      <div className="flex items-baseline justify-between">
+        <Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">{label}</Label>
+        {hint && <span className="text-[10px] font-normal text-muted-foreground/70">{hint}</span>}
       </div>
       {children}
     </div>
@@ -685,26 +701,33 @@ function ContrastReport({ draft }: { draft: Branding }) {
     { label: "Primaire sur fond (sombre)", a: draft.dark_primary, b: draft.dark_background },
   ];
   return (
-    <div className="rounded-2xl border border-border bg-card/60 backdrop-blur p-4">
-      <h3 className="text-xs font-bold uppercase text-muted-foreground mb-2 flex items-center gap-1.5">
-        <ShieldCheck className="h-3 w-3" /> Lisibilité (estimation)
+    <section className="space-y-3">
+      <h3 className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        <ShieldCheck className="h-4 w-4 text-amber-400" /> Lisibilité (estimation WCAG)
       </h3>
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-2 gap-3">
         {checks.map((c) => {
           const ratio = contrastRatio(c.a, c.b);
           const pass = ratio >= 3.5;
           return (
-            <div key={c.label} className="flex items-center justify-between rounded-lg border border-border bg-secondary/40 px-3 py-2 text-[11px]">
-              <span className="truncate">{c.label}</span>
-              <span className={cn("flex items-center gap-1 font-mono", pass ? "text-emerald-500" : "text-amber-500")}>
-                {pass ? <Check className="h-3 w-3" /> : <AlertTriangle className="h-3 w-3" />}
-                {ratio.toFixed(2)}
-              </span>
+            <div key={c.label} className="p-3 bg-white/5 border border-border rounded-lg flex items-center justify-between">
+              <span className="text-[10px] text-muted-foreground truncate pr-2">{c.label}</span>
+              <div className="flex items-center gap-1.5 shrink-0">
+                <span
+                  className={cn(
+                    "w-1.5 h-1.5 rounded-full",
+                    pass ? "bg-emerald-500 shadow-[0_0_8px_hsl(160_70%_45%/0.7)]" : "bg-amber-500 shadow-[0_0_8px_hsl(38_92%_50%/0.7)]"
+                  )}
+                />
+                <span className={cn("text-xs font-bold font-mono", pass ? "text-emerald-400" : "text-amber-400")}>
+                  {ratio.toFixed(2)}
+                </span>
+              </div>
             </div>
           );
         })}
       </div>
-    </div>
+    </section>
   );
 }
 
