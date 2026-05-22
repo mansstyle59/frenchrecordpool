@@ -170,7 +170,7 @@ export default function AdminArtists() {
   return (
     <AdminLayout
       wide
-      title="DJs / Artistes"
+      title="DJs / Remixers"
       subtitle="Fichier des artistes et remixeurs présents sur la plateforme."
       actions={<Button onClick={openAdd} variant="hero"><Plus className="h-4 w-4 mr-2" />Nouveau DJ</Button>}
     >

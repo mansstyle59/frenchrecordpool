@@ -122,7 +122,7 @@ export default function Index() {
             <div className="lg:col-span-4 grid grid-cols-3 gap-2">
               {[
                 { icon: Headphones, label: "Tracks", value: tracks.length, color: "text-primary" },
-                { icon: Users, label: "Remixeurs", value: artistsCount, color: "text-foreground" },
+                { icon: Users, label: "Remixers", value: artistsCount, color: "text-foreground" },
                 { icon: TrendingUp, label: "Downloads", value: totalDownloads, color: "text-accent" },
               ].map((s) => (
                 <div
