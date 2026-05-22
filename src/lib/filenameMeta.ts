@@ -119,6 +119,46 @@ function matchKey(s: string): { key?: string; rest: string } {
   return { rest: s };
 }
 
+function matchYear(s: string): { year?: number; rest: string } {
+  const m = s.match(/[\(\[]\s*(20\d{2}|19\d{2})\s*[\)\]]/) || s.match(/\b(20\d{2}|19\d{2})\b/);
+  if (m) {
+    const y = parseInt(m[1], 10);
+    if (y >= 1990 && y <= 2100) {
+      return { year: y, rest: s.replace(m[0], " ").replace(/\s{2,}/g, " ").trim() };
+    }
+  }
+  return { rest: s };
+}
+
+const MOOD_KEYWORDS: Record<string, string> = {
+  "énergique": "Énergique", "energique": "Énergique", "energy": "Énergique",
+  "euphorique": "Euphorique", "euphoric": "Euphorique",
+  "dark": "Dark", "obscur": "Dark",
+  "mélancolique": "Mélancolique", "melancolique": "Mélancolique", "sad": "Mélancolique",
+  "chill": "Chill", "relaxed": "Chill", "détendu": "Chill",
+  "romantique": "Romantique", "romantic": "Romantique", "love": "Romantique",
+  "festif": "Festif", "festive": "Festif", "party": "Festif",
+  "agressif": "Agressif", "aggressive": "Agressif", "hard": "Agressif",
+  "sensuel": "Sensuel", "sexy": "Sensuel", "sensual": "Sensuel",
+  "hypnotique": "Hypnotique", "hypnotic": "Hypnotique",
+  "groovy": "Groovy", "groove": "Groovy",
+  "triomphant": "Triomphant", "triumphant": "Triomphant",
+  "mystérieux": "Mystérieux", "mysterious": "Mystérieux", "mystery": "Mystérieux",
+  "nostalgique": "Nostalgique", "nostalgic": "Nostalgique",
+  "estival": "Estival", "summer": "Estival", "été": "Estival",
+};
+
+function matchMood(s: string): { mood?: string; rest: string } {
+  const lower = s.toLowerCase();
+  for (const [kw, label] of Object.entries(MOOD_KEYWORDS)) {
+    const re = new RegExp(`(?:[\\(\\[]|[-\\s])${kw.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?:$|[\\s\\-_\\)\\]])`, "i");
+    if (re.test(lower)) {
+      return { mood: label, rest: s.replace(new RegExp(kw, "i"), " ").replace(/\s{2,}/g, " ").trim() };
+    }
+  }
+  return { rest: s };
+}
+
 export function parseFilenameMeta(filename: string): ParsedFilename {
   if (!filename) return {};
   let s = stripJunk(filename);
@@ -127,6 +167,8 @@ export function parseFilenameMeta(filename: string): ParsedFilename {
   const v = matchVersion(s); if (v.version) out.version = v.version; s = v.rest;
   const k = matchKey(s);     if (k.key)     out.key = k.key;         s = k.rest;
   const b = matchBpm(s);     if (b.bpm)     out.bpm = b.bpm;         s = b.rest;
+  const y = matchYear(s);    if (y.year)    out.year = y.year;       s = y.rest;
+  const m = matchMood(s);    if (m.mood)    out.mood = m.mood;       s = m.rest;
 
   // Split "Artist - Title" (handle several dash flavours)
   const parts = s.split(/\s+[-–—]\s+/).map((p) => p.trim()).filter(Boolean);
