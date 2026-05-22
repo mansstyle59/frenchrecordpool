@@ -987,6 +987,14 @@ export type Database = {
         Args: { _user_id: string }
         Returns: undefined
       }
+      admin_clear_support_thread: {
+        Args: { _thread_id: string }
+        Returns: undefined
+      }
+      admin_delete_support_thread: {
+        Args: { _thread_id: string }
+        Returns: undefined
+      }
       admin_delete_track: { Args: { _id: string }; Returns: undefined }
       admin_delete_user: { Args: { _user_id: string }; Returns: undefined }
       admin_review_track: {
