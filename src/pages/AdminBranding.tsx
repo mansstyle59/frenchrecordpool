@@ -571,10 +571,10 @@ export default function AdminBranding() {
 /* --------------------------- SUBCOMPONENTS --------------------------- */
 function Field({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
   return (
-    <div>
-      <div className="flex items-baseline justify-between mb-1">
-        <Label className="text-xs font-semibold">{label}</Label>
-        {hint && <span className="text-[10px] text-muted-foreground">{hint}</span>}
+    <div className="space-y-1.5">
+      <div className="flex items-baseline justify-between">
+        <Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">{label}</Label>
+        {hint && <span className="text-[10px] font-normal text-muted-foreground/70">{hint}</span>}
       </div>
       {children}
     </div>
