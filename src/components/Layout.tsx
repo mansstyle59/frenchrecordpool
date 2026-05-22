@@ -251,7 +251,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             </div>
           </footer>
         </div>
+        <SupportLauncher />
       </div>
     </SidebarProvider>
   );
 }
+
