@@ -60,6 +60,7 @@ export default function PopupHost() {
   const { pathname } = useLocation();
   const [popups, setPopups] = useState<Popup[]>([]);
   const [active, setActive] = useState<Popup | null>(null);
+  const [dismissed, setDismissed] = useState<Set<string>>(() => new Set());
 
   useEffect(() => {
     let cancelled = false;
@@ -79,6 +80,7 @@ export default function PopupHost() {
   const eligible = useMemo(() => {
     const mobile = isMobile();
     return popups.filter((p) => {
+      if (dismissed.has(p.id)) return false;
       if (alreadySeen(p.id, p.frequency)) return false;
       if (p.devices === "desktop" && mobile) return false;
       if (p.devices === "mobile" && !mobile) return false;
@@ -90,7 +92,7 @@ export default function PopupHost() {
       }
       return true;
     });
-  }, [popups, user, hasActiveSubscription, pathname]);
+  }, [popups, user, hasActiveSubscription, pathname, dismissed]);
 
   useEffect(() => {
     if (active || eligible.length === 0) return;
@@ -130,7 +132,10 @@ export default function PopupHost() {
   }, [eligible, active]);
 
   const close = () => {
-    if (active) markSeen(active.id, active.frequency);
+    if (active) {
+      markSeen(active.id, active.frequency);
+      setDismissed((prev) => new Set(prev).add(active.id));
+    }
     setActive(null);
   };
 
