@@ -677,6 +677,74 @@ export type Database = {
           },
         ]
       }
+      support_messages: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          is_admin: boolean
+          sender_id: string
+          thread_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          is_admin?: boolean
+          sender_id: string
+          thread_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          is_admin?: boolean
+          sender_id?: string
+          thread_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_messages_thread_id_fkey"
+            columns: ["thread_id"]
+            isOneToOne: false
+            referencedRelation: "support_threads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      support_threads: {
+        Row: {
+          closed: boolean
+          created_at: string
+          id: string
+          last_message_at: string
+          subject: string | null
+          unread_for_admin: boolean
+          unread_for_user: boolean
+          user_id: string
+        }
+        Insert: {
+          closed?: boolean
+          created_at?: string
+          id?: string
+          last_message_at?: string
+          subject?: string | null
+          unread_for_admin?: boolean
+          unread_for_user?: boolean
+          user_id: string
+        }
+        Update: {
+          closed?: boolean
+          created_at?: string
+          id?: string
+          last_message_at?: string
+          subject?: string | null
+          unread_for_admin?: boolean
+          unread_for_user?: boolean
+          user_id?: string
+        }
+        Relationships: []
+      }
       track_revisions: {
         Row: {
           created_at: string
@@ -887,6 +955,14 @@ export type Database = {
       }
     }
     Functions: {
+      admin_assign_plan: {
+        Args: { _months?: number; _plan_id: string; _user_id: string }
+        Returns: undefined
+      }
+      admin_cancel_subscription: {
+        Args: { _user_id: string }
+        Returns: undefined
+      }
       admin_delete_track: { Args: { _id: string }; Returns: undefined }
       admin_delete_user: { Args: { _user_id: string }; Returns: undefined }
       admin_review_track: {
@@ -910,6 +986,7 @@ export type Database = {
         Args: { _id?: string; _track: Json }
         Returns: string
       }
+      cancel_my_subscription: { Args: never; Returns: undefined }
       cms_publish: { Args: { _keys?: string[] }; Returns: number }
       cms_restore_version: { Args: { _version_id: string }; Returns: undefined }
       cms_revert_draft: { Args: { _key: string }; Returns: undefined }
