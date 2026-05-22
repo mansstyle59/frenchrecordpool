@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { resolveCover } from "@/lib/trackCover";
 
 const STATUS_LABEL: Record<string, { label: string; color: string }> = {
   pending: { label: "En attente", color: "bg-yellow-500/15 text-yellow-500 border-yellow-500/30" },
