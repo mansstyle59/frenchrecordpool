@@ -219,13 +219,19 @@ export default function TrackForm({ initialData, saving, onSubmit, existingGenre
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [audioFile]);
 
-  // Cover preview
+  // Cover preview — single source of truth: file > url > initial
   useEffect(() => {
-    if (!coverFile) return;
-    const url = URL.createObjectURL(coverFile);
-    setCoverPreview(url);
-    return () => URL.revokeObjectURL(url);
-  }, [coverFile]);
+    if (coverFile) {
+      const url = URL.createObjectURL(coverFile);
+      setCoverPreview(url);
+      return () => URL.revokeObjectURL(url);
+    }
+    if (coverUrl) {
+      setCoverPreview(coverUrl);
+      return;
+    }
+    setCoverPreview(initialData?.cover_url ?? null);
+  }, [coverFile, coverUrl, initialData?.cover_url]);
 
   useEffect(() => {
     return () => { if (previewBlobUrl) URL.revokeObjectURL(previewBlobUrl); };
