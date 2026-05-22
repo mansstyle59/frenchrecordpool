@@ -261,6 +261,87 @@ export type Database = {
         }
         Relationships: []
       }
+      popups: {
+        Row: {
+          accent_color: string
+          audience: string
+          bg_color: string
+          body: string | null
+          created_at: string
+          created_by: string | null
+          cta_label: string | null
+          cta_url: string | null
+          devices: string
+          ends_at: string | null
+          frequency: string
+          id: string
+          image_url: string | null
+          is_active: boolean
+          layout: string
+          name: string
+          pages: string[]
+          priority: number
+          starts_at: string | null
+          text_color: string
+          title: string | null
+          trigger_type: string
+          trigger_value: number
+          updated_at: string
+        }
+        Insert: {
+          accent_color?: string
+          audience?: string
+          bg_color?: string
+          body?: string | null
+          created_at?: string
+          created_by?: string | null
+          cta_label?: string | null
+          cta_url?: string | null
+          devices?: string
+          ends_at?: string | null
+          frequency?: string
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          layout?: string
+          name: string
+          pages?: string[]
+          priority?: number
+          starts_at?: string | null
+          text_color?: string
+          title?: string | null
+          trigger_type?: string
+          trigger_value?: number
+          updated_at?: string
+        }
+        Update: {
+          accent_color?: string
+          audience?: string
+          bg_color?: string
+          body?: string | null
+          created_at?: string
+          created_by?: string | null
+          cta_label?: string | null
+          cta_url?: string | null
+          devices?: string
+          ends_at?: string | null
+          frequency?: string
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          layout?: string
+          name?: string
+          pages?: string[]
+          priority?: number
+          starts_at?: string | null
+          text_color?: string
+          title?: string | null
+          trigger_type?: string
+          trigger_value?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
