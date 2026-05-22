@@ -120,7 +120,7 @@ Deno.serve(async (req) => {
 
       const { data: signedData, error: signedError } = await adminClient.storage
         .from("track-audio")
-        .createSignedUrl(storagePath, 300, { download: filename });
+        .createSignedUrl(storagePath, isStream ? 3600 : 300, isStream ? undefined : { download: filename });
 
       if (signedError || !signedData?.signedUrl) {
         return new Response(JSON.stringify({ error: "Impossible de générer le lien" }), {
