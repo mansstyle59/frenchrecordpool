@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import {
   KeyRound, Search, Shield, ShieldOff, UserCheck, X, Ban, CheckCircle2, Trash2,
-  Unlock, Lock, Users, Crown, Pencil, Eye, Download as DownloadIcon,
+  Unlock, Lock, Users, Crown, Pencil, Eye, Download as DownloadIcon, Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,6 +21,7 @@ import AdminLayout from "@/components/admin/AdminLayout";
 import AdminStatsRow from "@/components/admin/AdminStatsRow";
 import UserEditDialog from "@/components/admin/UserEditDialog";
 import UserDetailDialog from "@/components/admin/UserDetailDialog";
+import AssignPlanDialog from "@/components/admin/AssignPlanDialog";
 
 interface ProfileRow {
   id: string;
@@ -44,6 +45,7 @@ export default function AdminUsers() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [editing, setEditing] = useState<ProfileRow | null>(null);
   const [viewing, setViewing] = useState<ProfileRow | null>(null);
+  const [assigning, setAssigning] = useState<ProfileRow | null>(null);
 
   const { data: profiles = [] } = useQuery({
     queryKey: ["admin-profiles"],
@@ -512,6 +514,11 @@ export default function AdminUsers() {
                             <Shield className="h-3 w-3" /> Promouvoir
                           </Button>
                         )}
+                        {!isAdminRole && (
+                          <Button variant="ghost" size="sm" className="gap-1 text-primary" onClick={() => setAssigning(p)} title="Attribuer un plan">
+                            <Sparkles className="h-3 w-3" /> Plan
+                          </Button>
+                        )}
                         <Button variant="ghost" size="sm" className="gap-1" onClick={() => handlePasswordReset(p)}>
                           <KeyRound className="h-3 w-3" /> Mdp
                         </Button>
@@ -572,6 +579,16 @@ export default function AdminUsers() {
         isAdmin={viewing ? (rolesByUser.get(viewing.user_id) ?? []).includes("admin") : false}
         subscription={viewing ? subsByUser.get(viewing.user_id) : null}
       />
+
+      <AssignPlanDialog
+        open={!!assigning}
+        onOpenChange={(o) => !o && setAssigning(null)}
+        userId={assigning?.user_id ?? null}
+        userLabel={assigning?.email ?? assigning?.dj_name ?? null}
+        onAssigned={() => queryClient.invalidateQueries({ queryKey: ["admin-all-subs"] })}
+      />
+
+
 
       <AlertDialog open={!!confirmDelete} onOpenChange={(o) => !o && setConfirmDelete(null)}>
         <AlertDialogContent>

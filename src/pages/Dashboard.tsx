@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
-import { User, CreditCard, Download, LogOut, Camera, Loader2, Heart, Music2, TrendingUp } from "lucide-react";
+import { User, CreditCard, Download, LogOut, Camera, Loader2, Heart, Music2, MessageCircle, Calendar, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,16 +12,19 @@ import Layout from "@/components/Layout";
 import { useAuth } from "@/contexts/AuthContext";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useTracks } from "@/hooks/useTracks";
+import { useSubscription } from "@/hooks/useSubscription";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { resolveCover } from "@/lib/trackCover";
 import RedeemPromoCard from "@/components/RedeemPromoCard";
+import SupportChat from "@/components/SupportChat";
 
 export default function Dashboard() {
-  const { user, loading, profile, hasActiveSubscription, signOut, refreshProfile } = useAuth();
+  const { user, loading, profile, signOut, refreshProfile } = useAuth();
   const navigate = useNavigate();
   const { favoriteIds } = useFavorites();
   const { data: allTracks = [] } = useTracks();
+  const { subscription, hasActive, refetch: refetchSub } = useSubscription();
   const [djName, setDjName] = useState("");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -140,6 +143,7 @@ export default function Dashboard() {
           <TabsList className="bg-secondary">
             <TabsTrigger value="profile" className="gap-1"><User className="h-4 w-4" /> Profil</TabsTrigger>
             <TabsTrigger value="subscription" className="gap-1"><CreditCard className="h-4 w-4" /> Abonnement</TabsTrigger>
+            <TabsTrigger value="support" className="gap-1"><MessageCircle className="h-4 w-4" /> Support</TabsTrigger>
             <TabsTrigger value="favorites" className="gap-1"><Heart className="h-4 w-4" /> Favoris</TabsTrigger>
             <TabsTrigger value="downloads" className="gap-1"><Download className="h-4 w-4" /> Historique</TabsTrigger>
           </TabsList>
@@ -185,25 +189,83 @@ export default function Dashboard() {
           <TabsContent value="subscription">
             <div className="grid md:grid-cols-2 gap-4 max-w-3xl">
               <div className="bg-card border border-border rounded-xl p-6 space-y-4">
-                <div className="flex items-center justify-between">
+                <div className="flex items-start justify-between gap-3">
                   <div>
-                    <p className="font-display font-semibold text-lg">Abonnement</p>
-                    <p className="text-sm text-muted-foreground">Accès au téléchargement du catalogue</p>
+                    <p className="font-display font-semibold text-lg">
+                      {subscription?.planName || "Aucun abonnement"}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Accès au téléchargement du catalogue
+                    </p>
                   </div>
-                  <Badge className={hasActiveSubscription ? "bg-primary/20 text-primary border-primary/30" : "bg-destructive/20 text-destructive"}>
-                    {hasActiveSubscription ? "Actif" : "Inactif"}
+                  <Badge className={hasActive ? "bg-primary/20 text-primary border-primary/30" : "bg-destructive/20 text-destructive"}>
+                    {hasActive ? "Actif" : "Inactif"}
                   </Badge>
                 </div>
-                {!hasActiveSubscription && (
-                  <div className="space-y-2">
-                    <p className="text-sm text-muted-foreground">Choisis un plan ou utilise un code partenaire.</p>
-                    <Button asChild size="sm" variant="outline"><Link to="/pricing">Voir les plans</Link></Button>
+
+                {subscription && (
+                  <div className="space-y-2 text-sm border-t border-border pt-3">
+                    {subscription.planPriceCents !== null && (
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Tarif</span>
+                        <span className="font-medium">
+                          {(subscription.planPriceCents / 100).toFixed(0)} {subscription.planCurrency} / {subscription.planInterval}
+                        </span>
+                      </div>
+                    )}
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Statut</span>
+                      <span className="font-medium capitalize">{subscription.status}</span>
+                    </div>
+                    {subscription.expiresAt && (
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground flex items-center gap-1"><Calendar className="h-3 w-3" /> Échéance</span>
+                        <span className="font-medium">
+                          {subscription.isLifetime
+                            ? "À vie"
+                            : `${subscription.expiresAt.toLocaleDateString("fr-FR")}${subscription.daysLeft !== null ? ` (${subscription.daysLeft} j)` : ""}`}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {!hasActive && (
+                  <div className="space-y-2 border-t border-border pt-3">
+                    <p className="text-sm text-muted-foreground">Choisissez un plan ou utilisez un code partenaire.</p>
+                    <Button asChild size="sm" variant="hero"><Link to="/pricing">Voir les plans</Link></Button>
+                  </div>
+                )}
+
+                {subscription?.isActive && !subscription.isLifetime && subscription.status === "active" && (
+                  <div className="border-t border-border pt-3">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-destructive hover:text-destructive gap-1"
+                      onClick={async () => {
+                        if (!confirm("Annuler votre abonnement ? Vous perdrez l'accès aux téléchargements.")) return;
+                        const { error } = await supabase.rpc("cancel_my_subscription" as any);
+                        if (error) { toast({ title: "Erreur", description: error.message, variant: "destructive" }); return; }
+                        toast({ title: "Abonnement annulé" });
+                        refetchSub();
+                      }}
+                    >
+                      <XCircle className="h-4 w-4" /> Annuler l'abonnement
+                    </Button>
                   </div>
                 )}
               </div>
               <RedeemPromoCard />
             </div>
           </TabsContent>
+
+          <TabsContent value="support">
+            <div className="max-w-2xl">
+              <SupportChat />
+            </div>
+          </TabsContent>
+
 
 
           <TabsContent value="favorites">
