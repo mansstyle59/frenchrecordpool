@@ -20,6 +20,7 @@ import Signup from "./pages/Signup";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import Dashboard from "./pages/Dashboard";
+import Downloads from "./pages/Downloads";
 import Admin from "./pages/Admin";
 import AdminTracks from "./pages/AdminTracks";
 import AdminUsers from "./pages/AdminUsers";
