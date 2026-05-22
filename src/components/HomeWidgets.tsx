@@ -410,3 +410,257 @@ function HtmlBlockWidget({ config }: { config: any }) {
     </div>
   );
 }
+
+/* ─── STATS (counters) ─── */
+function StatsWidget({ config }: { config: any }) {
+  const [counts, setCounts] = useState<{ tracks: number; djs: number; downloads: number }>({ tracks: 0, djs: 0, downloads: 0 });
+  useEffect(() => {
+    if (!config.auto_fetch) return;
+    (async () => {
+      const [{ count: tracks }, { count: djs }, { data: dl }] = await Promise.all([
+        supabase.from("tracks").select("id", { count: "exact", head: true }).eq("status", "approved"),
+        supabase.from("artists").select("id", { count: "exact", head: true }),
+        supabase.from("tracks").select("downloads").eq("status", "approved"),
+      ]);
+      const sum = (dl || []).reduce((s, r: any) => s + (r.downloads || 0), 0);
+      setCounts({ tracks: tracks || 0, djs: djs || 0, downloads: sum });
+    })();
+  }, [config.auto_fetch]);
+
+  const items = (config.items?.length ? config.items : [
+    { label: "Tracks", value: config.auto_fetch ? String(counts.tracks) : "1 200+" },
+    { label: "DJs", value: config.auto_fetch ? String(counts.djs) : "350+" },
+    { label: "Téléchargements", value: config.auto_fetch ? String(counts.downloads) : "50K+" },
+  ]);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
+      className="rounded-3xl border border-border bg-gradient-to-br from-primary/10 via-card to-accent/10 p-8 md:p-10"
+    >
+      {config.title && (
+        <h2 className="font-display text-2xl md:text-3xl font-bold text-center mb-8">{config.title}</h2>
+      )}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+        {items.map((it: any, i: number) => (
+          <div key={i} className="text-center">
+            <div className="font-display font-black text-3xl md:text-5xl gradient-text tabular-nums">{it.value}</div>
+            <div className="text-xs uppercase tracking-widest text-muted-foreground mt-1">{it.label}</div>
+          </div>
+        ))}
+      </div>
+    </motion.div>
+  );
+}
+
+/* ─── GENRES CLOUD ─── */
+function GenresCloudWidget({ config }: { config: any }) {
+  const [genres, setGenres] = useState<{ name: string; count: number }[]>([]);
+  useEffect(() => {
+    supabase.from("tracks").select("genre").eq("status", "approved").then(({ data }) => {
+      const map = new Map<string, number>();
+      (data || []).forEach((t: any) => t.genre && map.set(t.genre, (map.get(t.genre) || 0) + 1));
+      setGenres([...map.entries()].map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count).slice(0, config.limit || 16));
+    });
+  }, [config.limit]);
+
+  return (
+    <div>
+      <div className="flex items-center gap-3 mb-6">
+        <div className="w-1 h-9 rounded-full bg-gradient-to-b from-primary to-accent" />
+        <h2 className="font-display text-2xl md:text-3xl font-bold flex items-center gap-2">
+          <Tag className="h-5 w-5 text-primary" /> {config.title || "Genres"}
+        </h2>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {genres.map((g) => (
+          <Link
+            key={g.name} to={`/tracks?genre=${encodeURIComponent(g.name)}`}
+            className="group inline-flex items-center gap-2 px-4 py-2 rounded-full border border-border bg-card hover:border-primary/60 hover:bg-primary/5 transition"
+            style={{ fontSize: `${Math.min(1.5, 0.85 + g.count / 50)}rem` }}
+          >
+            <span className="font-display font-semibold">{g.name}</span>
+            <span className="text-[10px] uppercase tracking-widest text-muted-foreground">{g.count}</span>
+          </Link>
+        ))}
+        {genres.length === 0 && <p className="text-sm text-muted-foreground">Aucun genre disponible.</p>}
+      </div>
+    </div>
+  );
+}
+
+/* ─── FEATURED TRACK ─── */
+function FeaturedTrackWidget({ config }: { config: any }) {
+  const [track, setTrack] = useState<any>(null);
+  const { play } = usePlayer();
+  useEffect(() => {
+    if (config.track_id) {
+      supabase.from("tracks").select("*").eq("id", config.track_id).maybeSingle().then(({ data }) => setTrack(data));
+    } else {
+      supabase.from("tracks").select("*").eq("status", "approved").order("downloads", { ascending: false }).limit(1).then(({ data }) => data?.[0] && setTrack(data[0]));
+    }
+  }, [config.track_id]);
+
+  if (!track) return null;
+  const cover = resolveCover(track);
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
+      className="relative overflow-hidden rounded-3xl border border-border bg-card flex flex-col md:flex-row gap-6 md:gap-10 p-6 md:p-10"
+    >
+      {cover && <div className="absolute inset-0 opacity-25 bg-cover bg-center blur-3xl" style={{ backgroundImage: `url(${cover})` }} />}
+      <div className="relative shrink-0 mx-auto md:mx-0">
+        <img src={cover || "/placeholder.svg"} alt={track.title} className="w-56 h-56 md:w-72 md:h-72 rounded-2xl object-cover shadow-2xl" />
+      </div>
+      <div className="relative flex-1 flex flex-col justify-center text-center md:text-left">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent/20 text-accent text-xs font-bold uppercase tracking-wider mb-3 self-center md:self-start">
+          <Star className="h-3 w-3" /> {config.tag || "Track de la semaine"}
+        </div>
+        <h2 className="font-display text-3xl md:text-5xl font-black mb-2">{track.title}</h2>
+        <p className="text-muted-foreground text-lg mb-4">{track.artist}</p>
+        <div className="flex flex-wrap gap-3 justify-center md:justify-start">
+          <Button size="lg" variant="hero" onClick={() => play(track)}>
+            <Play className="mr-1 h-4 w-4" /> Écouter
+          </Button>
+          <Button asChild size="lg" variant="outline">
+            <Link to={`/tracks/${track.id}`}>Détails</Link>
+          </Button>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+/* ─── TESTIMONIALS ─── */
+function TestimonialsWidget({ config }: { config: any }) {
+  const items = config.items || [
+    { quote: "La meilleure source d'edits du moment.", author: "DJ Example", role: "Club, Paris" },
+  ];
+  return (
+    <div>
+      {config.title && (
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-1 h-9 rounded-full bg-gradient-to-b from-primary to-accent" />
+          <h2 className="font-display text-2xl md:text-3xl font-bold">{config.title}</h2>
+        </div>
+      )}
+      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+        {items.map((it: any, i: number) => (
+          <motion.div
+            key={i}
+            initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.05 }}
+            className="rounded-2xl border border-border bg-card p-6 relative"
+          >
+            <Quote className="absolute top-4 right-4 h-8 w-8 text-primary/15" />
+            <p className="text-base mb-4">"{it.quote}"</p>
+            <div className="flex items-center gap-3">
+              {it.avatar && <img src={it.avatar} alt={it.author} className="w-10 h-10 rounded-full object-cover" />}
+              <div>
+                <p className="font-semibold text-sm">{it.author}</p>
+                {it.role && <p className="text-xs text-muted-foreground">{it.role}</p>}
+              </div>
+            </div>
+          </motion.div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ─── FAQ ─── */
+function FaqWidget({ config }: { config: any }) {
+  const items = config.items || [];
+  const [open, setOpen] = useState<number | null>(0);
+  return (
+    <div className="max-w-3xl mx-auto">
+      <div className="flex items-center gap-3 mb-6 justify-center">
+        <HelpCircle className="h-6 w-6 text-primary" />
+        <h2 className="font-display text-2xl md:text-3xl font-bold">{config.title || "Questions fréquentes"}</h2>
+      </div>
+      <div className="space-y-2">
+        {items.map((it: any, i: number) => {
+          const isOpen = open === i;
+          return (
+            <div key={i} className="rounded-xl border border-border bg-card overflow-hidden">
+              <button
+                onClick={() => setOpen(isOpen ? null : i)}
+                className="w-full flex items-center justify-between p-4 text-left hover:bg-muted/30 transition"
+              >
+                <span className="font-semibold">{it.question}</span>
+                <ChevronDown className={`h-4 w-4 transition-transform ${isOpen ? "rotate-180" : ""}`} />
+              </button>
+              {isOpen && (
+                <div className="px-4 pb-4 text-sm text-muted-foreground whitespace-pre-line">{it.answer}</div>
+              )}
+            </div>
+          );
+        })}
+        {items.length === 0 && <p className="text-sm text-muted-foreground text-center">Aucune question configurée.</p>}
+      </div>
+    </div>
+  );
+}
+
+/* ─── LOGOS STRIP ─── */
+function LogosStripWidget({ config }: { config: any }) {
+  const logos = config.logos || [];
+  return (
+    <div className="text-center">
+      {config.title && (
+        <p className="text-xs uppercase tracking-widest text-muted-foreground mb-6">{config.title}</p>
+      )}
+      <div className="flex flex-wrap items-center justify-center gap-8 md:gap-12 opacity-70">
+        {logos.map((l: any, i: number) => (
+          <a key={i} href={l.url || "#"} target={l.url ? "_blank" : undefined} rel="noreferrer" className="hover:opacity-100 opacity-60 transition">
+            <img src={l.image_url} alt={l.alt || ""} className="h-8 md:h-10 object-contain grayscale hover:grayscale-0 transition" />
+          </a>
+        ))}
+        {logos.length === 0 && <p className="text-sm text-muted-foreground">Ajoute des logos partenaires.</p>}
+      </div>
+    </div>
+  );
+}
+
+/* ─── DIVIDER ─── */
+function DividerWidget({ config }: { config: any }) {
+  if (config.style === "spacer") return <div style={{ height: `${config.height || 40}px` }} />;
+  if (config.style === "gradient") {
+    return <div className="h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent" />;
+  }
+  return (
+    <div className="flex items-center gap-4 text-muted-foreground">
+      <div className="h-px flex-1 bg-border" />
+      {config.label ? <span className="text-xs uppercase tracking-widest">{config.label}</span> : <Minus className="h-4 w-4" />}
+      <div className="h-px flex-1 bg-border" />
+    </div>
+  );
+}
+
+/* ─── TWO COLUMNS (image + text) ─── */
+function TwoColumnsWidget({ config }: { config: any }) {
+  const reversed = config.image_position === "right";
+  return (
+    <div className={`grid md:grid-cols-2 gap-8 md:gap-12 items-center ${reversed ? "md:[&>*:first-child]:order-2" : ""}`}>
+      <div className="rounded-3xl overflow-hidden border border-border aspect-video md:aspect-square bg-muted">
+        {config.image_url ? (
+          <img src={config.image_url} alt={config.title || ""} className="w-full h-full object-cover" />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-muted-foreground text-sm">Ajoute une image</div>
+        )}
+      </div>
+      <div>
+        {config.eyebrow && (
+          <p className="text-xs uppercase tracking-widest text-primary font-bold mb-3">{config.eyebrow}</p>
+        )}
+        <h2 className="font-display text-3xl md:text-4xl font-bold mb-4">{config.title || "Titre"}</h2>
+        {config.body && <p className="text-muted-foreground whitespace-pre-line mb-6">{config.body}</p>}
+        {config.cta_label && (
+          <Button asChild variant="hero">
+            <Link to={config.cta_url || "#"}>{config.cta_label}</Link>
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+}
+
