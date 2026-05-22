@@ -81,9 +81,18 @@ function WidgetRenderer({ widget, preview }: { widget: Widget; preview: boolean 
     case "promo_banner":     return <PromoBannerWidget config={widget.config} />;
     case "top_djs":          return <ArtistCarouselWidget config={{ ...widget.config, featured_only: true }} />;
     case "html_block":       return <HtmlBlockWidget config={widget.config} />;
+    case "stats":            return <StatsWidget config={widget.config} />;
+    case "genres_cloud":     return <GenresCloudWidget config={widget.config} />;
+    case "featured_track":   return <FeaturedTrackWidget config={widget.config} />;
+    case "testimonials":     return <TestimonialsWidget config={widget.config} />;
+    case "faq":              return <FaqWidget config={widget.config} />;
+    case "logos_strip":      return <LogosStripWidget config={widget.config} />;
+    case "divider":          return <DividerWidget config={widget.config} />;
+    case "two_columns":      return <TwoColumnsWidget config={widget.config} />;
     default: return null;
   }
 }
+
 
 /* ─── HERO ─── */
 function HeroWidget({ config, preview }: { config: any; preview: boolean }) {
