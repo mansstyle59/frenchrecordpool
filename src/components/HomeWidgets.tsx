@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Mail, Clock, Megaphone, Users, Code as CodeIcon, Sparkles, Play,
   Music2, Headphones, ArrowRight, BarChart3, Tag, Star, HelpCircle,
-  ChevronDown, Minus, Quote,
+  ChevronDown, Minus, Quote, Download, TrendingUp, Disc3, Radio,
+  Image as ImageIcon, Check, Instagram, Newspaper, X as XIcon,
 } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -15,20 +16,21 @@ import TrackRow from "@/components/TrackRow";
 import { resolveCover } from "@/lib/trackCover";
 import { usePlayer } from "@/contexts/PlayerContext";
 import { titleStyle, bodyStyle } from "@/lib/widgetTypography";
-
+import {
+  ANIM_VARIANTS, CONTAINER_CLASS, PAD_X, PAD_Y, bgStyle,
+  type WidgetCommon,
+} from "@/lib/widgetCommon";
 
 export interface Widget {
   id: string;
   type: string;
   position: number;
-  config: Record<string, any>;
+  config: Record<string, any> & { common?: WidgetCommon };
   is_active: boolean;
 }
 
 interface Props {
-  /** Pre-loaded widgets (used by admin preview). If undefined, fetch active widgets. */
   widgets?: Widget[];
-  /** Disable links/interactions (preview mode) */
   preview?: boolean;
 }
 
@@ -50,7 +52,7 @@ export default function HomeWidgets({ widgets: propWidgets, preview = false }: P
   if (widgets.length === 0) return null;
 
   return (
-    <div className={preview ? "space-y-8" : "space-y-12 md:space-y-16"}>
+    <div className={preview ? "space-y-4" : "space-y-4 md:space-y-6"}>
       {widgets.map((w) => (
         <WidgetWrapper key={w.id} widget={w} preview={preview} />
       ))}
@@ -58,15 +60,47 @@ export default function HomeWidgets({ widgets: propWidgets, preview = false }: P
   );
 }
 
+/* ─── Shared shell : container + bg + entrance animation ─── */
 function WidgetWrapper({ widget, preview }: { widget: Widget; preview: boolean }) {
-  // Hero widget is full-width, others get container
-  if (widget.type === "hero") {
-    return <HeroWidget config={widget.config} preview={preview} />;
-  }
-  return (
-    <section className="container">
+  const common: WidgetCommon = widget.config.common || {};
+  // Hero defaults to full width without container
+  const isHero = widget.type === "hero";
+  const containerKey = (common.container ?? (isHero ? "full" : "default")) as keyof typeof CONTAINER_CLASS;
+  const padY = PAD_Y[common.pad_y ?? (isHero ? "none" : "md")];
+  const padX = PAD_X[common.pad_x ?? "none"];
+
+  const hasBg = common.bg_kind && common.bg_kind !== "none";
+  const animKey = common.anim ?? "slide-up";
+  const variants = ANIM_VARIANTS[animKey] || ANIM_VARIANTS["slide-up"];
+
+  const content = (
+    <div className={`${CONTAINER_CLASS[containerKey]} ${padX} relative z-10`}>
       <WidgetRenderer widget={widget} preview={preview} />
-    </section>
+    </div>
+  );
+
+  return (
+    <motion.section
+      variants={variants}
+      initial={animKey === "none" ? false : "hidden"}
+      whileInView={animKey === "none" ? undefined : "show"}
+      viewport={{ once: true, amount: 0.15 }}
+      transition={common.anim_delay ? { delay: common.anim_delay / 1000 } : undefined}
+      className={`relative ${padY} ${hasBg ? "overflow-hidden" : ""}`}
+    >
+      {hasBg && (
+        <>
+          <div className="absolute inset-0 -z-0" style={bgStyle(common)} />
+          {common.bg_kind === "image" && common.bg_blur ? (
+            <div className="absolute inset-0 -z-0 backdrop-blur" style={{ backdropFilter: `blur(${common.bg_blur}px)` }} />
+          ) : null}
+          {common.bg_overlay ? (
+            <div className="absolute inset-0 -z-0 bg-background" style={{ opacity: (common.bg_overlay ?? 0) / 100 }} />
+          ) : null}
+        </>
+      )}
+      {content}
+    </motion.section>
   );
 }
 
@@ -74,23 +108,40 @@ function WidgetRenderer({ widget, preview }: { widget: Widget; preview: boolean 
   switch (widget.type) {
     case "hero":             return <HeroWidget config={widget.config} preview={preview} />;
     case "track_grid":       return <TrackGridWidget config={widget.config} preview={preview} />;
+    case "top_downloads":    return <TrackGridWidget config={{ title: "Top téléchargements", sort_by: "popular", limit: 8, see_all_url: "/popular", ...widget.config }} preview={preview} />;
+    case "new_releases":     return <TrackGridWidget config={{ title: "Nouveautés", sort_by: "recent", limit: 8, see_all_url: "/new", ...widget.config }} preview={preview} />;
+    case "top_genre":        return <TopGenreWidget config={widget.config} preview={preview} />;
+    case "top_label":        return <TopLabelWidget config={widget.config} />;
+    case "top_artists":      return <TopArtistsWidget config={widget.config} />;
     case "artist_carousel":  return <ArtistCarouselWidget config={widget.config} />;
     case "cta":              return <CtaWidget config={widget.config} />;
     case "rich_text":        return <RichTextWidget config={widget.config} />;
     case "video_embed":      return <VideoEmbedWidget config={widget.config} />;
+    case "audio_embed":      return <AudioEmbedWidget config={widget.config} />;
     case "newsletter":       return <NewsletterWidget config={widget.config} />;
     case "countdown":        return <CountdownWidget config={widget.config} />;
     case "promo_banner":     return <PromoBannerWidget config={widget.config} />;
+    case "sticky_promo":     return <StickyPromoWidget config={widget.config} />;
     case "top_djs":          return <ArtistCarouselWidget config={{ ...widget.config, featured_only: true }} />;
     case "html_block":       return <HtmlBlockWidget config={widget.config} />;
     case "stats":            return <StatsWidget config={widget.config} />;
+    case "live_counter":     return <LiveCounterWidget config={widget.config} />;
     case "genres_cloud":     return <GenresCloudWidget config={widget.config} />;
     case "featured_track":   return <FeaturedTrackWidget config={widget.config} />;
     case "testimonials":     return <TestimonialsWidget config={widget.config} />;
+    case "video_testimonial":return <VideoTestimonialWidget config={widget.config} />;
     case "faq":              return <FaqWidget config={widget.config} />;
     case "logos_strip":      return <LogosStripWidget config={widget.config} />;
     case "divider":          return <DividerWidget config={widget.config} />;
     case "two_columns":      return <TwoColumnsWidget config={widget.config} />;
+    case "slides_carousel":  return <SlidesCarouselWidget config={widget.config} preview={preview} />;
+    case "image_gallery":    return <ImageGalleryWidget config={widget.config} />;
+    case "marquee":          return <MarqueeWidget config={widget.config} />;
+    case "plans_compare":    return <PlansCompareWidget config={widget.config} />;
+    case "features_grid":    return <FeaturesGridWidget config={widget.config} />;
+    case "blog_cards":       return <BlogCardsWidget config={widget.config} />;
+    case "team_grid":        return <TeamGridWidget config={widget.config} />;
+    case "instagram_feed":   return <InstagramFeedWidget config={widget.config} />;
     default: return null;
   }
 }
@@ -98,76 +149,89 @@ function WidgetRenderer({ widget, preview }: { widget: Widget; preview: boolean 
 
 /* ─── HERO ─── */
 function HeroWidget({ config, preview }: { config: any; preview: boolean }) {
+  const layout = config.layout || "center";
+  const height = config.height === "compact" ? "py-12" : config.height === "full" ? "py-32 md:py-48" : "py-20 md:py-32";
+  const overlay = config.overlay_opacity ?? 75;
   return (
-    <section className="relative overflow-hidden">
+    <div className="relative overflow-hidden rounded-none">
       {config.bg_url && (
-        <div className="absolute inset-0 bg-cover bg-center opacity-25" style={{ backgroundImage: `url(${config.bg_url})` }} />
+        <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${config.bg_url})` }} />
       )}
-      <div className="absolute inset-0 bg-gradient-to-b from-background/75 via-background/90 to-background" />
+      <div className="absolute inset-0" style={{ background: `linear-gradient(to bottom, hsl(var(--background)/${overlay / 100}), hsl(var(--background)/${(overlay + 20) / 100}), hsl(var(--background)))` }} />
       <motion.div className="absolute -top-32 -left-32 w-[28rem] h-[28rem] rounded-full bg-primary/30 blur-3xl"
         animate={{ scale: [1, 1.15, 1] }} transition={{ duration: 8, repeat: Infinity }} />
       <motion.div className="absolute -bottom-32 -right-32 w-[28rem] h-[28rem] rounded-full bg-accent/30 blur-3xl"
         animate={{ scale: [1.1, 1, 1.1] }} transition={{ duration: 10, repeat: Infinity }} />
 
-      <div className={`relative container ${preview ? "py-10" : "py-20 md:py-32"} text-center`}>
-        {config.eyebrow && (
-          <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/15 text-primary text-xs font-bold uppercase tracking-wider mb-5">
-            <Sparkles className="h-3 w-3" /> {config.eyebrow}
-          </span>
-        )}
-        <h1 className={`font-display font-black tracking-tight ${preview ? "text-3xl" : "text-5xl md:text-7xl"} mb-4`} style={titleStyle(config.typo)}>
-          {config.title || "Le pool de musique des DJs"}
-          {config.highlight && (
-            <> <span className="gradient-text">{config.highlight}</span></>
+      <div className={`relative container ${preview ? "py-10" : height} ${layout === "left" ? "text-left" : layout === "split" ? "grid md:grid-cols-2 gap-10 items-center text-left" : "text-center"}`}>
+        <div className={layout === "left" || layout === "split" ? "max-w-2xl" : "max-w-3xl mx-auto"}>
+          {config.eyebrow && (
+            <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/15 text-primary text-xs font-bold uppercase tracking-wider mb-5">
+              <Sparkles className="h-3 w-3" /> {config.eyebrow}
+            </span>
           )}
-        </h1>
-        {config.subtitle && (
-          <p className={`text-muted-foreground mx-auto ${preview ? "text-sm max-w-xl" : "text-lg md:text-xl max-w-2xl"} mb-8`} style={bodyStyle(config.typo)}>
-            {config.subtitle}
-          </p>
-        )}
+          <h1 className={`font-display font-black tracking-tight ${preview ? "text-3xl" : "text-5xl md:text-7xl"} mb-4`} style={titleStyle(config.typo)}>
+            {config.title || "Le pool de musique des DJs"}
+            {config.highlight && (
+              <> <span className="gradient-text">{config.highlight}</span></>
+            )}
+          </h1>
+          {config.subtitle && (
+            <p className={`text-muted-foreground ${layout === "center" ? "mx-auto" : ""} ${preview ? "text-sm max-w-xl" : "text-lg md:text-xl max-w-2xl"} mb-8`} style={bodyStyle(config.typo)}>
+              {config.subtitle}
+            </p>
+          )}
 
-        <div className="flex flex-wrap justify-center gap-3">
-          {config.cta_primary_label && (
-            <Button asChild size={preview ? "default" : "lg"} variant="hero">
-              <Link to={config.cta_primary_url || "/new"}>
-                {config.cta_primary_label} <ArrowRight className="ml-1 h-4 w-4" />
-              </Link>
-            </Button>
-          )}
-          {config.cta_secondary_label && (
-            <Button asChild size={preview ? "default" : "lg"} variant="outline">
-              <Link to={config.cta_secondary_url || "/pricing"}>{config.cta_secondary_label}</Link>
-            </Button>
-          )}
+          <div className={`flex flex-wrap gap-3 ${layout === "center" ? "justify-center" : ""}`}>
+            {config.cta_primary_label && (
+              <Button asChild size={preview ? "default" : "lg"} variant="hero">
+                <Link to={config.cta_primary_url || "/new"}>
+                  {config.cta_primary_label} <ArrowRight className="ml-1 h-4 w-4" />
+                </Link>
+              </Button>
+            )}
+            {config.cta_secondary_label && (
+              <Button asChild size={preview ? "default" : "lg"} variant="outline">
+                <Link to={config.cta_secondary_url || "/pricing"}>{config.cta_secondary_label}</Link>
+              </Button>
+            )}
+          </div>
+
+          {config.trust_badges?.length ? (
+            <div className={`flex flex-wrap gap-4 mt-8 text-xs text-muted-foreground ${layout === "center" ? "justify-center" : ""}`}>
+              {config.trust_badges.map((b: string, i: number) => (
+                <span key={i} className="flex items-center gap-1.5"><Check className="h-3.5 w-3.5 text-primary" /> {b}</span>
+              ))}
+            </div>
+          ) : null}
         </div>
+
+        {layout === "split" && config.bg_url && (
+          <div className="hidden md:block relative">
+            <img src={config.bg_url} alt="" className="rounded-3xl shadow-2xl w-full aspect-[4/5] object-cover" />
+          </div>
+        )}
       </div>
-    </section>
+    </div>
   );
 }
 
 /* ─── TRACK GRID ─── */
 function TrackGridWidget({ config, preview }: { config: any; preview: boolean }) {
   const [tracks, setTracks] = useState<any[]>([]);
-  const { play } = usePlayer();
-
   useEffect(() => {
     let q = supabase.from("tracks").select("*").eq("status", "approved");
     const sort = config.sort_by || "recent";
     if (sort === "popular") q = q.order("downloads", { ascending: false });
     else if (sort === "alphabetical") q = q.order("title", { ascending: true });
     else q = q.order("release_date", { ascending: false }).order("created_at", { ascending: false });
-
-    if (config.genre)    q = q.eq("genre", config.genre);
-    if (config.tag)      q = q.contains("tags", [config.tag]);
-
-    q.limit(Math.min(config.limit || 8, 24)).then(({ data }) => {
-      if (data) setTracks(data);
-    });
-  }, [config.sort_by, config.genre, config.tag, config.limit]);
+    if (config.genre) q = q.eq("genre", config.genre);
+    if (config.label) q = q.eq("label", config.label);
+    if (config.tag)   q = q.contains("tags", [config.tag]);
+    q.limit(Math.min(config.limit || 8, 24)).then(({ data }) => { if (data) setTracks(data); });
+  }, [config.sort_by, config.genre, config.tag, config.label, config.limit]);
 
   if (tracks.length === 0) return null;
-
   const Icon = config.sort_by === "popular" ? Headphones : Music2;
   return (
     <div>
@@ -186,10 +250,131 @@ function TrackGridWidget({ config, preview }: { config: any; preview: boolean })
         )}
       </div>
       <div className="rounded-2xl border border-border bg-card/40 backdrop-blur-sm overflow-hidden">
-        {tracks.map((t, i) => (
-          <TrackRow key={t.id} track={t} index={i} />
-        ))}
+        {tracks.map((t, i) => <TrackRow key={t.id} track={t} index={i} />)}
+      </div>
+    </div>
+  );
+}
 
+/* ─── TOP GENRE ─── */
+function TopGenreWidget({ config, preview }: { config: any; preview: boolean }) {
+  const [genre, setGenre] = useState<string | null>(config.genre || null);
+  const [tracks, setTracks] = useState<any[]>([]);
+  useEffect(() => {
+    (async () => {
+      let g = config.genre;
+      if (!g) {
+        const { data } = await supabase.from("tracks").select("genre").eq("status", "approved");
+        const map = new Map<string, number>();
+        (data || []).forEach((t: any) => t.genre && map.set(t.genre, (map.get(t.genre) || 0) + 1));
+        g = [...map.entries()].sort((a, b) => b[1] - a[1])[0]?.[0];
+        setGenre(g);
+      }
+      if (!g) return;
+      const { data: list } = await supabase.from("tracks").select("*").eq("status", "approved").eq("genre", g).order("downloads", { ascending: false }).limit(config.limit || 6);
+      setTracks(list || []);
+    })();
+  }, [config.genre, config.limit]);
+  if (!genre || tracks.length === 0) return null;
+  return (
+    <div>
+      <div className="flex items-end justify-between mb-6 gap-4">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="w-1 h-9 rounded-full bg-gradient-to-b from-primary to-accent shrink-0" />
+          <h2 className="font-display text-2xl md:text-3xl font-bold flex items-center gap-2 truncate" style={titleStyle(config.typo)}>
+            <TrendingUp className="h-5 w-5 text-primary shrink-0" />
+            {config.title || `Top ${genre}`}
+          </h2>
+        </div>
+        {!preview && (
+          <Button asChild variant="ghost" size="sm">
+            <Link to={`/tracks?genre=${encodeURIComponent(genre)}`}>Tout voir <ArrowRight className="ml-1 h-3.5 w-3.5" /></Link>
+          </Button>
+        )}
+      </div>
+      <div className="rounded-2xl border border-border bg-card/40 backdrop-blur-sm overflow-hidden">
+        {tracks.map((t, i) => <TrackRow key={t.id} track={t} index={i} />)}
+      </div>
+    </div>
+  );
+}
+
+/* ─── TOP LABEL ─── */
+function TopLabelWidget({ config }: { config: any }) {
+  const [list, setList] = useState<{ label: string; count: number; cover?: string }[]>([]);
+  useEffect(() => {
+    supabase.from("tracks").select("label, cover_url, downloads").eq("status", "approved").then(({ data }) => {
+      const map = new Map<string, { count: number; cover?: string }>();
+      (data || []).forEach((t: any) => {
+        if (!t.label) return;
+        const cur = map.get(t.label) || { count: 0, cover: t.cover_url };
+        map.set(t.label, { count: cur.count + (t.downloads || 1), cover: cur.cover || t.cover_url });
+      });
+      setList([...map.entries()].map(([label, v]) => ({ label, ...v })).sort((a, b) => b.count - a.count).slice(0, config.limit || 8));
+    });
+  }, [config.limit]);
+  if (list.length === 0) return null;
+  return (
+    <div>
+      <div className="flex items-center gap-3 mb-6">
+        <div className="w-1 h-9 rounded-full bg-gradient-to-b from-primary to-accent" />
+        <h2 className="font-display text-2xl md:text-3xl font-bold flex items-center gap-2" style={titleStyle(config.typo)}>
+          <Disc3 className="h-5 w-5 text-primary" /> {config.title || "Labels en vogue"}
+        </h2>
+      </div>
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+        {list.map((l) => (
+          <Link key={l.label} to={`/tracks?label=${encodeURIComponent(l.label)}`}
+            className="group relative aspect-video rounded-2xl overflow-hidden border border-border hover:border-primary/60 transition">
+            {l.cover ? <img src={l.cover} alt={l.label} className="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:opacity-90 group-hover:scale-105 transition" /> : null}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/85 to-transparent" />
+            <div className="absolute inset-0 p-4 flex flex-col justify-end">
+              <p className="font-bold text-white text-sm md:text-base truncate">{l.label}</p>
+              <p className="text-white/60 text-[10px] uppercase tracking-widest">{l.count} dl</p>
+            </div>
+          </Link>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ─── TOP ARTISTS (by downloads aggregate) ─── */
+function TopArtistsWidget({ config }: { config: any }) {
+  const [list, setList] = useState<{ name: string; count: number; cover?: string }[]>([]);
+  useEffect(() => {
+    supabase.from("tracks").select("artist, cover_url, downloads").eq("status", "approved").then(({ data }) => {
+      const map = new Map<string, { count: number; cover?: string }>();
+      (data || []).forEach((t: any) => {
+        if (!t.artist) return;
+        const cur = map.get(t.artist) || { count: 0, cover: t.cover_url };
+        map.set(t.artist, { count: cur.count + (t.downloads || 1), cover: cur.cover || t.cover_url });
+      });
+      setList([...map.entries()].map(([name, v]) => ({ name, ...v })).sort((a, b) => b.count - a.count).slice(0, config.limit || 6));
+    });
+  }, [config.limit]);
+  if (list.length === 0) return null;
+  return (
+    <div>
+      <div className="flex items-center gap-3 mb-6">
+        <div className="w-1 h-9 rounded-full bg-gradient-to-b from-primary to-accent" />
+        <h2 className="font-display text-2xl md:text-3xl font-bold flex items-center gap-2" style={titleStyle(config.typo)}>
+          <Users className="h-5 w-5 text-primary" /> {config.title || "Top artistes"}
+        </h2>
+      </div>
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+        {list.map((a, i) => (
+          <Link key={a.name} to={`/tracks?artist=${encodeURIComponent(a.name)}`}
+            className="group relative aspect-square rounded-2xl overflow-hidden border border-border hover:border-primary/60 transition">
+            {a.cover ? <img src={a.cover} alt={a.name} className="w-full h-full object-cover group-hover:scale-105 transition" /> :
+              <div className="w-full h-full bg-gradient-to-br from-primary/30 to-accent/30 flex items-center justify-center text-3xl font-bold">{a.name[0]}</div>}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/85 to-transparent" />
+            <div className="absolute top-2 left-2 w-7 h-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-xs">{i + 1}</div>
+            <div className="absolute inset-0 p-3 flex items-end">
+              <p className="text-white font-semibold text-sm truncate w-full">{a.name}</p>
+            </div>
+          </Link>
+        ))}
       </div>
     </div>
   );
@@ -243,17 +428,14 @@ function ArtistCarouselWidget({ config }: { config: any }) {
 /* ─── CTA ─── */
 function CtaWidget({ config }: { config: any }) {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
-      className="relative overflow-hidden rounded-3xl border border-primary/30 bg-gradient-to-br from-primary/20 via-card to-accent/15 p-10 md:p-14 text-center"
-    >
+    <div className="relative overflow-hidden rounded-3xl border border-primary/30 bg-gradient-to-br from-primary/20 via-card to-accent/15 p-10 md:p-14 text-center">
       <div className="absolute -top-20 -right-20 h-64 w-64 rounded-full bg-primary/30 blur-3xl" />
       <div className="absolute -bottom-20 -left-20 h-64 w-64 rounded-full bg-accent/20 blur-3xl" />
       <div className="relative">
         <h2 className="font-display text-3xl md:text-5xl font-black mb-3" style={titleStyle(config.typo)}>
           {config.title || "Prêt à jouer en live ?"}
         </h2>
-        {config.body && <p className="text-muted-foreground md:text-lg mb-6 max-w-2xl mx-auto">{config.body}</p>}
+        {config.body && <p className="text-muted-foreground md:text-lg mb-6 max-w-2xl mx-auto" style={bodyStyle(config.typo)}>{config.body}</p>}
         <div className="flex flex-wrap justify-center gap-3">
           {config.cta_label && (
             <Button asChild size="lg" variant="hero">
@@ -267,7 +449,7 @@ function CtaWidget({ config }: { config: any }) {
           )}
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 }
 
@@ -277,7 +459,7 @@ function RichTextWidget({ config }: { config: any }) {
   return (
     <div className={`prose prose-invert max-w-3xl ${config.center !== false ? "mx-auto" : ""} ${align}`}>
       {config.title && <h2 className="font-display text-3xl md:text-4xl font-bold mb-4" style={titleStyle(config.typo)}>{config.title}</h2>}
-      {config.body && <p className="text-muted-foreground whitespace-pre-line text-lg">{config.body}</p>}
+      {config.body && <p className="text-muted-foreground whitespace-pre-line text-lg" style={bodyStyle(config.typo)}>{config.body}</p>}
     </div>
   );
 }
@@ -286,7 +468,6 @@ function RichTextWidget({ config }: { config: any }) {
 function VideoEmbedWidget({ config }: { config: any }) {
   const url = config.url || "";
   let embed = url;
-  // Convert YouTube watch links
   const yt = url.match(/(?:youtu\.be\/|youtube\.com\/watch\?v=)([\w-]{11})/);
   if (yt) embed = `https://www.youtube.com/embed/${yt[1]}`;
   return (
@@ -308,6 +489,31 @@ function VideoEmbedWidget({ config }: { config: any }) {
   );
 }
 
+/* ─── AUDIO EMBED (Spotify / SoundCloud) ─── */
+function AudioEmbedWidget({ config }: { config: any }) {
+  const url = config.url || "";
+  let src = "";
+  let height = 152;
+  if (/spotify\.com/.test(url)) {
+    src = url.replace("/track/", "/embed/track/").replace("/playlist/", "/embed/playlist/").replace("/album/", "/embed/album/");
+    height = url.includes("playlist") || url.includes("album") ? 380 : 152;
+  } else if (/soundcloud\.com/.test(url)) {
+    src = `https://w.soundcloud.com/player/?url=${encodeURIComponent(url)}&color=%233b82f6&auto_play=false&hide_related=false&show_comments=true&show_user=true&show_reposts=false`;
+    height = 166;
+  }
+  return (
+    <div>
+      {config.title && (
+        <h2 className="font-display text-2xl md:text-3xl font-bold mb-4" style={titleStyle(config.typo)}>{config.title}</h2>
+      )}
+      <div className="rounded-2xl overflow-hidden border border-border bg-card">
+        {src ? <iframe src={src} width="100%" height={height} frameBorder={0} allow="autoplay; encrypted-media" /> :
+          <div className="p-6 text-center text-sm text-muted-foreground">Colle un lien Spotify ou SoundCloud.</div>}
+      </div>
+    </div>
+  );
+}
+
 /* ─── NEWSLETTER ─── */
 function NewsletterWidget({ config }: { config: any }) {
   const [email, setEmail] = useState("");
@@ -321,24 +527,21 @@ function NewsletterWidget({ config }: { config: any }) {
     toast.success(config.success_message || "Merci ! On reste en contact.");
   };
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
-      className="relative overflow-hidden rounded-3xl border border-border bg-gradient-to-br from-primary/15 via-card to-accent/10 p-8 md:p-12"
-    >
+    <div className="relative overflow-hidden rounded-3xl border border-border bg-gradient-to-br from-primary/15 via-card to-accent/10 p-8 md:p-12">
       <div className="absolute -top-20 -right-20 h-64 w-64 rounded-full bg-primary/20 blur-3xl" />
       <div className="relative max-w-2xl">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/15 text-primary text-xs font-bold uppercase tracking-wider mb-4">
           <Mail className="h-3 w-3" /> Newsletter
         </div>
         <h2 className="font-display text-3xl md:text-4xl font-bold mb-2" style={titleStyle(config.typo)}>{config.title || "Reste informé"}</h2>
-        <p className="text-muted-foreground mb-6">{config.body || "Reçois chaque semaine les meilleures exclus."}</p>
+        <p className="text-muted-foreground mb-6" style={bodyStyle(config.typo)}>{config.body || "Reçois chaque semaine les meilleures exclus."}</p>
         <form onSubmit={submit} className="flex flex-col sm:flex-row gap-3 max-w-md">
           <Input type="email" required value={email} onChange={(e) => setEmail(e.target.value)}
             placeholder={config.placeholder || "ton@email.com"} className="flex-1" />
           <Button type="submit" disabled={loading}>{loading ? "…" : (config.cta_label || "S'inscrire")}</Button>
         </form>
       </div>
-    </motion.div>
+    </div>
   );
 }
 
@@ -352,10 +555,7 @@ function CountdownWidget({ config }: { config: any }) {
   const m = Math.floor((diff % 3600000) / 60000), s = Math.floor((diff % 60000) / 1000);
   const units = [["Jours", d], ["Heures", h], ["Min", m], ["Sec", s]] as const;
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.97 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }}
-      className="relative overflow-hidden rounded-3xl border border-accent/30 bg-gradient-to-br from-accent/15 via-card to-primary/10 p-8 md:p-12 text-center"
-    >
+    <div className="relative overflow-hidden rounded-3xl border border-accent/30 bg-gradient-to-br from-accent/15 via-card to-primary/10 p-8 md:p-12 text-center">
       <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent/15 text-accent text-xs font-bold uppercase tracking-wider mb-3">
         <Clock className="h-3 w-3" /> {config.tag || "Bientôt"}
       </div>
@@ -372,25 +572,21 @@ function CountdownWidget({ config }: { config: any }) {
       {config.cta_label && config.cta_url && (
         <Button asChild className="mt-8"><Link to={config.cta_url}>{config.cta_label}</Link></Button>
       )}
-    </motion.div>
+    </div>
   );
 }
 
 /* ─── PROMO BANNER ─── */
 function PromoBannerWidget({ config }: { config: any }) {
   return (
-    <motion.div
-      initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }}
+    <div
       className="relative overflow-hidden rounded-3xl border border-border p-8 md:p-12 flex flex-col md:flex-row items-center gap-6"
       style={{
-        background: config.bg_color
-          ? `linear-gradient(135deg, hsl(${config.bg_color}), hsl(${config.bg_color} / 0.7))` : undefined,
+        background: config.bg_color ? `linear-gradient(135deg, hsl(${config.bg_color}), hsl(${config.bg_color} / 0.7))` : undefined,
         color: config.text_color ? `hsl(${config.text_color})` : undefined,
       }}
     >
-      {config.image_url && (
-        <img src={config.image_url} alt="" className="w-40 h-40 rounded-2xl object-cover shadow-xl shrink-0" />
-      )}
+      {config.image_url && <img src={config.image_url} alt="" className="w-40 h-40 rounded-2xl object-cover shadow-xl shrink-0" />}
       <div className="flex-1 min-w-0">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-xs font-bold uppercase tracking-wider mb-3">
           <Megaphone className="h-3 w-3" /> {config.tag || "Promo"}
@@ -401,7 +597,28 @@ function PromoBannerWidget({ config }: { config: any }) {
           <Button asChild variant="secondary"><Link to={config.cta_url}>{config.cta_label}</Link></Button>
         )}
       </div>
-    </motion.div>
+    </div>
+  );
+}
+
+/* ─── STICKY PROMO BANNER (top thin bar with dismiss) ─── */
+function StickyPromoWidget({ config }: { config: any }) {
+  const storageKey = `dismiss_promo_${config.id || config.title || "default"}`;
+  const [open, setOpen] = useState(true);
+  useEffect(() => { if (typeof window !== "undefined" && localStorage.getItem(storageKey)) setOpen(false); }, [storageKey]);
+  if (!open) return null;
+  return (
+    <div className="rounded-2xl border border-border flex items-center gap-3 px-4 py-2.5 text-sm"
+      style={{ background: config.bg_color ? `hsl(${config.bg_color})` : "hsl(var(--primary))", color: config.text_color ? `hsl(${config.text_color})` : "hsl(var(--primary-foreground))" }}>
+      <Megaphone className="h-4 w-4 shrink-0" />
+      <span className="flex-1 truncate font-medium">{config.title || "Offre limitée"}</span>
+      {config.cta_label && config.cta_url && (
+        <Link to={config.cta_url} className="underline font-bold whitespace-nowrap">{config.cta_label}</Link>
+      )}
+      <button onClick={() => { localStorage.setItem(storageKey, "1"); setOpen(false); }} className="opacity-70 hover:opacity-100">
+        <XIcon className="h-4 w-4" />
+      </button>
+    </div>
   );
 }
 
@@ -414,7 +631,7 @@ function HtmlBlockWidget({ config }: { config: any }) {
   );
 }
 
-/* ─── STATS (counters) ─── */
+/* ─── STATS ─── */
 function StatsWidget({ config }: { config: any }) {
   const [counts, setCounts] = useState<{ tracks: number; djs: number; downloads: number }>({ tracks: 0, djs: 0, downloads: 0 });
   useEffect(() => {
@@ -437,10 +654,7 @@ function StatsWidget({ config }: { config: any }) {
   ]);
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
-      className="rounded-3xl border border-border bg-gradient-to-br from-primary/10 via-card to-accent/10 p-8 md:p-10"
-    >
+    <div className="rounded-3xl border border-border bg-gradient-to-br from-primary/10 via-card to-accent/10 p-8 md:p-10">
       {config.title && (
         <h2 className="font-display text-2xl md:text-3xl font-bold text-center mb-8" style={titleStyle(config.typo)}>{config.title}</h2>
       )}
@@ -452,7 +666,38 @@ function StatsWidget({ config }: { config: any }) {
           </div>
         ))}
       </div>
-    </motion.div>
+    </div>
+  );
+}
+
+/* ─── LIVE COUNTER (members) ─── */
+function LiveCounterWidget({ config }: { config: any }) {
+  const [count, setCount] = useState<number | null>(null);
+  useEffect(() => {
+    supabase.from("profiles").select("id", { count: "exact", head: true }).then(({ count }) => setCount(count || 0));
+    const ch = supabase.channel("rt-profiles-count")
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "profiles" }, () => setCount((c) => (c ?? 0) + 1))
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, []);
+  return (
+    <div className="rounded-3xl border border-border bg-card p-8 md:p-10 text-center relative overflow-hidden">
+      <div className="absolute top-4 right-4 flex items-center gap-1.5 text-[10px] uppercase tracking-widest text-emerald-500">
+        <span className="relative flex h-2 w-2">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+          <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+        </span>
+        Live
+      </div>
+      <Radio className="h-8 w-8 text-primary mx-auto mb-3" />
+      <p className="text-xs uppercase tracking-widest text-muted-foreground" style={bodyStyle(config.typo)}>{config.label || "DJs inscrits en ce moment"}</p>
+      <div className="font-display font-black text-5xl md:text-7xl gradient-text tabular-nums mt-2" style={titleStyle(config.typo)}>
+        {count === null ? "—" : count.toLocaleString("fr-FR")}
+      </div>
+      {config.cta_label && config.cta_url && (
+        <Button asChild className="mt-6"><Link to={config.cta_url}>{config.cta_label}</Link></Button>
+      )}
+    </div>
   );
 }
 
@@ -477,11 +722,9 @@ function GenresCloudWidget({ config }: { config: any }) {
       </div>
       <div className="flex flex-wrap gap-2">
         {genres.map((g) => (
-          <Link
-            key={g.name} to={`/tracks?genre=${encodeURIComponent(g.name)}`}
+          <Link key={g.name} to={`/tracks?genre=${encodeURIComponent(g.name)}`}
             className="group inline-flex items-center gap-2 px-4 py-2 rounded-full border border-border bg-card hover:border-primary/60 hover:bg-primary/5 transition"
-            style={{ fontSize: `${Math.min(1.5, 0.85 + g.count / 50)}rem` }}
-          >
+            style={{ fontSize: `${Math.min(1.5, 0.85 + g.count / 50)}rem` }}>
             <span className="font-display font-semibold">{g.name}</span>
             <span className="text-[10px] uppercase tracking-widest text-muted-foreground">{g.count}</span>
           </Link>
@@ -507,10 +750,7 @@ function FeaturedTrackWidget({ config }: { config: any }) {
   if (!track) return null;
   const cover = resolveCover(track);
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
-      className="relative overflow-hidden rounded-3xl border border-border bg-card flex flex-col md:flex-row gap-6 md:gap-10 p-6 md:p-10"
-    >
+    <div className="relative overflow-hidden rounded-3xl border border-border bg-card flex flex-col md:flex-row gap-6 md:gap-10 p-6 md:p-10">
       {cover && <div className="absolute inset-0 opacity-25 bg-cover bg-center blur-3xl" style={{ backgroundImage: `url(${cover})` }} />}
       <div className="relative shrink-0 mx-auto md:mx-0">
         <img src={cover || "/placeholder.svg"} alt={track.title} className="w-56 h-56 md:w-72 md:h-72 rounded-2xl object-cover shadow-2xl" />
@@ -530,15 +770,13 @@ function FeaturedTrackWidget({ config }: { config: any }) {
           </Button>
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 }
 
 /* ─── TESTIMONIALS ─── */
 function TestimonialsWidget({ config }: { config: any }) {
-  const items = config.items || [
-    { quote: "La meilleure source d'edits du moment.", author: "DJ Example", role: "Club, Paris" },
-  ];
+  const items = config.items || [{ quote: "La meilleure source d'edits du moment.", author: "DJ Example", role: "Club, Paris" }];
   return (
     <div>
       {config.title && (
@@ -549,11 +787,7 @@ function TestimonialsWidget({ config }: { config: any }) {
       )}
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
         {items.map((it: any, i: number) => (
-          <motion.div
-            key={i}
-            initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.05 }}
-            className="rounded-2xl border border-border bg-card p-6 relative"
-          >
+          <div key={i} className="rounded-2xl border border-border bg-card p-6 relative">
             <Quote className="absolute top-4 right-4 h-8 w-8 text-primary/15" />
             <p className="text-base mb-4">"{it.quote}"</p>
             <div className="flex items-center gap-3">
@@ -563,8 +797,35 @@ function TestimonialsWidget({ config }: { config: any }) {
                 {it.role && <p className="text-xs text-muted-foreground">{it.role}</p>}
               </div>
             </div>
-          </motion.div>
+          </div>
         ))}
+      </div>
+    </div>
+  );
+}
+
+/* ─── VIDEO TESTIMONIAL ─── */
+function VideoTestimonialWidget({ config }: { config: any }) {
+  const url = config.video_url || "";
+  const yt = url.match(/(?:youtu\.be\/|youtube\.com\/watch\?v=)([\w-]{11})/);
+  const embed = yt ? `https://www.youtube.com/embed/${yt[1]}` : url;
+  return (
+    <div className="grid md:grid-cols-2 gap-8 items-center rounded-3xl border border-border bg-gradient-to-br from-primary/10 via-card to-accent/10 p-6 md:p-10">
+      <div className="rounded-2xl overflow-hidden border border-border aspect-video bg-black">
+        {embed ? <iframe src={embed} className="w-full h-full" allowFullScreen /> : <div className="p-6 text-sm text-muted-foreground">URL vidéo manquante</div>}
+      </div>
+      <div>
+        <Quote className="h-10 w-10 text-primary/30 mb-3" />
+        <p className="text-xl md:text-2xl font-display font-semibold mb-6" style={titleStyle(config.typo)}>
+          "{config.quote || "Le pool indispensable de mes sets."}"
+        </p>
+        <div className="flex items-center gap-3">
+          {config.avatar && <img src={config.avatar} alt="" className="w-12 h-12 rounded-full object-cover" />}
+          <div>
+            <p className="font-bold">{config.author || "DJ Example"}</p>
+            <p className="text-xs text-muted-foreground">{config.role || "Résident, Paris"}</p>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -585,16 +846,11 @@ function FaqWidget({ config }: { config: any }) {
           const isOpen = open === i;
           return (
             <div key={i} className="rounded-xl border border-border bg-card overflow-hidden">
-              <button
-                onClick={() => setOpen(isOpen ? null : i)}
-                className="w-full flex items-center justify-between p-4 text-left hover:bg-muted/30 transition"
-              >
+              <button onClick={() => setOpen(isOpen ? null : i)} className="w-full flex items-center justify-between p-4 text-left hover:bg-muted/30 transition">
                 <span className="font-semibold">{it.question}</span>
                 <ChevronDown className={`h-4 w-4 transition-transform ${isOpen ? "rotate-180" : ""}`} />
               </button>
-              {isOpen && (
-                <div className="px-4 pb-4 text-sm text-muted-foreground whitespace-pre-line">{it.answer}</div>
-              )}
+              {isOpen && <div className="px-4 pb-4 text-sm text-muted-foreground whitespace-pre-line">{it.answer}</div>}
             </div>
           );
         })}
@@ -610,7 +866,7 @@ function LogosStripWidget({ config }: { config: any }) {
   return (
     <div className="text-center">
       {config.title && (
-        <p className="text-xs uppercase tracking-widest text-muted-foreground mb-6">{config.title}</p>
+        <p className="text-xs uppercase tracking-widest text-muted-foreground mb-6" style={bodyStyle(config.typo)}>{config.title}</p>
       )}
       <div className="flex flex-wrap items-center justify-center gap-8 md:gap-12 opacity-70">
         {logos.map((l: any, i: number) => (
@@ -639,7 +895,7 @@ function DividerWidget({ config }: { config: any }) {
   );
 }
 
-/* ─── TWO COLUMNS (image + text) ─── */
+/* ─── TWO COLUMNS ─── */
 function TwoColumnsWidget({ config }: { config: any }) {
   const reversed = config.image_position === "right";
   return (
@@ -652,11 +908,9 @@ function TwoColumnsWidget({ config }: { config: any }) {
         )}
       </div>
       <div>
-        {config.eyebrow && (
-          <p className="text-xs uppercase tracking-widest text-primary font-bold mb-3">{config.eyebrow}</p>
-        )}
+        {config.eyebrow && <p className="text-xs uppercase tracking-widest text-primary font-bold mb-3">{config.eyebrow}</p>}
         <h2 className="font-display text-3xl md:text-4xl font-bold mb-4" style={titleStyle(config.typo)}>{config.title || "Titre"}</h2>
-        {config.body && <p className="text-muted-foreground whitespace-pre-line mb-6">{config.body}</p>}
+        {config.body && <p className="text-muted-foreground whitespace-pre-line mb-6" style={bodyStyle(config.typo)}>{config.body}</p>}
         {config.cta_label && (
           <Button asChild variant="hero">
             <Link to={config.cta_url || "#"}>{config.cta_label}</Link>
@@ -667,3 +921,244 @@ function TwoColumnsWidget({ config }: { config: any }) {
   );
 }
 
+/* ─── SLIDES CAROUSEL (fullscreen-style) ─── */
+function SlidesCarouselWidget({ config, preview }: { config: any; preview: boolean }) {
+  const slides = config.slides || [];
+  const [idx, setIdx] = useState(0);
+  useEffect(() => {
+    if (slides.length < 2 || !config.autoplay) return;
+    const id = setInterval(() => setIdx((i) => (i + 1) % slides.length), (config.duration || 5) * 1000);
+    return () => clearInterval(id);
+  }, [slides.length, config.autoplay, config.duration]);
+  if (slides.length === 0) return <div className="p-12 text-center text-muted-foreground border border-dashed rounded-2xl">Ajoute des slides.</div>;
+  const s = slides[idx];
+  return (
+    <div className={`relative overflow-hidden rounded-3xl ${preview ? "aspect-[16/8]" : "aspect-[16/7] md:aspect-[16/6]"} bg-card border border-border`}>
+      <AnimatePresence mode="wait">
+        <motion.div key={idx}
+          initial={{ opacity: 0, scale: 1.05 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.7 }}
+          className="absolute inset-0">
+          {s.image_url && <img src={s.image_url} alt="" className="w-full h-full object-cover" />}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+          <div className="absolute inset-0 flex flex-col justify-end p-6 md:p-12 text-white">
+            {s.eyebrow && <span className="text-xs uppercase tracking-widest text-primary font-bold mb-2">{s.eyebrow}</span>}
+            <h2 className="font-display text-3xl md:text-5xl font-black mb-3 max-w-3xl" style={titleStyle(config.typo)}>{s.title}</h2>
+            {s.body && <p className="text-base md:text-lg max-w-2xl opacity-90 mb-5">{s.body}</p>}
+            {s.cta_label && s.cta_url && (
+              <Button asChild variant="hero" className="self-start"><Link to={s.cta_url}>{s.cta_label}</Link></Button>
+            )}
+          </div>
+        </motion.div>
+      </AnimatePresence>
+      {slides.length > 1 && (
+        <div className="absolute bottom-4 right-4 flex gap-1.5">
+          {slides.map((_: any, i: number) => (
+            <button key={i} onClick={() => setIdx(i)} className={`h-1.5 rounded-full transition-all ${i === idx ? "w-8 bg-white" : "w-3 bg-white/40"}`} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ─── IMAGE GALLERY (masonry-ish grid) ─── */
+function ImageGalleryWidget({ config }: { config: any }) {
+  const images = config.images || [];
+  return (
+    <div>
+      {config.title && (
+        <h2 className="font-display text-2xl md:text-3xl font-bold mb-6" style={titleStyle(config.typo)}>{config.title}</h2>
+      )}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+        {images.map((im: any, i: number) => (
+          <a key={i} href={im.url || im.image_url} target="_blank" rel="noreferrer" className="block group">
+            <div className={`rounded-2xl overflow-hidden border border-border ${i % 5 === 0 ? "aspect-square" : "aspect-[4/3]"}`}>
+              <img src={im.image_url} alt={im.alt || ""} className="w-full h-full object-cover group-hover:scale-105 transition duration-500" loading="lazy" />
+            </div>
+          </a>
+        ))}
+        {images.length === 0 && <p className="text-sm text-muted-foreground col-span-full">Ajoute des images.</p>}
+      </div>
+    </div>
+  );
+}
+
+/* ─── MARQUEE ─── */
+function MarqueeWidget({ config }: { config: any }) {
+  const items = (config.items || "FRESH · NEW · HOT · EXCLUSIVE · 100% DJ").split("·").filter(Boolean);
+  return (
+    <div className="relative overflow-hidden border-y border-border py-3 bg-card">
+      <div className="flex gap-12 whitespace-nowrap animate-[marquee_30s_linear_infinite] will-change-transform">
+        {[...items, ...items, ...items].map((s, i) => (
+          <span key={i} className="font-display font-black text-xl md:text-3xl tracking-tighter flex items-center gap-12" style={titleStyle(config.typo)}>
+            <span>{s.trim()}</span>
+            <Sparkles className="h-5 w-5 text-primary inline" />
+          </span>
+        ))}
+      </div>
+      <style>{`@keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-33.333%); } }`}</style>
+    </div>
+  );
+}
+
+/* ─── PLANS COMPARE ─── */
+function PlansCompareWidget({ config }: { config: any }) {
+  const [plans, setPlans] = useState<any[]>([]);
+  useEffect(() => {
+    supabase.from("subscription_plans").select("*").eq("is_active", true).order("sort_order").then(({ data }) => setPlans(data || []));
+  }, []);
+  return (
+    <div>
+      {config.title && (
+        <h2 className="font-display text-3xl md:text-4xl font-bold text-center mb-3" style={titleStyle(config.typo)}>{config.title}</h2>
+      )}
+      {config.subtitle && <p className="text-muted-foreground text-center max-w-2xl mx-auto mb-10">{config.subtitle}</p>}
+      <div className="grid md:grid-cols-3 gap-5">
+        {plans.map((p, i) => {
+          const highlight = config.highlight_slug ? p.slug === config.highlight_slug : i === 1;
+          return (
+            <div key={p.id} className={`relative rounded-3xl border p-6 md:p-8 ${highlight ? "border-primary bg-gradient-to-br from-primary/20 via-card to-accent/15 shadow-2xl scale-[1.02]" : "border-border bg-card"}`}>
+              {highlight && <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground">Recommandé</Badge>}
+              <h3 className="font-display text-2xl font-bold">{p.name}</h3>
+              <p className="text-muted-foreground text-sm mb-5">{p.description}</p>
+              <div className="mb-6">
+                <span className="font-display font-black text-4xl">{(p.price_cents / 100).toFixed(0)}€</span>
+                <span className="text-sm text-muted-foreground">/{p.interval === "month" ? "mois" : "an"}</span>
+              </div>
+              <ul className="space-y-2 mb-6">
+                {(p.features || []).map((f: string, j: number) => (
+                  <li key={j} className="flex items-start gap-2 text-sm">
+                    <Check className="h-4 w-4 text-primary mt-0.5 shrink-0" /><span>{f}</span>
+                  </li>
+                ))}
+              </ul>
+              <Button asChild className="w-full" variant={highlight ? "hero" : "outline"}>
+                <Link to="/pricing">Choisir</Link>
+              </Button>
+            </div>
+          );
+        })}
+        {plans.length === 0 && <p className="text-sm text-muted-foreground text-center col-span-full">Configure tes plans dans l'admin.</p>}
+      </div>
+    </div>
+  );
+}
+
+/* Need Badge */
+import { Badge } from "@/components/ui/badge";
+
+/* ─── FEATURES GRID ─── */
+function FeaturesGridWidget({ config }: { config: any }) {
+  const items = config.items || [];
+  const iconMap: Record<string, any> = { Download, Music2, Star, Headphones, Sparkles, Radio, Disc3, Mail, Clock };
+  return (
+    <div>
+      {config.title && (
+        <h2 className="font-display text-3xl md:text-4xl font-bold text-center mb-3" style={titleStyle(config.typo)}>{config.title}</h2>
+      )}
+      {config.subtitle && <p className="text-muted-foreground text-center max-w-2xl mx-auto mb-10">{config.subtitle}</p>}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        {items.map((it: any, i: number) => {
+          const Ic = iconMap[it.icon || "Sparkles"] || Sparkles;
+          return (
+            <div key={i} className="rounded-2xl border border-border bg-card p-6 hover:border-primary/60 transition">
+              <div className="w-12 h-12 rounded-xl bg-primary/15 flex items-center justify-center mb-4">
+                <Ic className="h-6 w-6 text-primary" />
+              </div>
+              <h3 className="font-bold text-lg mb-1">{it.title}</h3>
+              <p className="text-sm text-muted-foreground">{it.body}</p>
+            </div>
+          );
+        })}
+        {items.length === 0 && <p className="text-sm text-muted-foreground col-span-full text-center">Ajoute des features.</p>}
+      </div>
+    </div>
+  );
+}
+
+/* ─── BLOG CARDS ─── */
+function BlogCardsWidget({ config }: { config: any }) {
+  const items = config.items || [];
+  return (
+    <div>
+      {config.title && (
+        <div className="flex items-center gap-3 mb-6">
+          <Newspaper className="h-6 w-6 text-primary" />
+          <h2 className="font-display text-2xl md:text-3xl font-bold" style={titleStyle(config.typo)}>{config.title}</h2>
+        </div>
+      )}
+      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+        {items.map((it: any, i: number) => (
+          <Link key={i} to={it.url || "#"} className="group rounded-2xl border border-border bg-card overflow-hidden hover:border-primary/60 transition">
+            {it.image_url && (
+              <div className="aspect-video overflow-hidden">
+                <img src={it.image_url} alt={it.title} className="w-full h-full object-cover group-hover:scale-105 transition duration-500" />
+              </div>
+            )}
+            <div className="p-5">
+              {it.category && <p className="text-[10px] uppercase tracking-widest text-primary font-bold mb-2">{it.category}</p>}
+              <h3 className="font-display text-lg font-bold mb-2 group-hover:text-primary transition">{it.title}</h3>
+              {it.excerpt && <p className="text-sm text-muted-foreground line-clamp-2">{it.excerpt}</p>}
+              {it.date && <p className="text-xs text-muted-foreground mt-3">{it.date}</p>}
+            </div>
+          </Link>
+        ))}
+        {items.length === 0 && <p className="text-sm text-muted-foreground col-span-full text-center">Ajoute des articles.</p>}
+      </div>
+    </div>
+  );
+}
+
+/* ─── TEAM GRID ─── */
+function TeamGridWidget({ config }: { config: any }) {
+  const items = config.items || [];
+  return (
+    <div>
+      {config.title && (
+        <h2 className="font-display text-2xl md:text-3xl font-bold text-center mb-8" style={titleStyle(config.typo)}>{config.title}</h2>
+      )}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+        {items.map((m: any, i: number) => (
+          <div key={i} className="text-center">
+            <div className="aspect-square rounded-2xl overflow-hidden border border-border mb-3">
+              {m.avatar ? <img src={m.avatar} alt={m.name} className="w-full h-full object-cover" /> :
+                <div className="w-full h-full bg-gradient-to-br from-primary/30 to-accent/30 flex items-center justify-center text-3xl font-bold">{m.name?.[0]}</div>}
+            </div>
+            <p className="font-bold">{m.name}</p>
+            <p className="text-xs text-muted-foreground">{m.role}</p>
+          </div>
+        ))}
+        {items.length === 0 && <p className="text-sm text-muted-foreground col-span-full text-center">Ajoute des membres.</p>}
+      </div>
+    </div>
+  );
+}
+
+/* ─── INSTAGRAM FEED (static cards, no API) ─── */
+function InstagramFeedWidget({ config }: { config: any }) {
+  const items = config.items || [];
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-3">
+          <Instagram className="h-6 w-6 text-primary" />
+          <h2 className="font-display text-2xl md:text-3xl font-bold" style={titleStyle(config.typo)}>{config.title || "Sur Instagram"}</h2>
+        </div>
+        {config.handle && (
+          <a href={`https://instagram.com/${config.handle.replace("@", "")}`} target="_blank" rel="noreferrer" className="text-sm text-primary hover:underline">@{config.handle.replace("@", "")}</a>
+        )}
+      </div>
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2">
+        {items.map((it: any, i: number) => (
+          <a key={i} href={it.url || "#"} target="_blank" rel="noreferrer" className="block aspect-square rounded-xl overflow-hidden border border-border group relative">
+            <img src={it.image_url} alt="" className="w-full h-full object-cover group-hover:scale-110 transition duration-500" loading="lazy" />
+            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition flex items-center justify-center opacity-0 group-hover:opacity-100">
+              <Instagram className="h-6 w-6 text-white" />
+            </div>
+          </a>
+        ))}
+        {items.length === 0 && <p className="text-sm text-muted-foreground col-span-full text-center">Ajoute des posts.</p>}
+      </div>
+    </div>
+  );
+}
