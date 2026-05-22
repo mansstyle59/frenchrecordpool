@@ -13,6 +13,7 @@ import CoverPicker from "@/components/CoverPicker";
 import { extractAudioMetadataFast, needsBpmAnalysis, analyzeBpmAsync } from "@/lib/audioMetadata";
 import { generateAudioPreview, type PreviewStartMode } from "@/lib/audioPreview";
 import { trackSchema, validateAudioFile, validateImageFile } from "@/lib/trackSchema";
+import { parseFilenameMeta } from "@/lib/filenameMeta";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import type { DbTrack } from "@/hooks/useTracks";
