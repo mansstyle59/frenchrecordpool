@@ -21,6 +21,7 @@ import AdminLayout from "@/components/admin/AdminLayout";
 import AdminStatsRow from "@/components/admin/AdminStatsRow";
 import UserEditDialog from "@/components/admin/UserEditDialog";
 import UserDetailDialog from "@/components/admin/UserDetailDialog";
+import AssignPlanDialog from "@/components/admin/AssignPlanDialog";
 
 interface ProfileRow {
   id: string;
