@@ -701,26 +701,33 @@ function ContrastReport({ draft }: { draft: Branding }) {
     { label: "Primaire sur fond (sombre)", a: draft.dark_primary, b: draft.dark_background },
   ];
   return (
-    <div className="rounded-2xl border border-border bg-card/60 backdrop-blur p-4">
-      <h3 className="text-xs font-bold uppercase text-muted-foreground mb-2 flex items-center gap-1.5">
-        <ShieldCheck className="h-3 w-3" /> Lisibilité (estimation)
+    <section className="space-y-3">
+      <h3 className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        <ShieldCheck className="h-4 w-4 text-amber-400" /> Lisibilité (estimation WCAG)
       </h3>
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-2 gap-3">
         {checks.map((c) => {
           const ratio = contrastRatio(c.a, c.b);
           const pass = ratio >= 3.5;
           return (
-            <div key={c.label} className="flex items-center justify-between rounded-lg border border-border bg-secondary/40 px-3 py-2 text-[11px]">
-              <span className="truncate">{c.label}</span>
-              <span className={cn("flex items-center gap-1 font-mono", pass ? "text-emerald-500" : "text-amber-500")}>
-                {pass ? <Check className="h-3 w-3" /> : <AlertTriangle className="h-3 w-3" />}
-                {ratio.toFixed(2)}
-              </span>
+            <div key={c.label} className="p-3 bg-white/5 border border-border rounded-lg flex items-center justify-between">
+              <span className="text-[10px] text-muted-foreground truncate pr-2">{c.label}</span>
+              <div className="flex items-center gap-1.5 shrink-0">
+                <span
+                  className={cn(
+                    "w-1.5 h-1.5 rounded-full",
+                    pass ? "bg-emerald-500 shadow-[0_0_8px_hsl(160_70%_45%/0.7)]" : "bg-amber-500 shadow-[0_0_8px_hsl(38_92%_50%/0.7)]"
+                  )}
+                />
+                <span className={cn("text-xs font-bold font-mono", pass ? "text-emerald-400" : "text-amber-400")}>
+                  {ratio.toFixed(2)}
+                </span>
+              </div>
             </div>
           );
         })}
       </div>
-    </div>
+    </section>
   );
 }
 
