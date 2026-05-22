@@ -63,12 +63,12 @@ export default function PopupHost() {
 
   useEffect(() => {
     let cancelled = false;
-    supabase
+    (supabase as any)
       .from("popups")
       .select("*")
       .eq("is_active", true)
       .order("priority", { ascending: false })
-      .then(({ data }) => {
+      .then(({ data }: any) => {
         if (!cancelled && data) setPopups(data as Popup[]);
       });
     return () => {
