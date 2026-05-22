@@ -1075,7 +1075,26 @@ function PlansCompareWidget({ config }: { config: any }) {
 /* ─── FEATURES GRID ─── */
 function FeaturesGridWidget({ config }: { config: any }) {
   const items = config.items || [];
-  const iconMap: Record<string, any> = { Download, Music2, Star, Headphones, Sparkles, Radio, Disc3, Mail, Clock };
+  const iconMap: Record<string, any> = {
+    Download, Music, Music2, Play, Pause, ListMusic, Mic2, Volume2, Volume1, VolumeX,
+    Star, Headphones, Sparkles, Radio, Disc, Disc3, DiscAlbum, Mail, Clock, Check, CheckCircle, CheckCircle2,
+    Heart, TrendingUp, BarChart3, Globe, Lock, Unlock, User, Users, Calendar, Tag, Search, Filter,
+    Settings, Bell, MessageCircle, Share2, Link: LinkIcon, ExternalLink, FileAudio, Video, Camera, Image: ImageIcon, Layers, LayoutGrid,
+    Columns3, LayoutTemplate, Monitor, Smartphone, Wifi, Award, Crown, ThumbsUp, Eye,
+    Shield, ShieldCheck, Zap, AlertCircle, Info, HelpCircle, Minus, Plus, ArrowRight, ArrowLeft,
+    X: XIcon, Trash2, Pencil, Copy, Save, RefreshCw, SlidersHorizontal,
+    Hash, Bookmark, Flag, MapPin, Phone, ShoppingCart, CreditCard, Truck,
+    Package, Gift, Percent, DollarSign, Euro, ArrowUpRight, Briefcase,
+    Building2, Headset, Keyboard, MousePointerClick, Palette, Wand2,
+    Code2, Terminal, Fingerprint, ScanFace, Cloud, CloudDownload,
+    Database, Server, HardDrive, Cpu, WifiOff, Globe2, Landmark,
+    Megaphone: MegaphoneIcon, Tv, Film, Clapperboard, CirclePlay,
+    Aperture, Sun, Moon, Flame, Snowflake, Leaf, TreePine, Mountain,
+    Anchor, Compass, Sailboat, Ship, Plane, Car, Bike, Bus, TrainFront,
+    Ticket, Map: MapIcon, Pin: PinIcon, Navigation, BookOpen, BookMarked, Library,
+    GraduationCap, School, PenTool, Ruler, Calculator, Scissors,
+    Paintbrush, PencilRuler, Drum, Guitar, Piano, Mic, Speaker,
+  };
   return (
     <div>
       {config.title && (
