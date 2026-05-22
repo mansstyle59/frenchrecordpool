@@ -33,14 +33,18 @@ export default function MiniPlayer() {
   const progressRef = useRef<HTMLInputElement>(null);
   const playedMirrorRef = useRef<HTMLDivElement>(null);
   const mobilePlayedRef = useRef<HTMLDivElement>(null);
-  const timeRef = useRef<HTMLSpanElement>(null);
   const [loading, setLoading] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
 
   // ----- Source switching (only when the track URL actually changes) -----
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio || !currentTrack?.previewUrl) return;
-    if (audio.src !== currentTrack.previewUrl) {
+    const nextSrc = new URL(currentTrack.previewUrl, window.location.href).href;
+    if (audio.src !== nextSrc) {
+      setCurrentTime(0);
+      setDuration(0);
       audio.src = currentTrack.previewUrl;
       audio.currentTime = 0;
       audio.load();
@@ -72,33 +76,49 @@ export default function MiniPlayer() {
     const audio = audioRef.current;
     if (!audio) return;
     let raf = 0;
-    const tick = () => {
-      const d = audio.duration || 0;
+    const sync = () => {
+      const d = Number.isFinite(audio.duration) ? audio.duration : 0;
       const c = audio.currentTime || 0;
       const pct = d ? (c / d) * 100 : 0;
+      setCurrentTime(c);
+      setDuration(d);
       if (progressRef.current) progressRef.current.value = String(pct);
       if (playedMirrorRef.current) playedMirrorRef.current.style.clipPath = `inset(0 ${100 - pct}% 0 0)`;
       if (mobilePlayedRef.current) mobilePlayedRef.current.style.width = `${pct}%`;
-      if (timeRef.current) timeRef.current.textContent = `${formatTime(c)} / ${formatTime(d)}`;
+      if (audio.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA && !audio.paused) setLoading(false);
+    };
+    const tick = () => {
+      sync();
       raf = requestAnimationFrame(tick);
     };
     const onEnded = () => next();
     const onWaiting = () => setLoading(true);
-    const onCanPlay = () => setLoading(false);
-    const onPlaying = () => setLoading(false);
+    const onReady = () => { sync(); setLoading(false); };
+    const onError = () => setLoading(false);
     audio.addEventListener("ended", onEnded);
     audio.addEventListener("waiting", onWaiting);
-    audio.addEventListener("canplay", onCanPlay);
-    audio.addEventListener("playing", onPlaying);
+    audio.addEventListener("stalled", onWaiting);
+    audio.addEventListener("loadedmetadata", onReady);
+    audio.addEventListener("durationchange", onReady);
+    audio.addEventListener("timeupdate", sync);
+    audio.addEventListener("canplay", onReady);
+    audio.addEventListener("playing", onReady);
+    audio.addEventListener("error", onError);
+    sync();
     raf = requestAnimationFrame(tick);
     return () => {
       cancelAnimationFrame(raf);
       audio.removeEventListener("ended", onEnded);
       audio.removeEventListener("waiting", onWaiting);
-      audio.removeEventListener("canplay", onCanPlay);
-      audio.removeEventListener("playing", onPlaying);
+      audio.removeEventListener("stalled", onWaiting);
+      audio.removeEventListener("loadedmetadata", onReady);
+      audio.removeEventListener("durationchange", onReady);
+      audio.removeEventListener("timeupdate", sync);
+      audio.removeEventListener("canplay", onReady);
+      audio.removeEventListener("playing", onReady);
+      audio.removeEventListener("error", onError);
     };
-  }, [audioRef, next]);
+  }, [audioRef, currentTrack?.id, currentTrack?.previewUrl, next]);
 
   // ----- Media Session API (OS / lock-screen controls) -----
   useEffect(() => {
@@ -282,8 +302,8 @@ export default function MiniPlayer() {
               />
             </div>
 
-          <span ref={timeRef} className="text-[11px] text-muted-foreground shrink-0 w-16 text-right hidden sm:block tabular-nums font-mono">
-            0:00 / 0:00
+          <span className="text-[11px] text-muted-foreground shrink-0 w-20 text-right hidden sm:block tabular-nums font-mono">
+            {formatTime(currentTime)} / {formatTime(duration)}
           </span>
 
           {/* Upgrade CTA when listening to an extract while not subscribed */}
