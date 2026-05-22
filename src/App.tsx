@@ -80,6 +80,7 @@ const App = () => (
               <Route path="/admin/promo-codes" element={<AdminPromoCodes />} />
               <Route path="/admin/branding" element={<AdminBranding />} />
               <Route path="/admin/screenshot-studio" element={<AdminScreenshotStudio />} />
+              <Route path="/admin/popups" element={<AdminPopups />} />
               <Route path="/admin/audit" element={<AdminAuditLog />} />
               <Route path="/admin/queue" element={<AdminQueue />} />
               <Route path="/dj" element={<DjDashboard />} />
