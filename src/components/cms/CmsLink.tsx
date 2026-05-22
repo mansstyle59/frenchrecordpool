@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import UrlPicker from "@/components/cms/UrlPicker";
 
 interface Props {
   editKey: string;
@@ -58,8 +59,8 @@ export default function CmsLink({ editKey, defaultLabel, defaultUrl, className, 
             <Input value={draft.label} onChange={(e) => setDraft({ ...draft, label: e.target.value })} />
           </div>
           <div>
-            <Label className="text-xs">URL</Label>
-            <Input value={draft.url} onChange={(e) => setDraft({ ...draft, url: e.target.value })} placeholder="/route ou https://…" />
+            <Label className="text-xs">Destination</Label>
+            <UrlPicker value={draft.url} onChange={(url) => setDraft({ ...draft, url })} />
           </div>
           <Button
             size="sm"
