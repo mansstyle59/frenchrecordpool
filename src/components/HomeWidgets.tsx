@@ -9,7 +9,7 @@ import {
   Music, Pause, ListMusic, Mic2, Volume2, Volume1, VolumeX,
   CheckCircle, CheckCircle2, Heart, Globe, Lock, Unlock, User,
   Calendar, Search, Filter, Settings, Bell, MessageCircle, Share2,
-  Link, ExternalLink, FileAudio, Video, Camera, Layers, LayoutGrid,
+  Link as LinkIcon, ExternalLink, FileAudio, Video, Camera, Layers, LayoutGrid,
   Columns3, LayoutTemplate, Monitor, Smartphone, Wifi, Award, Crown,
   ThumbsUp, Eye, Shield, ShieldCheck, Zap, AlertCircle, Info,
   Plus, ArrowLeft, Trash2, Pencil, Copy, Save, RefreshCw, SlidersHorizontal,
@@ -24,7 +24,6 @@ import {
   Ticket, Map, Pin, Navigation, BookOpen, BookMarked, Library,
   GraduationCap, School, PenTool, Ruler, Calculator, Scissors,
   Paintbrush, PencilRuler, Drum, Guitar, Piano, Mic, Speaker,
-  type LucideIcon,
 } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
