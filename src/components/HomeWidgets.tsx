@@ -3,8 +3,10 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   Mail, Clock, Megaphone, Users, Code as CodeIcon, Sparkles, Play,
-  Music2, Headphones, ArrowRight,
+  Music2, Headphones, ArrowRight, BarChart3, Tag, Star, HelpCircle,
+  ChevronDown, Minus, Quote,
 } from "lucide-react";
+
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
