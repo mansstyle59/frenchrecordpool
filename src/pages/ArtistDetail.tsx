@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Disc3, Music2, ArrowLeft, Pencil, Download, Headphones, Globe, Instagram, Youtube, Music, X, Eye } from "lucide-react";
 import { motion } from "framer-motion";
 import Layout from "@/components/Layout";
-import TrackRow from "@/components/TrackRow";
+import TrackRow, { TrackListHeader } from "@/components/TrackRow";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
