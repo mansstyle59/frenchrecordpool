@@ -90,7 +90,7 @@ export default function AdminPopups() {
     mutationFn: async (p: Popup) => {
       const payload: any = { ...p };
       if (!payload.id) delete payload.id;
-      const { error } = await supabase.from("popups").upsert(payload);
+      const { error } = await (supabase as any).from("popups").upsert(payload);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -103,7 +103,7 @@ export default function AdminPopups() {
 
   const remove = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("popups").delete().eq("id", id);
+      const { error } = await (supabase as any).from("popups").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -114,7 +114,7 @@ export default function AdminPopups() {
 
   const toggleActive = useMutation({
     mutationFn: async ({ id, is_active }: { id: string; is_active: boolean }) => {
-      const { error } = await supabase.from("popups").update({ is_active }).eq("id", id);
+      const { error } = await (supabase as any).from("popups").update({ is_active }).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["admin-popups"] }),
