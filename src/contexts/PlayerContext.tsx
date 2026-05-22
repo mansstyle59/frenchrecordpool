@@ -90,17 +90,15 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const goTo = useCallback((dir: 1 | -1) => {
+    if (!queue.length) return;
     setCurrentTrack((curr) => {
-      if (!curr || queue.length === 1) return curr;
+      if (!curr) return curr;
       const idx = queue.findIndex((t) => t.id === curr.id);
       if (idx === -1) return curr;
-      const next = queue[(idx + dir + queue.length) % queue.length];
-      if (next?.previewUrl) {
-        setIsPlaying(true);
-        return next;
-      }
-      return curr;
+      const target = queue[(idx + dir + queue.length) % queue.length];
+      return target?.previewUrl ? target : curr;
     });
+    setIsPlaying(true);
   }, [queue]);
 
   const next = useCallback(() => goTo(1), [goTo]);

@@ -36,19 +36,36 @@ export default function MiniPlayer() {
   const timeRef = useRef<HTMLSpanElement>(null);
   const [loading, setLoading] = useState(false);
 
-  // ----- Source switching -----
+  // ----- Source switching (only when the track URL actually changes) -----
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio || !currentTrack?.previewUrl) return;
     if (audio.src !== currentTrack.previewUrl) {
       audio.src = currentTrack.previewUrl;
+      audio.currentTime = 0;
       audio.load();
       setLoading(true);
     }
+  }, [currentTrack?.id, currentTrack?.previewUrl, audioRef]);
+
+  // ----- Play / pause -----
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio || !currentTrack?.previewUrl) return;
+    if (isPlaying) {
+      const p = audio.play();
+      if (p && typeof p.catch === "function") p.catch(() => {});
+    } else {
+      audio.pause();
+    }
+  }, [isPlaying, currentTrack?.id, currentTrack?.previewUrl, audioRef]);
+
+  // ----- Volume / mute -----
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
     audio.volume = muted ? 0 : volume;
-    if (isPlaying) audio.play().catch(() => {});
-    else audio.pause();
-  }, [currentTrack, isPlaying, audioRef, volume, muted]);
+  }, [volume, muted, audioRef]);
 
   // ----- Loading state + progress + ended -----
   useEffect(() => {
