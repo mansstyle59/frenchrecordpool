@@ -13,7 +13,7 @@ import { resolveCover } from "@/lib/trackCover";
 
 /* ─── Shared column template (header + rows MUST match) ─── */
 //          cover  | title/artist | version | BPM | KEY  | GENRE | TIME | actions
-const COLS = "48px minmax(0,1fr) 110px 56px 56px 120px 56px auto";
+const COLS = "48px minmax(0,1fr) 110px 56px 56px 120px 56px 180px";
 const COL_GAP = "gap-x-4";
 
 interface TrackRowProps {
