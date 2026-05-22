@@ -182,10 +182,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             <div className="flex items-center gap-2 sm:gap-3 h-14 sm:h-16 px-3 sm:px-4">
               <SidebarTrigger />
 
-              <Link to="/" className="flex items-center gap-2 shrink-0 lg:hidden">
-                <Disc3 className="h-6 w-6 text-primary" />
-                <span className="font-display font-bold gradient-text hidden sm:inline">FRP</span>
-              </Link>
 
               <div className="ml-auto flex items-center gap-2">
                 {searchOpen && (

@@ -18,6 +18,7 @@ type Artist = {
   id: string;
   name: string;
   slug: string;
+  kind: string;
   photo_url: string | null;
   bio: string | null;
   country: string | null;
@@ -30,7 +31,7 @@ type Artist = {
 };
 
 const empty = {
-  name: "", slug: "", photo_url: "", bio: "", country: "", genre: "",
+  name: "", slug: "", kind: "remixer", photo_url: "", bio: "", country: "", genre: "",
   soundcloud_url: "", instagram_url: "", website_url: "",
   featured: false, sort_order: 0,
 };
@@ -100,7 +101,7 @@ export default function AdminArtists() {
   const openEdit = (a: Artist) => {
     setEditing(a);
     setForm({
-      name: a.name, slug: a.slug,
+      name: a.name, slug: a.slug, kind: a.kind || "remixer",
       photo_url: a.photo_url ?? "", bio: a.bio ?? "",
       country: a.country ?? "", genre: a.genre ?? "",
       soundcloud_url: a.soundcloud_url ?? "",
@@ -133,6 +134,7 @@ export default function AdminArtists() {
     const payload: any = {
       name: form.name.trim(),
       slug,
+      kind: form.kind || "remixer",
       photo_url: photoUrl,
       bio: form.bio || null,
       country: form.country || null,
@@ -238,6 +240,9 @@ export default function AdminArtists() {
                     <Switch checked={a.featured} onCheckedChange={() => toggleFeatured(a)} aria-label="Mettre en avant" />
                   </div>
                   <div className="flex flex-wrap gap-1">
+                    <Badge variant={a.kind === "artist" ? "outline" : "default"} className="text-[10px] capitalize">
+                      {a.kind === "artist" ? "DJ" : a.kind === "both" ? "DJ + Remixer" : "Remixer"}
+                    </Badge>
                     {a.genre && <Badge variant="secondary" className="text-[10px]">{a.genre}</Badge>}
                     {a.country && <Badge variant="outline" className="text-[10px]">{a.country}</Badge>}
                     <Badge variant="outline" className="text-[10px]">{count} track{count !== 1 ? "s" : ""}</Badge>
@@ -292,6 +297,18 @@ export default function AdminArtists() {
               <Label>Slug</Label>
               <Input value={form.slug} onChange={(e) => setForm({ ...form, slug: slugify(e.target.value) })}
                 placeholder="dj-yass" />
+            </div>
+            <div className="space-y-2">
+              <Label>Type *</Label>
+              <select
+                value={form.kind}
+                onChange={(e) => setForm({ ...form, kind: e.target.value })}
+                className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm"
+              >
+                <option value="remixer">Remixer (page Remixers)</option>
+                <option value="artist">DJ / Artiste</option>
+                <option value="both">Les deux</option>
+              </select>
             </div>
             <div className="space-y-2">
               <Label>Genre principal</Label>

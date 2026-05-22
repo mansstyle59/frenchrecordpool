@@ -20,8 +20,8 @@ export default function Remixers() {
     queryFn: async () => {
       const { data } = await supabase
         .from("artists")
-        .select("id, name, slug, photo_url")
-        .eq("kind", "remixer")
+        .select("id, name, slug, photo_url, kind")
+        .in("kind", ["remixer", "both"])
         .order("name", { ascending: true });
 
       // Count tracks per remixer

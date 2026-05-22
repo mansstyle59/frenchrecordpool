@@ -9,6 +9,7 @@ import { PlayerProvider } from "@/contexts/PlayerContext";
 import { BrandingProvider } from "@/contexts/BrandingContext";
 import { CmsProvider } from "@/contexts/CmsContext";
 import MiniPlayer from "@/components/MiniPlayer";
+import PageTransition from "@/components/PageTransition";
 import SubscriptionRequiredDialog from "@/components/SubscriptionRequiredDialog";
 import CmsEditBar from "@/components/cms/CmsEditBar";
 import CmsAutoEditor from "@/components/cms/CmsAutoEditor";
@@ -103,6 +104,7 @@ const App = () => (
               <Route path="/stems" element={<Stems />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
+            <PageTransition />
             <MiniPlayer />
             <SubscriptionRequiredDialog />
             <CmsEditBar />
