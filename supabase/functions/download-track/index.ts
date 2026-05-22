@@ -44,7 +44,8 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { track_id } = await req.json();
+    const { track_id, mode } = await req.json();
+    const isStream = mode === "stream";
     if (!track_id) {
       return new Response(JSON.stringify({ error: "track_id manquant" }), {
         status: 400,
