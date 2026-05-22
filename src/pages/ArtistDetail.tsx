@@ -207,6 +207,7 @@ export default function ArtistDetail({ kind = "artist" }: ArtistDetailProps) {
               </div>
             ) : (
               <div className="rounded-2xl border border-border bg-card/40 backdrop-blur overflow-hidden">
+                <TrackListHeader />
                 {tracks.map((t, i) => <TrackRow key={t.id} track={t} index={i} />)}
               </div>
             )}
