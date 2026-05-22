@@ -702,29 +702,27 @@ export default function TrackForm({ initialData, saving, onSubmit, existingGenre
               <Input
                 value={genre}
                 onChange={(e) => setGenre(e.target.value)}
-                placeholder="House, Hip-Hop, Reggaeton…"
+                placeholder="Choisir ou taper…"
                 list="track-genres-suggest"
                 className="bg-secondary border-border"
               />
               <datalist id="track-genres-suggest">
-                {existingGenres.map((g) => <option key={g} value={g} />)}
+                {[...new Set([...GENRE_PRESETS, ...existingGenres])].map((g) => <option key={g} value={g} />)}
               </datalist>
-              {existingGenres.length > 0 && (
-                <div className="flex gap-1 flex-wrap pt-1">
-                  {existingGenres.slice(0, 6).map((g) => (
-                    <button
-                      key={g}
-                      type="button"
-                      onClick={() => setGenre(g)}
-                      className={`text-[10px] px-2 py-0.5 rounded-full border transition-colors ${
-                        genre === g ? "bg-primary text-primary-foreground border-primary" : "bg-muted/40 text-muted-foreground border-border hover:text-foreground"
-                      }`}
-                    >
-                      {g}
-                    </button>
-                  ))}
-                </div>
-              )}
+              <div className="flex gap-1 flex-wrap pt-1">
+                {[...new Set([...existingGenres.slice(0, 4), ...GENRE_PRESETS])].slice(0, 8).map((g) => (
+                  <button
+                    key={g}
+                    type="button"
+                    onClick={() => setGenre(g)}
+                    className={`text-[10px] px-2 py-0.5 rounded-full border transition-colors ${
+                      genre === g ? "bg-primary text-primary-foreground border-primary" : "bg-muted/40 text-muted-foreground border-border hover:text-foreground"
+                    }`}
+                  >
+                    {g}
+                  </button>
+                ))}
+              </div>
             </div>
 
             <div className="space-y-1">
