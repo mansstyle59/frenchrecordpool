@@ -126,6 +126,29 @@ export default function TrackRow({ track }: TrackRowProps) {
     });
   };
 
+  /** Always play the short preview (or a 30s slice of full as fallback). */
+  const handlePlayPreview = async () => {
+    stopPreview();
+    if (!shortSrc && !fullSrc) {
+      toast.error("Aucun extrait audio disponible.");
+      return;
+    }
+    let src = shortSrc || fullSrc!;
+    // If only the full track exists (no dedicated preview), get a signed URL when it's private
+    if (!shortSrc && fullSrc && fullSrc.includes("/object/public/track-audio/")) {
+      const signed = await getFullStreamUrl(track.id);
+      if (signed) src = signed;
+    }
+    play({
+      id: track.id + "::preview",
+      title: track.title,
+      artist: track.artist,
+      coverUrl: resolveCover(track),
+      previewUrl: src,
+      isFull: false,
+    });
+  };
+
   const handleDownload = () => downloadTrack(track.id, user, hasActiveSubscription);
   const resolvedUrl = (track as any).download_url || track.audio_url;
   const isExternalLink = resolvedUrl && !resolvedUrl.includes("/object/public/track-audio/");
