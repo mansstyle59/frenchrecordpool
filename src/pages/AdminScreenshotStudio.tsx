@@ -172,10 +172,10 @@ export default function AdminScreenshotStudio() {
                 <CardContent className="pt-4 space-y-3">
                   <div>
                     <Label className="text-xs">Track (auto-remplit le visuel)</Label>
-                    <Select value={trackId} onValueChange={setTrackId}>
+                    <Select value={trackId || "__none__"} onValueChange={(v) => setTrackId(v === "__none__" ? "" : v)}>
                       <SelectTrigger><SelectValue placeholder="Aucun – contenu libre" /></SelectTrigger>
                       <SelectContent className="max-h-72">
-                        <SelectItem value="">— Aucun —</SelectItem>
+                        <SelectItem value="__none__">— Aucun —</SelectItem>
                         {tracks.map(t => (
                           <SelectItem key={t.id} value={t.id}>
                             <span className="truncate">{t.artist} – {t.title}</span>
