@@ -12,34 +12,57 @@ export function normalizeTitleKey(title: string): string {
 }
 
 // Normalise l'artiste principal pour regrouper les variantes.
-// Gère: feat./ft./featuring/with, &, +, /, ,, vs/x, "and",
-//       "Artist & Remixers", contenu entre () ou [] (ex: "(prod. by X)"),
-//       préfixes/suffixes courants (DJ, MC, The), accents et apostrophes.
+// Gère :
+//  - separators: feat./ft./featuring/with/pres./vs/x/b2b/starring/introducing/and
+//  - ponctuation: & , / + ; · • | — – -  (em/en-dash, bullet, etc.)
+//  - parenthèses/crochets: "(prod. by X)", "[Remix]"
+//  - suffixes collectifs: "Artist & Remixers/Editors/Crew/Team/Friends/Family/Allstars/Collective"
+//  - préfixes parasites: "DJ", "MC", "The", "Le/La/Les" (FR), "El/Los/Las" (ES)
+//  - accents, apostrophes (' ’ ` ´), tirets multiples, espaces multiples
+//  - cas spéciaux: "Various Artists" / "VA" → "various artists" (groupé)
 export function normalizeArtistKey(artist: string): string {
   if (!artist) return "";
   let s = artist
     .toLowerCase()
-    // Retire diacritiques
+    // Diacritiques
     .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-    // Retire contenu entre () ou [] (prod. by, remix credits, etc.)
+    // Contenu entre () ou []
     .replace(/\[[^\]]*\]|\([^)]*\)/g, " ")
-    // Normalise les apostrophes/quotes
-    .replace(/[’'`]/g, "")
-    // Remplace séparateurs courants par un délimiteur unique
-    .replace(/\s*(?:feat\.?|ft\.?|featuring|with|presents|pres\.?|vs\.?|versus|and)\s+/gi, "|")
-    .replace(/\s*[&,\/+]\s*/g, "|")
-    .replace(/\s+x\s+/gi, "|");
+    // Apostrophes / quotes
+    .replace(/[’'`´]/g, "")
+    // Tirets longs/courts/bullets → délimiteur
+    .replace(/\s*[—–•·]\s*/g, "|")
+    // Mots-clés de collaboration → délimiteur
+    .replace(
+      /\s*(?:feat\.?|ft\.?|featuring|featured|with|w\/|presents?|pres\.?|vs\.?|versus|and|starring|introducing|b2b)\s+/gi,
+      "|"
+    )
+    // Séparateurs ponctuels
+    .replace(/\s*[&,\/+;]\s*/g, "|")
+    // " x " comme séparateur (entouré d'espaces)
+    .replace(/\s+x\s+/gi, "|")
+    // " - " comme séparateur (tiret entouré d'espaces uniquement)
+    .replace(/\s+-\s+/g, "|");
 
-  // Garde le premier artiste
-  let main = s.split("|")[0] || "";
+  // Cas spécial: Various Artists / VA
+  const compact = s.replace(/\s+/g, " ").trim();
+  if (/^(various artists|v\.?\s*a\.?)$/.test(compact)) return "various artists";
 
-  // Retire préfixes parasites (dj, mc, the)
-  main = main.replace(/^\s*(dj|mc|the)\s+/i, "");
-  // Suffixes "remix(ers)/edit(s)/crew" résiduels
-  main = main.replace(/\s+(remixers?|editors?|crew|team)$/i, "");
+  // Premier artiste
+  let main = (s.split("|")[0] || "").trim();
 
-  return main.replace(/[^a-z0-9]+/g, " ").trim();
+  // Préfixes parasites (DJ, MC, articles courants)
+  main = main.replace(/^\s*(?:dj|mc|mc\.?|the|le|la|les|el|los|las)\s+/i, "");
+
+  // Suffixes collectifs résiduels
+  main = main.replace(
+    /\s+(?:remixers?|editors?|crew|team|family|friends|allstars|all-?stars|collective|crew|gang|squad|sound(?:system)?|productions?)$/i,
+    ""
+  );
+
+  return main.replace(/[^a-z0-9]+/g, " ").replace(/\s+/g, " ").trim();
 }
+
 
 export interface TrackGroup {
   key: string;
