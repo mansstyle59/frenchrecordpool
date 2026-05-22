@@ -356,7 +356,7 @@ export default function AdminBranding() {
                 <Input value={draft.site_name} onChange={(e) => update({ site_name: e.target.value })} className="bg-black/20 dark:bg-black/40 border-border focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary" />
               </Field>
               <Field label="Slogan" hint={`${(draft.tagline ?? "").length}/80`}>
-                <Input value={draft.tagline ?? ""} maxLength={80} onChange={(e) => update({ tagline: e.target.value })} className="bg-secondary border-border" />
+                <Input value={draft.tagline ?? ""} maxLength={80} onChange={(e) => update({ tagline: e.target.value })} className="bg-black/20 dark:bg-black/40 border-border focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary" />
               </Field>
 
               <AssetDropzone
