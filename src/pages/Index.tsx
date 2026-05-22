@@ -8,6 +8,7 @@ import TrackRow from "@/components/TrackRow";
 import GenreCard from "@/components/GenreCard";
 import CmsText from "@/components/cms/CmsText";
 import CmsImage from "@/components/cms/CmsImage";
+import HomeWidgets from "@/components/HomeWidgets";
 import { useTracks } from "@/hooks/useTracks";
 import { usePlayer } from "@/contexts/PlayerContext";
 import { resolveCover } from "@/lib/trackCover";
