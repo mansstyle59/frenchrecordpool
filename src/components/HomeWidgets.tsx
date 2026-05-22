@@ -174,7 +174,7 @@ function TrackGridWidget({ config, preview }: { config: any; preview: boolean })
       <div className="flex items-end justify-between mb-6 gap-4">
         <div className="flex items-center gap-3 min-w-0">
           <div className="w-1 h-9 rounded-full bg-gradient-to-b from-primary to-accent shrink-0" />
-          <h2 className="font-display text-2xl md:text-3xl font-bold flex items-center gap-2 truncate">
+          <h2 className="font-display text-2xl md:text-3xl font-bold flex items-center gap-2 truncate" style={titleStyle(config.typo)}>
             <Icon className="h-5 w-5 text-primary shrink-0" />
             {config.title || "Tracks"}
           </h2>
@@ -212,7 +212,7 @@ function ArtistCarouselWidget({ config }: { config: any }) {
     <div>
       <div className="flex items-center gap-3 mb-6">
         <div className="w-1 h-9 rounded-full bg-gradient-to-b from-primary to-accent" />
-        <h2 className="font-display text-2xl md:text-3xl font-bold flex items-center gap-2">
+        <h2 className="font-display text-2xl md:text-3xl font-bold flex items-center gap-2" style={titleStyle(config.typo)}>
           <Users className="h-5 w-5 text-primary" /> {config.title || "Artistes"}
         </h2>
       </div>
@@ -250,7 +250,7 @@ function CtaWidget({ config }: { config: any }) {
       <div className="absolute -top-20 -right-20 h-64 w-64 rounded-full bg-primary/30 blur-3xl" />
       <div className="absolute -bottom-20 -left-20 h-64 w-64 rounded-full bg-accent/20 blur-3xl" />
       <div className="relative">
-        <h2 className="font-display text-3xl md:text-5xl font-black mb-3">
+        <h2 className="font-display text-3xl md:text-5xl font-black mb-3" style={titleStyle(config.typo)}>
           {config.title || "Prêt à jouer en live ?"}
         </h2>
         {config.body && <p className="text-muted-foreground md:text-lg mb-6 max-w-2xl mx-auto">{config.body}</p>}
@@ -276,7 +276,7 @@ function RichTextWidget({ config }: { config: any }) {
   const align = config.align === "center" ? "text-center" : config.align === "right" ? "text-right" : "text-left";
   return (
     <div className={`prose prose-invert max-w-3xl ${config.center !== false ? "mx-auto" : ""} ${align}`}>
-      {config.title && <h2 className="font-display text-3xl md:text-4xl font-bold mb-4">{config.title}</h2>}
+      {config.title && <h2 className="font-display text-3xl md:text-4xl font-bold mb-4" style={titleStyle(config.typo)}>{config.title}</h2>}
       {config.body && <p className="text-muted-foreground whitespace-pre-line text-lg">{config.body}</p>}
     </div>
   );
@@ -294,7 +294,7 @@ function VideoEmbedWidget({ config }: { config: any }) {
       {config.title && (
         <div className="flex items-center gap-3 mb-6">
           <div className="w-1 h-9 rounded-full bg-gradient-to-b from-primary to-accent" />
-          <h2 className="font-display text-2xl md:text-3xl font-bold">{config.title}</h2>
+          <h2 className="font-display text-2xl md:text-3xl font-bold" style={titleStyle(config.typo)}>{config.title}</h2>
         </div>
       )}
       <div className="rounded-2xl overflow-hidden border border-border aspect-video bg-black">
@@ -330,7 +330,7 @@ function NewsletterWidget({ config }: { config: any }) {
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/15 text-primary text-xs font-bold uppercase tracking-wider mb-4">
           <Mail className="h-3 w-3" /> Newsletter
         </div>
-        <h2 className="font-display text-3xl md:text-4xl font-bold mb-2">{config.title || "Reste informé"}</h2>
+        <h2 className="font-display text-3xl md:text-4xl font-bold mb-2" style={titleStyle(config.typo)}>{config.title || "Reste informé"}</h2>
         <p className="text-muted-foreground mb-6">{config.body || "Reçois chaque semaine les meilleures exclus."}</p>
         <form onSubmit={submit} className="flex flex-col sm:flex-row gap-3 max-w-md">
           <Input type="email" required value={email} onChange={(e) => setEmail(e.target.value)}
@@ -359,7 +359,7 @@ function CountdownWidget({ config }: { config: any }) {
       <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent/15 text-accent text-xs font-bold uppercase tracking-wider mb-3">
         <Clock className="h-3 w-3" /> {config.tag || "Bientôt"}
       </div>
-      <h2 className="font-display text-3xl md:text-4xl font-bold mb-2">{config.title || "Drop exclusif"}</h2>
+      <h2 className="font-display text-3xl md:text-4xl font-bold mb-2" style={titleStyle(config.typo)}>{config.title || "Drop exclusif"}</h2>
       {config.subtitle && <p className="text-muted-foreground mb-6">{config.subtitle}</p>}
       <div className="flex justify-center gap-3 md:gap-6 mt-6 flex-wrap">
         {units.map(([label, value]) => (
@@ -395,7 +395,7 @@ function PromoBannerWidget({ config }: { config: any }) {
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-xs font-bold uppercase tracking-wider mb-3">
           <Megaphone className="h-3 w-3" /> {config.tag || "Promo"}
         </div>
-        <h2 className="font-display text-3xl md:text-4xl font-bold mb-2">{config.title || "Offre limitée"}</h2>
+        <h2 className="font-display text-3xl md:text-4xl font-bold mb-2" style={titleStyle(config.typo)}>{config.title || "Offre limitée"}</h2>
         {config.body && <p className="opacity-80 mb-4">{config.body}</p>}
         {config.cta_label && config.cta_url && (
           <Button asChild variant="secondary"><Link to={config.cta_url}>{config.cta_label}</Link></Button>
@@ -442,7 +442,7 @@ function StatsWidget({ config }: { config: any }) {
       className="rounded-3xl border border-border bg-gradient-to-br from-primary/10 via-card to-accent/10 p-8 md:p-10"
     >
       {config.title && (
-        <h2 className="font-display text-2xl md:text-3xl font-bold text-center mb-8">{config.title}</h2>
+        <h2 className="font-display text-2xl md:text-3xl font-bold text-center mb-8" style={titleStyle(config.typo)}>{config.title}</h2>
       )}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
         {items.map((it: any, i: number) => (
@@ -471,7 +471,7 @@ function GenresCloudWidget({ config }: { config: any }) {
     <div>
       <div className="flex items-center gap-3 mb-6">
         <div className="w-1 h-9 rounded-full bg-gradient-to-b from-primary to-accent" />
-        <h2 className="font-display text-2xl md:text-3xl font-bold flex items-center gap-2">
+        <h2 className="font-display text-2xl md:text-3xl font-bold flex items-center gap-2" style={titleStyle(config.typo)}>
           <Tag className="h-5 w-5 text-primary" /> {config.title || "Genres"}
         </h2>
       </div>
@@ -519,7 +519,7 @@ function FeaturedTrackWidget({ config }: { config: any }) {
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent/20 text-accent text-xs font-bold uppercase tracking-wider mb-3 self-center md:self-start">
           <Star className="h-3 w-3" /> {config.tag || "Track de la semaine"}
         </div>
-        <h2 className="font-display text-3xl md:text-5xl font-black mb-2">{track.title}</h2>
+        <h2 className="font-display text-3xl md:text-5xl font-black mb-2" style={titleStyle(config.typo)}>{track.title}</h2>
         <p className="text-muted-foreground text-lg mb-4">{track.artist}</p>
         <div className="flex flex-wrap gap-3 justify-center md:justify-start">
           <Button size="lg" variant="hero" onClick={() => play(track)}>
@@ -544,7 +544,7 @@ function TestimonialsWidget({ config }: { config: any }) {
       {config.title && (
         <div className="flex items-center gap-3 mb-6">
           <div className="w-1 h-9 rounded-full bg-gradient-to-b from-primary to-accent" />
-          <h2 className="font-display text-2xl md:text-3xl font-bold">{config.title}</h2>
+          <h2 className="font-display text-2xl md:text-3xl font-bold" style={titleStyle(config.typo)}>{config.title}</h2>
         </div>
       )}
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -578,7 +578,7 @@ function FaqWidget({ config }: { config: any }) {
     <div className="max-w-3xl mx-auto">
       <div className="flex items-center gap-3 mb-6 justify-center">
         <HelpCircle className="h-6 w-6 text-primary" />
-        <h2 className="font-display text-2xl md:text-3xl font-bold">{config.title || "Questions fréquentes"}</h2>
+        <h2 className="font-display text-2xl md:text-3xl font-bold" style={titleStyle(config.typo)}>{config.title || "Questions fréquentes"}</h2>
       </div>
       <div className="space-y-2">
         {items.map((it: any, i: number) => {
@@ -655,7 +655,7 @@ function TwoColumnsWidget({ config }: { config: any }) {
         {config.eyebrow && (
           <p className="text-xs uppercase tracking-widest text-primary font-bold mb-3">{config.eyebrow}</p>
         )}
-        <h2 className="font-display text-3xl md:text-4xl font-bold mb-4">{config.title || "Titre"}</h2>
+        <h2 className="font-display text-3xl md:text-4xl font-bold mb-4" style={titleStyle(config.typo)}>{config.title || "Titre"}</h2>
         {config.body && <p className="text-muted-foreground whitespace-pre-line mb-6">{config.body}</p>}
         {config.cta_label && (
           <Button asChild variant="hero">
