@@ -143,10 +143,15 @@ export default function Remixers() {
                     ) : (
                       <div className="absolute inset-0 flex items-center justify-center text-4xl font-display font-black text-background">{r.name[0]?.toUpperCase()}</div>
                     )}
+                    <span className={`absolute bottom-1 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider backdrop-blur-md whitespace-nowrap ${
+                      r.kind === "both" ? "bg-primary/90 text-primary-foreground" : "bg-accent/90 text-accent-foreground"
+                    }`}>
+                      {r.kind === "both" ? "DJ + Remixer" : "Remixer"}
+                    </span>
                   </div>
                   <p className="mt-3 font-display font-bold text-base group-hover:text-primary transition-colors truncate">{r.name}</p>
                   <p className="text-[11px] uppercase tracking-widest text-muted-foreground mt-0.5">
-                    {r.trackCount} remix{r.trackCount > 1 ? "" : ""}
+                    {r.trackCount} remix
                   </p>
                 </Link>
               </motion.div>
