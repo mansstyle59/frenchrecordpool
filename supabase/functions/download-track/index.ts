@@ -76,8 +76,10 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Record download
-    await adminClient.from("downloads").insert({ user_id: user.id, track_id: track.id });
+    // Record download (skip for streaming)
+    if (!isStream) {
+      await adminClient.from("downloads").insert({ user_id: user.id, track_id: track.id });
+    }
 
     // Sanitize a filename segment (remove illegal chars, collapse spaces)
     const sanitize = (s: string) =>
