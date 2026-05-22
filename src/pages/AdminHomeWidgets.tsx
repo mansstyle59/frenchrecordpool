@@ -723,13 +723,45 @@ function TypeFields({ w, setC }: { w: Widget; setC: (k: string, v: any) => void 
             <Field label="Mot surligné"><Input value={c.highlight ?? ""} onChange={(e) => setC("highlight", e.target.value)} /></Field>
           </div>
           <Field label="Sous-titre"><Textarea rows={2} value={c.subtitle ?? ""} onChange={(e) => setC("subtitle", e.target.value)} /></Field>
-          <Field label="Image de fond (URL)"><Input value={c.bg_url ?? ""} onChange={(e) => setC("bg_url", e.target.value)} /></Field>
+          <Field label="Image de fond (URL)"><Input value={c.bg_url ?? ""} onChange={(e) => setC("bg_url", e.target.value)} placeholder="https://..." /></Field>
+          <div className="grid grid-cols-3 gap-3">
+            <Field label="Layout">
+              <Select value={c.layout ?? "center"} onValueChange={(v) => setC("layout", v)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="center">Centré</SelectItem>
+                  <SelectItem value="left">Aligné à gauche</SelectItem>
+                  <SelectItem value="split">Split (image à droite)</SelectItem>
+                </SelectContent>
+              </Select>
+            </Field>
+            <Field label="Hauteur">
+              <Select value={c.height ?? "standard"} onValueChange={(v) => setC("height", v)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="compact">Compact</SelectItem>
+                  <SelectItem value="standard">Standard</SelectItem>
+                  <SelectItem value="full">Plein écran</SelectItem>
+                </SelectContent>
+              </Select>
+            </Field>
+            <Field label={`Overlay (${c.overlay_opacity ?? 75}%)`}>
+              <Input type="number" min={0} max={100} value={c.overlay_opacity ?? 75} onChange={(e) => setC("overlay_opacity", parseInt(e.target.value) || 0)} />
+            </Field>
+          </div>
           <div className="grid grid-cols-2 gap-3">
             <Field label="CTA principal"><Input value={c.cta_primary_label ?? ""} onChange={(e) => setC("cta_primary_label", e.target.value)} /></Field>
             <Field label="URL"><Input value={c.cta_primary_url ?? ""} onChange={(e) => setC("cta_primary_url", e.target.value)} /></Field>
             <Field label="CTA secondaire"><Input value={c.cta_secondary_label ?? ""} onChange={(e) => setC("cta_secondary_label", e.target.value)} /></Field>
             <Field label="URL"><Input value={c.cta_secondary_url ?? ""} onChange={(e) => setC("cta_secondary_url", e.target.value)} /></Field>
           </div>
+          <Field label="Trust badges (séparés par virgule)">
+            <Input
+              value={(c.trust_badges ?? []).join(", ")}
+              onChange={(e) => setC("trust_badges", e.target.value.split(",").map((s) => s.trim()).filter(Boolean))}
+              placeholder="Sans engagement, +1200 tracks, Mise à jour hebdo"
+            />
+          </Field>
         </>
       );
     case "track_grid":
