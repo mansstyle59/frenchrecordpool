@@ -203,8 +203,8 @@ export default function MiniPlayer() {
             <SkipForward className="h-3.5 w-3.5" />
           </Button>
 
-          {/* Waveform progress (desktop) — uses clip-path so the colored layer is a perfect mirror */}
-          <div className="flex-1 hidden sm:block relative h-10 group select-none">
+          {/* Waveform progress (desktop) */}
+          <div className="flex-1 hidden sm:block relative h-8 group select-none">
             <div className="absolute inset-0 flex items-center justify-between gap-[2px] px-0.5">
               {bars.map((b, i) => (
                 <div
@@ -248,20 +248,34 @@ export default function MiniPlayer() {
             />
           </div>
 
-
-          <span ref={timeRef} className="text-xs text-muted-foreground shrink-0 w-20 text-right hidden sm:block tabular-nums">
+          <span ref={timeRef} className="text-[11px] text-muted-foreground shrink-0 w-16 text-right hidden sm:block tabular-nums font-mono">
             0:00 / 0:00
           </span>
 
+          {/* Upgrade CTA when listening to an extract while not subscribed */}
+          {!isFull && !hasActiveSubscription && (
+            <Button
+              asChild
+              size="sm"
+              variant="hero"
+              className="shrink-0 hidden md:inline-flex h-7 px-2.5 text-[11px] gap-1"
+              title="Abonnez-vous pour écouter le titre complet"
+            >
+              <Link to="/pricing">
+                <Crown className="h-3 w-3" /> Débloquer
+              </Link>
+            </Button>
+          )}
+
           {/* Volume + Mute */}
-          <div className="hidden md:flex items-center gap-2 w-28 shrink-0">
+          <div className="hidden lg:flex items-center gap-1.5 w-24 shrink-0">
             <button
               type="button"
               onClick={toggleMute}
               className="text-muted-foreground hover:text-foreground transition-colors"
               title={muted ? "Réactiver le son (M)" : "Couper le son (M)"}
             >
-              {muted ? <VolumeX className="h-4 w-4 text-destructive" /> : <Volume2 className="h-4 w-4" />}
+              {muted ? <VolumeX className="h-3.5 w-3.5 text-destructive" /> : <Volume2 className="h-3.5 w-3.5" />}
             </button>
             <input
               type="range"
@@ -277,10 +291,10 @@ export default function MiniPlayer() {
           {/* Queue */}
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="ghost" size="icon" className="shrink-0 relative" title="File d'attente">
-                <ListMusic className="h-4 w-4" />
+              <Button variant="ghost" size="icon" className="shrink-0 relative h-8 w-8" title="File d'attente">
+                <ListMusic className="h-3.5 w-3.5" />
                 {queue.length > 0 && (
-                  <span className="absolute -top-1 -right-1 h-4 min-w-4 px-1 rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center">
+                  <span className="absolute -top-0.5 -right-0.5 h-3.5 min-w-3.5 px-1 rounded-full bg-primary text-primary-foreground text-[9px] font-bold flex items-center justify-center">
                     {queue.length}
                   </span>
                 )}
@@ -323,8 +337,8 @@ export default function MiniPlayer() {
           </Popover>
 
           {/* Close player */}
-          <Button variant="ghost" size="icon" className="shrink-0 text-muted-foreground hover:text-destructive" onClick={clear} title="Fermer le lecteur">
-            <X className="h-4 w-4" />
+          <Button variant="ghost" size="icon" className="shrink-0 h-8 w-8 text-muted-foreground hover:text-destructive" onClick={clear} title="Fermer le lecteur">
+            <X className="h-3.5 w-3.5" />
           </Button>
         </div>
       </div>
