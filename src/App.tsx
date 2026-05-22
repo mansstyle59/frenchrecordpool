@@ -103,6 +103,7 @@ const App = () => (
             <SubscriptionRequiredDialog />
             <CmsEditBar />
             <CmsAutoEditor />
+            <PopupHost />
           </BrowserRouter>
           </TooltipProvider>
           </CmsProvider>
