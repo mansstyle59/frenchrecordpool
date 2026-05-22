@@ -13,6 +13,8 @@ export interface ParsedFilename {
   bpm?: number;
   key?: string;
   remixers?: string[];
+  year?: number;
+  mood?: string;
 }
 
 const VERSION_KEYWORDS = [
