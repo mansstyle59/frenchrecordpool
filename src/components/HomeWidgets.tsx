@@ -245,23 +245,43 @@ function HeroWidget({ config, preview }: { config: any; preview: boolean }) {
 /* ─── TRACK GRID ─── */
 function TrackGridWidget({ config, preview }: { config: any; preview: boolean }) {
   const [tracks, setTracks] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [genres, setGenres] = useState<string[]>([]);
+  const [activeGenre, setActiveGenre] = useState<string | null>(config.genre || null);
+  const tabsEnabled = !!config.genre_tabs;
+
+  // Load available genres once if tabs are enabled
   useEffect(() => {
+    if (!tabsEnabled) return;
+    supabase.from("tracks").select("genre").eq("status", "approved").then(({ data }) => {
+      const counts = new Map<string, number>();
+      (data || []).forEach((t: any) => t.genre && counts.set(t.genre, (counts.get(t.genre) || 0) + 1));
+      const sorted = [...counts.entries()].sort((a, b) => b[1] - a[1]).map(([g]) => g);
+      setGenres(sorted.slice(0, 12));
+    });
+  }, [tabsEnabled]);
+
+  useEffect(() => {
+    setLoading(true);
     let q = supabase.from("tracks").select("*").eq("status", "approved");
     const sort = config.sort_by || "recent";
     if (sort === "popular") q = q.order("downloads", { ascending: false });
     else if (sort === "alphabetical") q = q.order("title", { ascending: true });
     else q = q.order("release_date", { ascending: false }).order("created_at", { ascending: false });
-    if (config.genre) q = q.eq("genre", config.genre);
+    const effectiveGenre = tabsEnabled ? activeGenre : config.genre;
+    if (effectiveGenre) q = q.eq("genre", effectiveGenre);
     if (config.label) q = q.eq("label", config.label);
     if (config.tag)   q = q.contains("tags", [config.tag]);
-    q.limit(Math.min(config.limit || 8, 24)).then(({ data }) => { if (data) setTracks(data); });
-  }, [config.sort_by, config.genre, config.tag, config.label, config.limit]);
+    q.limit(Math.min(config.limit || 8, 24)).then(({ data }) => {
+      setTracks(data || []);
+      setLoading(false);
+    });
+  }, [config.sort_by, config.genre, config.tag, config.label, config.limit, activeGenre, tabsEnabled]);
 
-  if (tracks.length === 0) return null;
   const Icon = config.sort_by === "popular" ? Headphones : Music2;
   return (
     <div>
-      <div className="flex items-end justify-between mb-6 gap-4">
+      <div className="flex items-end justify-between mb-4 gap-4">
         <div className="flex items-center gap-3 min-w-0">
           <div className="w-1 h-9 rounded-full bg-gradient-to-b from-primary to-accent shrink-0" />
           <h2 className="font-display text-2xl md:text-3xl font-bold flex items-center gap-2 truncate" style={titleStyle(config.typo)}>
@@ -275,8 +295,61 @@ function TrackGridWidget({ config, preview }: { config: any; preview: boolean })
           </Button>
         )}
       </div>
-      <div className="rounded-2xl border border-border bg-card/40 backdrop-blur-sm overflow-hidden">
-        {tracks.map((t, i) => <TrackRow key={t.id} track={t} index={i} />)}
+
+      {/* Menu roulant de genres */}
+      {tabsEnabled && genres.length > 0 && (
+        <div className="relative -mx-1 mb-4">
+          <div className="flex gap-2 overflow-x-auto scrollbar-none px-1 pb-1 snap-x">
+            <button
+              onClick={() => setActiveGenre(null)}
+              className={`shrink-0 snap-start px-3 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wider border transition-all ${
+                activeGenre === null
+                  ? "bg-primary text-primary-foreground border-primary shadow-md shadow-primary/30"
+                  : "bg-card/60 border-border text-muted-foreground hover:text-foreground hover:border-primary/40"
+              }`}
+            >
+              Tous
+            </button>
+            {genres.map((g) => (
+              <button
+                key={g}
+                onClick={() => setActiveGenre(g)}
+                className={`shrink-0 snap-start px-3 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wider border transition-all ${
+                  activeGenre === g
+                    ? "bg-primary text-primary-foreground border-primary shadow-md shadow-primary/30"
+                    : "bg-card/60 border-border text-muted-foreground hover:text-foreground hover:border-primary/40"
+                }`}
+              >
+                {g}
+              </button>
+            ))}
+          </div>
+          {/* Fade edges */}
+          <div className="pointer-events-none absolute left-0 top-0 bottom-1 w-6 bg-gradient-to-r from-background to-transparent" />
+          <div className="pointer-events-none absolute right-0 top-0 bottom-1 w-6 bg-gradient-to-l from-background to-transparent" />
+        </div>
+      )}
+
+      <div className="rounded-2xl border border-border bg-card/40 backdrop-blur-sm overflow-hidden min-h-[120px]">
+        {loading ? (
+          <div className="divide-y divide-border/40">
+            {Array.from({ length: Math.min(config.limit || 8, 6) }).map((_, i) => (
+              <div key={i} className="flex items-center gap-3 px-4 py-3 animate-pulse">
+                <div className="h-14 w-14 rounded-lg bg-muted/50 shrink-0" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-3 w-1/3 bg-muted/50 rounded" />
+                  <div className="h-2.5 w-1/4 bg-muted/40 rounded" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : tracks.length === 0 ? (
+          <div className="p-8 text-center text-sm text-muted-foreground">
+            Aucun titre {activeGenre ? `pour le genre "${activeGenre}"` : "à afficher"}.
+          </div>
+        ) : (
+          tracks.map((t, i) => <TrackRow key={t.id} track={t} index={i} />)
+        )}
       </div>
     </div>
   );
