@@ -14,7 +14,7 @@ interface Thread {
   last_message_at: string;
   unread_for_admin: boolean;
   closed: boolean;
-  profiles?: { dj_name: string | null; email: string | null; avatar_url: string | null } | null;
+  profile?: { dj_name: string | null; email: string | null; avatar_url: string | null } | null;
 }
 
 export default function AdminSupport() {
@@ -22,38 +22,25 @@ export default function AdminSupport() {
   const qc = useQueryClient();
   const [selected, setSelected] = useState<Thread | null>(null);
 
-  const { data: threads = [] } = useQuery({
+  const { data: list = [] } = useQuery({
     queryKey: ["admin-support-threads"],
     enabled: isAdmin,
-    queryFn: async () => {
-      const { data } = await supabase
+    queryFn: async (): Promise<Thread[]> => {
+      const { data: threads } = await supabase
         .from("support_threads")
-        .select("*, profiles!support_threads_user_id_fkey(dj_name,email,avatar_url)")
+        .select("*")
         .order("last_message_at", { ascending: false });
-      // FK alias may not exist — fallback fetch:
-      if (!data || data.length === 0) return [];
-      return data as unknown as Thread[];
-    },
-  });
-
-  // Fallback: fetch profiles separately if the FK alias above didn't yield them
-  const { data: threadsWithProfiles = [] } = useQuery({
-    queryKey: ["admin-support-threads-with-profiles", threads.map((t: any) => t.id).join(",")],
-    enabled: isAdmin && threads.length > 0,
-    queryFn: async () => {
-      const userIds = Array.from(new Set(threads.map((t: any) => t.user_id)));
+      if (!threads || threads.length === 0) return [];
+      const ids = Array.from(new Set(threads.map((t: any) => t.user_id)));
       const { data: profs } = await supabase
         .from("profiles")
         .select("user_id,dj_name,email,avatar_url")
-        .in("user_id", userIds);
+        .in("user_id", ids);
       const map = new Map((profs ?? []).map((p: any) => [p.user_id, p]));
-      return threads.map((t: any) => ({ ...t, profiles: map.get(t.user_id) ?? null })) as Thread[];
+      return threads.map((t: any) => ({ ...t, profile: map.get(t.user_id) ?? null })) as Thread[];
     },
   });
 
-  const list = threadsWithProfiles.length > 0 ? threadsWithProfiles : (threads as Thread[]);
-
-  // Realtime: refresh on new messages
   useEffect(() => {
     const ch = supabase
       .channel("admin-support-threads-feed")
@@ -72,7 +59,7 @@ export default function AdminSupport() {
             <Inbox className="h-4 w-4" />
             <span className="font-medium text-sm">Conversations ({list.length})</span>
           </div>
-          <div className="flex-1 overflow-y-auto divide-y divide-border">
+          <div className="flex-1 overflow-y-auto divide-y divide-border max-h-[700px]">
             {list.length === 0 ? (
               <p className="p-6 text-sm text-muted-foreground text-center">Aucune conversation.</p>
             ) : list.map((t) => {
@@ -84,16 +71,16 @@ export default function AdminSupport() {
                   className={`w-full text-left px-3 py-3 flex items-start gap-3 hover:bg-secondary/40 transition-colors ${active ? "bg-secondary/60" : ""}`}
                 >
                   <div className="h-9 w-9 rounded-full bg-secondary overflow-hidden flex items-center justify-center text-xs font-bold shrink-0">
-                    {t.profiles?.avatar_url ? (
-                      <img src={t.profiles.avatar_url} alt="" className="h-full w-full object-cover" />
+                    {t.profile?.avatar_url ? (
+                      <img src={t.profile.avatar_url} alt="" className="h-full w-full object-cover" />
                     ) : (
-                      (t.profiles?.dj_name || t.profiles?.email || "?").slice(0, 1).toUpperCase()
+                      (t.profile?.dj_name || t.profile?.email || "?").slice(0, 1).toUpperCase()
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-2">
                       <span className="text-sm font-medium truncate">
-                        {t.profiles?.dj_name || t.profiles?.email || "Utilisateur"}
+                        {t.profile?.dj_name || t.profile?.email || "Utilisateur"}
                       </span>
                       {t.unread_for_admin && (
                         <Badge className="h-4 px-1.5 text-[10px] bg-primary text-primary-foreground">
@@ -102,7 +89,7 @@ export default function AdminSupport() {
                       )}
                     </div>
                     <p className="text-[11px] text-muted-foreground truncate">
-                      {t.profiles?.email}
+                      {t.profile?.email}
                     </p>
                     <p className="text-[10px] text-muted-foreground mt-0.5">
                       {new Date(t.last_message_at).toLocaleString("fr-FR")}
@@ -114,7 +101,7 @@ export default function AdminSupport() {
           </div>
         </div>
 
-        <div className="min-h-[600px]">
+        <div>
           {selected ? (
             <SupportChat
               key={selected.id}
@@ -122,7 +109,7 @@ export default function AdminSupport() {
               className="h-[600px]"
             />
           ) : (
-            <div className="h-full flex items-center justify-center bg-card border border-border rounded-xl text-muted-foreground text-sm">
+            <div className="h-[600px] flex items-center justify-center bg-card border border-border rounded-xl text-muted-foreground text-sm">
               <div className="text-center">
                 <MessageSquare className="h-8 w-8 mx-auto mb-2 opacity-50" />
                 Sélectionne une conversation pour répondre.
