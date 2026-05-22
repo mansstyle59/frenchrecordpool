@@ -607,6 +607,7 @@ export type Database = {
           acapella_url: string | null
           artist: string
           artist_id: string | null
+          audio_format: string | null
           audio_url: string | null
           bpm: number | null
           cover_url: string | null
@@ -616,6 +617,7 @@ export type Database = {
           downloads: number | null
           duration: string | null
           featured_artists: string[] | null
+          file_size_bytes: number | null
           genre: string
           id: string
           instrumental_url: string | null
@@ -643,6 +645,7 @@ export type Database = {
           acapella_url?: string | null
           artist: string
           artist_id?: string | null
+          audio_format?: string | null
           audio_url?: string | null
           bpm?: number | null
           cover_url?: string | null
@@ -652,6 +655,7 @@ export type Database = {
           downloads?: number | null
           duration?: string | null
           featured_artists?: string[] | null
+          file_size_bytes?: number | null
           genre: string
           id?: string
           instrumental_url?: string | null
@@ -679,6 +683,7 @@ export type Database = {
           acapella_url?: string | null
           artist?: string
           artist_id?: string | null
+          audio_format?: string | null
           audio_url?: string | null
           bpm?: number | null
           cover_url?: string | null
@@ -688,6 +693,7 @@ export type Database = {
           downloads?: number | null
           duration?: string | null
           featured_artists?: string[] | null
+          file_size_bytes?: number | null
           genre?: string
           id?: string
           instrumental_url?: string | null
@@ -809,6 +815,27 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      my_download_history: {
+        Args: never
+        Returns: {
+          artist: string
+          audio_format: string
+          audio_url: string
+          bpm: number
+          cover_url: string
+          created_at: string
+          download_id: string
+          download_url: string
+          downloaded_at: string
+          duration: string
+          file_size_bytes: number
+          genre: string
+          musical_key: string
+          title: string
+          track_id: string
+          version: string
+        }[]
       }
       notify_user: {
         Args: {
