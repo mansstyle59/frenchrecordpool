@@ -332,18 +332,28 @@ export default function AdminBranding() {
           </motion.section>
 
           {/* TABS */}
-          <Tabs defaultValue="identity" className="rounded-2xl border border-border bg-card/60 backdrop-blur p-4 shadow-sm">
-            <TabsList className="grid grid-cols-4 w-full bg-secondary/50">
-              <TabsTrigger value="identity" className="text-xs"><ImageIcon className="h-3 w-3 mr-1" />Identité</TabsTrigger>
-              <TabsTrigger value="colors" className="text-xs"><Palette className="h-3 w-3 mr-1" />Couleurs</TabsTrigger>
-              <TabsTrigger value="typo" className="text-xs"><Type className="h-3 w-3 mr-1" />Typo</TabsTrigger>
-              <TabsTrigger value="content" className="text-xs"><Layout className="h-3 w-3 mr-1" />Contenu</TabsTrigger>
+          <Tabs defaultValue="identity" className="rounded-xl border border-border bg-white/5 backdrop-blur-md overflow-hidden shadow-sm">
+            <TabsList className="grid grid-cols-4 w-full bg-black/20 dark:bg-black/30 rounded-none h-auto p-0 border-b border-border">
+              {[
+                { v: "identity", icon: ImageIcon, label: "Identité" },
+                { v: "colors", icon: Palette, label: "Couleurs" },
+                { v: "typo", icon: Type, label: "Typo" },
+                { v: "content", icon: Layout, label: "Contenu" },
+              ].map((t) => (
+                <TabsTrigger
+                  key={t.v}
+                  value={t.v}
+                  className="py-3 text-xs font-medium text-muted-foreground rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:font-bold data-[state=active]:bg-transparent data-[state=active]:shadow-none flex items-center justify-center gap-1.5 transition-colors"
+                >
+                  <t.icon className="h-3.5 w-3.5" />{t.label}
+                </TabsTrigger>
+              ))}
             </TabsList>
 
             {/* ---------- Identity ---------- */}
-            <TabsContent value="identity" className="space-y-4 mt-5">
+            <TabsContent value="identity" className="space-y-5 p-5 m-0">
               <Field label="Nom du site">
-                <Input value={draft.site_name} onChange={(e) => update({ site_name: e.target.value })} className="bg-secondary border-border" />
+                <Input value={draft.site_name} onChange={(e) => update({ site_name: e.target.value })} className="bg-black/20 dark:bg-black/40 border-border focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary" />
               </Field>
               <Field label="Slogan" hint={`${(draft.tagline ?? "").length}/80`}>
                 <Input value={draft.tagline ?? ""} maxLength={80} onChange={(e) => update({ tagline: e.target.value })} className="bg-secondary border-border" />
