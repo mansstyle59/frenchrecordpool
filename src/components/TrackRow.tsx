@@ -29,7 +29,11 @@ export default function TrackRow({ track, index }: TrackRowProps) {
   const fullSrc = track.audio_url || null;
   const shortSrc = track.preview_url || null;
   const playbackSrc = hasActiveSubscription ? (fullSrc || shortSrc) : (shortSrc || fullSrc);
+  const isFullPlayback = hasActiveSubscription && !!fullSrc;
+  // Hover preview ALWAYS prefers the short clip; falls back to full but capped at 30s.
   const previewSrc = shortSrc || fullSrc;
+  const previewIsFull = !shortSrc && !!fullSrc;
+  const stopAtRef = useRef<number | null>(null);
 
   useEffect(() => {
     return () => {
@@ -49,7 +53,12 @@ export default function TrackRow({ track, index }: TrackRowProps) {
         audio.src = previewSrc;
         audio.volume = 0;
         audio.currentTime = 0;
+        audio.preload = "auto";
         previewRef.current = audio;
+        // Auto-stop after 30s if we are streaming the full track as preview
+        if (previewIsFull) {
+          stopAtRef.current = window.setTimeout(() => stopPreview(), 30_000) as unknown as number;
+        }
         const fadeIn = () => {
           let v = 0;
           const id = window.setInterval(() => {
@@ -65,6 +74,7 @@ export default function TrackRow({ track, index }: TrackRowProps) {
 
   const stopPreview = () => {
     if (hoverTimer.current) { window.clearTimeout(hoverTimer.current); hoverTimer.current = null; }
+    if (stopAtRef.current) { window.clearTimeout(stopAtRef.current); stopAtRef.current = null; }
     const audio = previewRef.current;
     if (audio) {
       try { audio.pause(); audio.currentTime = 0; } catch {}
