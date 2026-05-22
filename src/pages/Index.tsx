@@ -313,15 +313,18 @@ export default function Index() {
 
       {/* Nouveautés liste */}
       <section className="container py-12">
-        <SectionHeader icon={<Clock className="h-4 w-4" />} title="Nouveautés" subtitle="Les derniers ajouts au pool." href="/new" />
+        <SectionHeader icon={<Clock className="h-4 w-4" />} title={<CmsText editKey="home.new.title" as="span">Nouveautés</CmsText>} subtitle={<CmsText editKey="home.new.subtitle" as="span">Les derniers ajouts au pool.</CmsText>} href="/new" />
         <TrackListShell isLoading={isLoading} empty={newTracks.length === 0} emptyText="Aucune track disponible. L'admin doit ajouter des musiques.">
           {newTracks.map((track, i) => <TrackRow key={track.id} track={track} index={i} />)}
         </TrackListShell>
       </section>
 
+      {/* Widgets dynamiques (newsletter, countdown, promo, etc.) */}
+      <HomeWidgets />
+
       {/* Top */}
       <section className="container py-12">
-        <SectionHeader icon={<TrendingUp className="h-4 w-4" />} title="Top Téléchargements" subtitle="Ce que les DJs jouent en ce moment." href="/new" accent />
+        <SectionHeader icon={<TrendingUp className="h-4 w-4" />} title={<CmsText editKey="home.top.title" as="span">Top Téléchargements</CmsText>} subtitle={<CmsText editKey="home.top.subtitle" as="span">Ce que les DJs jouent en ce moment.</CmsText>} href="/new" accent />
         <TrackListShell isLoading={isLoading} empty={topTracks.length === 0} emptyText="Aucune track disponible.">
           {topTracks.map((track, i) => <TrackRow key={track.id} track={track} index={i} />)}
         </TrackListShell>
@@ -329,7 +332,7 @@ export default function Index() {
 
       {/* Genres */}
       <section className="container py-12 pb-24">
-        <SectionHeader icon={<Star className="h-4 w-4" />} title="Genres Populaires" subtitle="Explorez par style et ambiance." />
+        <SectionHeader icon={<Star className="h-4 w-4" />} title={<CmsText editKey="home.genres.title" as="span">Genres Populaires</CmsText>} subtitle={<CmsText editKey="home.genres.subtitle" as="span">Explorez par style et ambiance.</CmsText>} />
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
           {genres.map((genre) => (
             <GenreCard key={genre} genre={genre} trackCount={tracks.filter((t) => t.genre === genre).length} />
