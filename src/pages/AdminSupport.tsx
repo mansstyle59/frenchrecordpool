@@ -5,7 +5,15 @@ import { useAuth } from "@/contexts/AuthContext";
 import AdminLayout from "@/components/admin/AdminLayout";
 import SupportChat from "@/components/SupportChat";
 import { Badge } from "@/components/ui/badge";
-import { MessageSquare, Inbox } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { MessageSquare, Inbox, Trash2, Eraser } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+
 
 interface Thread {
   id: string;
