@@ -18,6 +18,7 @@ type Artist = {
   id: string;
   name: string;
   slug: string;
+  kind: string;
   photo_url: string | null;
   bio: string | null;
   country: string | null;
@@ -30,7 +31,7 @@ type Artist = {
 };
 
 const empty = {
-  name: "", slug: "", photo_url: "", bio: "", country: "", genre: "",
+  name: "", slug: "", kind: "remixer", photo_url: "", bio: "", country: "", genre: "",
   soundcloud_url: "", instagram_url: "", website_url: "",
   featured: false, sort_order: 0,
 };
@@ -100,7 +101,7 @@ export default function AdminArtists() {
   const openEdit = (a: Artist) => {
     setEditing(a);
     setForm({
-      name: a.name, slug: a.slug,
+      name: a.name, slug: a.slug, kind: a.kind || "remixer",
       photo_url: a.photo_url ?? "", bio: a.bio ?? "",
       country: a.country ?? "", genre: a.genre ?? "",
       soundcloud_url: a.soundcloud_url ?? "",
@@ -133,6 +134,7 @@ export default function AdminArtists() {
     const payload: any = {
       name: form.name.trim(),
       slug,
+      kind: form.kind || "remixer",
       photo_url: photoUrl,
       bio: form.bio || null,
       country: form.country || null,
