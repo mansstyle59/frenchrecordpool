@@ -988,6 +988,193 @@ function TypeFields({ w, setC }: { w: Widget; setC: (k: string, v: any) => void 
           <Field label="URL CTA"><Input value={c.cta_url ?? ""} onChange={(e) => setC("cta_url", e.target.value)} /></Field>
         </>
       );
+    case "top_downloads":
+    case "new_releases":
+      return (
+        <>
+          <Field label="Titre"><Input value={c.title ?? ""} onChange={(e) => setC("title", e.target.value)} /></Field>
+          <Field label="Nombre"><Input type="number" min={1} max={24} value={c.limit ?? 8} onChange={(e) => setC("limit", parseInt(e.target.value) || 8)} /></Field>
+          <Field label='URL "Tout voir"'><Input value={c.see_all_url ?? ""} onChange={(e) => setC("see_all_url", e.target.value)} /></Field>
+        </>
+      );
+    case "top_genre":
+      return (
+        <>
+          <Field label="Titre (vide = auto)"><Input value={c.title ?? ""} onChange={(e) => setC("title", e.target.value)} /></Field>
+          <Field label="Genre forcé (vide = top auto)"><Input value={c.genre ?? ""} onChange={(e) => setC("genre", e.target.value)} placeholder="House, Techno..." /></Field>
+          <Field label="Nombre"><Input type="number" min={1} max={20} value={c.limit ?? 6} onChange={(e) => setC("limit", parseInt(e.target.value) || 6)} /></Field>
+        </>
+      );
+    case "top_label":
+    case "top_artists":
+      return (
+        <>
+          <Field label="Titre"><Input value={c.title ?? ""} onChange={(e) => setC("title", e.target.value)} /></Field>
+          <Field label="Nombre"><Input type="number" min={2} max={24} value={c.limit ?? 8} onChange={(e) => setC("limit", parseInt(e.target.value) || 8)} /></Field>
+        </>
+      );
+    case "slides_carousel":
+      return (
+        <>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex items-center gap-2">
+              <Switch checked={!!c.autoplay} onCheckedChange={(v) => setC("autoplay", v)} />
+              <span className="text-sm">Autoplay</span>
+            </div>
+            <Field label="Durée (s)"><Input type="number" min={2} max={30} value={c.duration ?? 5} onChange={(e) => setC("duration", parseInt(e.target.value) || 5)} /></Field>
+          </div>
+          <RepeaterField label="Slides" items={c.slides ?? []} empty={{ title: "", body: "", image_url: "", cta_label: "", cta_url: "" }} onChange={(v) => setC("slides", v)}
+            render={(it, set) => (
+              <div className="space-y-2">
+                <Input placeholder="Eyebrow" value={it.eyebrow ?? ""} onChange={(e) => set({ ...it, eyebrow: e.target.value })} />
+                <Input placeholder="Titre" value={it.title ?? ""} onChange={(e) => set({ ...it, title: e.target.value })} />
+                <Textarea rows={2} placeholder="Texte" value={it.body ?? ""} onChange={(e) => set({ ...it, body: e.target.value })} />
+                <Input placeholder="Image URL" value={it.image_url ?? ""} onChange={(e) => set({ ...it, image_url: e.target.value })} />
+                <div className="grid grid-cols-2 gap-2">
+                  <Input placeholder="CTA label" value={it.cta_label ?? ""} onChange={(e) => set({ ...it, cta_label: e.target.value })} />
+                  <Input placeholder="CTA URL" value={it.cta_url ?? ""} onChange={(e) => set({ ...it, cta_url: e.target.value })} />
+                </div>
+              </div>
+            )} />
+        </>
+      );
+    case "image_gallery":
+      return (
+        <>
+          <Field label="Titre"><Input value={c.title ?? ""} onChange={(e) => setC("title", e.target.value)} /></Field>
+          <RepeaterField label="Images" items={c.images ?? []} empty={{ image_url: "", url: "", alt: "" }} onChange={(v) => setC("images", v)}
+            render={(it, set) => (
+              <div className="space-y-2">
+                <Input placeholder="Image URL" value={it.image_url ?? ""} onChange={(e) => set({ ...it, image_url: e.target.value })} />
+                <div className="grid grid-cols-2 gap-2">
+                  <Input placeholder="Lien (optionnel)" value={it.url ?? ""} onChange={(e) => set({ ...it, url: e.target.value })} />
+                  <Input placeholder="Alt" value={it.alt ?? ""} onChange={(e) => set({ ...it, alt: e.target.value })} />
+                </div>
+              </div>
+            )} />
+        </>
+      );
+    case "marquee":
+      return (
+        <Field label="Texte (séparé par ·)"><Input value={c.items ?? ""} onChange={(e) => setC("items", e.target.value)} placeholder="FRESH · NEW · HOT" /></Field>
+      );
+    case "live_counter":
+      return (
+        <>
+          <Field label="Libellé"><Input value={c.label ?? ""} onChange={(e) => setC("label", e.target.value)} /></Field>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="CTA"><Input value={c.cta_label ?? ""} onChange={(e) => setC("cta_label", e.target.value)} /></Field>
+            <Field label="URL"><Input value={c.cta_url ?? ""} onChange={(e) => setC("cta_url", e.target.value)} /></Field>
+          </div>
+        </>
+      );
+    case "plans_compare":
+      return (
+        <>
+          <Field label="Titre"><Input value={c.title ?? ""} onChange={(e) => setC("title", e.target.value)} /></Field>
+          <Field label="Sous-titre"><Textarea rows={2} value={c.subtitle ?? ""} onChange={(e) => setC("subtitle", e.target.value)} /></Field>
+          <Field label="Slug du plan mis en avant"><Input value={c.highlight_slug ?? ""} onChange={(e) => setC("highlight_slug", e.target.value)} placeholder="premium" /></Field>
+        </>
+      );
+    case "features_grid":
+      return (
+        <>
+          <Field label="Titre"><Input value={c.title ?? ""} onChange={(e) => setC("title", e.target.value)} /></Field>
+          <Field label="Sous-titre"><Textarea rows={2} value={c.subtitle ?? ""} onChange={(e) => setC("subtitle", e.target.value)} /></Field>
+          <RepeaterField label="Features" items={c.items ?? []} empty={{ icon: "Sparkles", title: "", body: "" }} onChange={(v) => setC("items", v)}
+            render={(it, set) => (
+              <div className="space-y-2">
+                <div className="grid grid-cols-2 gap-2">
+                  <Input placeholder="Icône (Download, Music2, Star, Headphones, Sparkles, Radio, Disc3, Mail, Clock)" value={it.icon ?? ""} onChange={(e) => set({ ...it, icon: e.target.value })} />
+                  <Input placeholder="Titre" value={it.title ?? ""} onChange={(e) => set({ ...it, title: e.target.value })} />
+                </div>
+                <Textarea rows={2} placeholder="Description" value={it.body ?? ""} onChange={(e) => set({ ...it, body: e.target.value })} />
+              </div>
+            )} />
+        </>
+      );
+    case "video_testimonial":
+      return (
+        <>
+          <Field label="URL vidéo YouTube"><Input value={c.video_url ?? ""} onChange={(e) => setC("video_url", e.target.value)} /></Field>
+          <Field label="Citation"><Textarea rows={3} value={c.quote ?? ""} onChange={(e) => setC("quote", e.target.value)} /></Field>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Auteur"><Input value={c.author ?? ""} onChange={(e) => setC("author", e.target.value)} /></Field>
+            <Field label="Rôle"><Input value={c.role ?? ""} onChange={(e) => setC("role", e.target.value)} /></Field>
+          </div>
+          <Field label="Avatar URL"><Input value={c.avatar ?? ""} onChange={(e) => setC("avatar", e.target.value)} /></Field>
+        </>
+      );
+    case "sticky_promo":
+      return (
+        <>
+          <Field label="Titre / message"><Input value={c.title ?? ""} onChange={(e) => setC("title", e.target.value)} /></Field>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="CTA"><Input value={c.cta_label ?? ""} onChange={(e) => setC("cta_label", e.target.value)} /></Field>
+            <Field label="URL"><Input value={c.cta_url ?? ""} onChange={(e) => setC("cta_url", e.target.value)} /></Field>
+            <Field label="Fond (HSL)"><Input value={c.bg_color ?? ""} onChange={(e) => setC("bg_color", e.target.value)} placeholder="220 80% 25%" /></Field>
+            <Field label="Texte (HSL)"><Input value={c.text_color ?? ""} onChange={(e) => setC("text_color", e.target.value)} placeholder="0 0% 100%" /></Field>
+          </div>
+        </>
+      );
+    case "blog_cards":
+      return (
+        <>
+          <Field label="Titre"><Input value={c.title ?? ""} onChange={(e) => setC("title", e.target.value)} /></Field>
+          <RepeaterField label="Articles" items={c.items ?? []} empty={{ title: "", excerpt: "", image_url: "", category: "", date: "", url: "" }} onChange={(v) => setC("items", v)}
+            render={(it, set) => (
+              <div className="space-y-2">
+                <Input placeholder="Titre" value={it.title ?? ""} onChange={(e) => set({ ...it, title: e.target.value })} />
+                <Textarea rows={2} placeholder="Extrait" value={it.excerpt ?? ""} onChange={(e) => set({ ...it, excerpt: e.target.value })} />
+                <Input placeholder="Image URL" value={it.image_url ?? ""} onChange={(e) => set({ ...it, image_url: e.target.value })} />
+                <div className="grid grid-cols-3 gap-2">
+                  <Input placeholder="Catégorie" value={it.category ?? ""} onChange={(e) => set({ ...it, category: e.target.value })} />
+                  <Input placeholder="Date" value={it.date ?? ""} onChange={(e) => set({ ...it, date: e.target.value })} />
+                  <Input placeholder="Lien" value={it.url ?? ""} onChange={(e) => set({ ...it, url: e.target.value })} />
+                </div>
+              </div>
+            )} />
+        </>
+      );
+    case "team_grid":
+      return (
+        <>
+          <Field label="Titre"><Input value={c.title ?? ""} onChange={(e) => setC("title", e.target.value)} /></Field>
+          <RepeaterField label="Membres" items={c.items ?? []} empty={{ name: "", role: "", avatar: "" }} onChange={(v) => setC("items", v)}
+            render={(it, set) => (
+              <div className="space-y-2">
+                <div className="grid grid-cols-2 gap-2">
+                  <Input placeholder="Nom" value={it.name ?? ""} onChange={(e) => set({ ...it, name: e.target.value })} />
+                  <Input placeholder="Rôle" value={it.role ?? ""} onChange={(e) => set({ ...it, role: e.target.value })} />
+                </div>
+                <Input placeholder="Avatar URL" value={it.avatar ?? ""} onChange={(e) => set({ ...it, avatar: e.target.value })} />
+              </div>
+            )} />
+        </>
+      );
+    case "audio_embed":
+      return (
+        <>
+          <Field label="Titre (optionnel)"><Input value={c.title ?? ""} onChange={(e) => setC("title", e.target.value)} /></Field>
+          <Field label="URL Spotify ou SoundCloud"><Input value={c.url ?? ""} onChange={(e) => setC("url", e.target.value)} placeholder="https://open.spotify.com/..." /></Field>
+        </>
+      );
+    case "instagram_feed":
+      return (
+        <>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Titre"><Input value={c.title ?? ""} onChange={(e) => setC("title", e.target.value)} /></Field>
+            <Field label="@handle"><Input value={c.handle ?? ""} onChange={(e) => setC("handle", e.target.value)} placeholder="frenchrecordpool" /></Field>
+          </div>
+          <RepeaterField label="Posts" items={c.items ?? []} empty={{ image_url: "", url: "" }} onChange={(v) => setC("items", v)}
+            render={(it, set) => (
+              <div className="space-y-2">
+                <Input placeholder="Image URL" value={it.image_url ?? ""} onChange={(e) => set({ ...it, image_url: e.target.value })} />
+                <Input placeholder="Lien post" value={it.url ?? ""} onChange={(e) => set({ ...it, url: e.target.value })} />
+              </div>
+            )} />
+        </>
+      );
     default:
       return null;
   }
