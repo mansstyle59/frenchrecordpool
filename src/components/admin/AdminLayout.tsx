@@ -27,6 +27,7 @@ const items = [
   { to: "/admin/screenshot-studio", label: "Screenshot Studio", icon: Camera },
   { to: "/admin/popups", label: "Popup Studio", icon: MessageSquare },
   { to: "/admin/widgets", label: "Widgets Home", icon: Blocks },
+  { to: "/admin/support", label: "Support", icon: MessageSquare },
   { to: "/admin/audit", label: "Journal", icon: ScrollText },
 ];
 
