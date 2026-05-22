@@ -15,10 +15,11 @@ export interface WidgetCommon {
   anim_delay?: number;     // ms
 }
 
+// djcity-like: contenu cadré ~1200-1280px max au centre, marges latérales.
 export const CONTAINER_CLASS: Record<NonNullable<WidgetCommon["container"]>, string> = {
   full: "w-full",
-  wide: "max-w-screen-2xl mx-auto px-4",
-  default: "container",
+  wide: "max-w-[1440px] mx-auto px-4 md:px-6",
+  default: "max-w-[1200px] mx-auto px-4 md:px-6",
   narrow: "max-w-3xl mx-auto px-4",
 };
 
