@@ -60,6 +60,7 @@ export default function PopupHost() {
   const { pathname } = useLocation();
   const [popups, setPopups] = useState<Popup[]>([]);
   const [active, setActive] = useState<Popup | null>(null);
+  const [dismissed, setDismissed] = useState<Set<string>>(() => new Set());
 
   useEffect(() => {
     let cancelled = false;
