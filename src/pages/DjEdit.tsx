@@ -34,6 +34,8 @@ export default function DjEdit() {
     }
   }, [isLoading, track, user, navigate]);
 
+  const isApproved = track?.status === "approved";
+
   const handleSubmit = async (data: TrackFormData) => {
     if (!id) return;
     setSaving(true);
@@ -50,9 +52,15 @@ export default function DjEdit() {
           instrumental_url: (track as any)?.instrumental_url ?? null,
         },
       });
-      const { error } = await supabase.rpc("dj_update_own_track" as any, { _id: id, _track: payload as any });
-      if (error) throw error;
-      toast({ title: "Morceau mis à jour", description: "Il repasse en attente de validation." });
+      if (isApproved) {
+        const { error } = await supabase.rpc("dj_submit_track_revision" as any, { _track_id: id, _payload: payload as any });
+        if (error) throw error;
+        toast({ title: "Demande envoyée", description: "Tes modifications attendent la validation d'un admin." });
+      } else {
+        const { error } = await supabase.rpc("dj_update_own_track" as any, { _id: id, _track: payload as any });
+        if (error) throw error;
+        toast({ title: "Morceau mis à jour", description: "Il repasse en attente de validation." });
+      }
       qc.invalidateQueries({ queryKey: ["my-tracks", user?.id] });
       navigate("/dj/tracks");
     } catch (err: any) {
@@ -68,7 +76,9 @@ export default function DjEdit() {
   return (
     <DjLayout
       title={`Modifier — ${track.title}`}
-      subtitle="La modification renvoie le morceau en file d'attente pour validation."
+      subtitle={isApproved
+        ? "Tes modifications seront soumises à l'admin avant publication."
+        : "La modification renvoie le morceau en file d'attente pour validation."}
     >
       {track.status === "rejected" && track.rejection_reason && (
         <div className="rounded-xl border border-destructive/30 bg-destructive/10 p-4 flex items-start gap-3">
@@ -76,6 +86,15 @@ export default function DjEdit() {
           <div>
             <p className="font-semibold text-destructive">Motif du refus</p>
             <p className="text-sm">{track.rejection_reason}</p>
+          </div>
+        </div>
+      )}
+      {isApproved && (
+        <div className="rounded-xl border border-primary/30 bg-primary/10 p-4 flex items-start gap-3">
+          <AlertCircle className="h-5 w-5 text-primary mt-0.5 shrink-0" />
+          <div>
+            <p className="font-semibold text-primary">Morceau déjà publié</p>
+            <p className="text-sm text-muted-foreground">Tes changements créeront une demande de modification. Le morceau actuel reste en ligne jusqu'à validation.</p>
           </div>
         </div>
       )}

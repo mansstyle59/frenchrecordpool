@@ -979,6 +979,10 @@ export type Database = {
       }
     }
     Functions: {
+      admin_apply_track_revision: {
+        Args: { _revision_id: string }
+        Returns: undefined
+      }
       admin_assign_plan: {
         Args: { _months?: number; _plan_id: string; _user_id: string }
         Returns: undefined
@@ -997,6 +1001,10 @@ export type Database = {
       }
       admin_delete_track: { Args: { _id: string }; Returns: undefined }
       admin_delete_user: { Args: { _user_id: string }; Returns: undefined }
+      admin_reject_track_revision: {
+        Args: { _reason?: string; _revision_id: string }
+        Returns: undefined
+      }
       admin_review_track: {
         Args: {
           _decision: string
@@ -1027,6 +1035,10 @@ export type Database = {
         Returns: undefined
       }
       dj_submit_track: { Args: { _track: Json }; Returns: string }
+      dj_submit_track_revision: {
+        Args: { _payload: Json; _track_id: string }
+        Returns: string
+      }
       dj_update_own_track: {
         Args: { _id: string; _track: Json }
         Returns: undefined
