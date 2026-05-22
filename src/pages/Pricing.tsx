@@ -1,7 +1,6 @@
 import { motion } from "framer-motion";
 import { Check, Sparkles, CreditCard, Shield } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
 import Layout from "@/components/Layout";
 import PageHero from "@/components/PageHero";
 import { Button } from "@/components/ui/button";
@@ -9,8 +8,10 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import CmsText from "@/components/cms/CmsText";
 import RedeemPromoCard from "@/components/RedeemPromoCard";
+import PlanRequestDialog from "@/components/PlanRequestDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+
 
 const INTERVAL_LABEL: Record<string, string> = {
   month: "/mois", year: "/an", lifetime: " à vie",
