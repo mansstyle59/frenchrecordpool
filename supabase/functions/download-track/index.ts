@@ -44,7 +44,8 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { track_id } = await req.json();
+    const { track_id, mode } = await req.json();
+    const isStream = mode === "stream";
     if (!track_id) {
       return new Response(JSON.stringify({ error: "track_id manquant" }), {
         status: 400,
@@ -75,8 +76,10 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Record download
-    await adminClient.from("downloads").insert({ user_id: user.id, track_id: track.id });
+    // Record download (skip for streaming)
+    if (!isStream) {
+      await adminClient.from("downloads").insert({ user_id: user.id, track_id: track.id });
+    }
 
     // Sanitize a filename segment (remove illegal chars, collapse spaces)
     const sanitize = (s: string) =>
@@ -117,7 +120,7 @@ Deno.serve(async (req) => {
 
       const { data: signedData, error: signedError } = await adminClient.storage
         .from("track-audio")
-        .createSignedUrl(storagePath, 300, { download: filename });
+        .createSignedUrl(storagePath, isStream ? 3600 : 300, isStream ? undefined : { download: filename });
 
       if (signedError || !signedData?.signedUrl) {
         return new Response(JSON.stringify({ error: "Impossible de générer le lien" }), {

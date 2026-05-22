@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { usePlayer } from "@/contexts/PlayerContext";
 import { useAuth } from "@/contexts/AuthContext";
-import { downloadTrack } from "@/lib/downloadTrack";
+import { downloadTrack, getFullStreamUrl } from "@/lib/downloadTrack";
 import { useFavorites } from "@/hooks/useFavorites";
 import type { DbTrack } from "@/hooks/useTracks";
 import { resolveCover } from "@/lib/trackCover";
@@ -103,7 +103,7 @@ export default function TrackRow({ track }: TrackRowProps) {
     setPreviewing(false);
   };
 
-  const handlePlay = () => {
+  const handlePlay = async () => {
     stopPreview();
     if (isCurrentTrack) { toggle(); return; }
     if (!playbackSrc) {
@@ -114,9 +114,15 @@ export default function TrackRow({ track }: TrackRowProps) {
       }
       return;
     }
+    let src = playbackSrc;
+    // For full playback from a private storage bucket, fetch a signed streaming URL
+    if (isFullPlayback && fullSrc && fullSrc.includes("/object/public/track-audio/")) {
+      const signed = await getFullStreamUrl(track.id);
+      if (signed) src = signed;
+    }
     play({
       id: track.id, title: track.title, artist: track.artist,
-      coverUrl: resolveCover(track), previewUrl: playbackSrc, isFull: isFullPlayback,
+      coverUrl: resolveCover(track), previewUrl: src, isFull: isFullPlayback,
     });
   };
 

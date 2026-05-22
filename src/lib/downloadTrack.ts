@@ -44,3 +44,24 @@ export async function downloadTrack(trackId: string, user: { id: string } | null
     toast({ title: "Erreur de téléchargement", description: err.message, variant: "destructive" });
   }
 }
+
+/**
+ * Return a short-lived signed URL to STREAM the full track (subscription required).
+ * Returns null if the user isn't subscribed, the track isn't found, or the source
+ * is an external (non-storage) link — in that case the caller should fall back to
+ * the public/preview URL.
+ */
+export async function getFullStreamUrl(trackId: string): Promise<string | null> {
+  try {
+    const { data, error } = await supabase.functions.invoke("download-track", {
+      body: { track_id: trackId, mode: "stream" },
+    });
+    if (error || !data || data.error) return null;
+    if (data.type === "file" && data.download_url) return data.download_url as string;
+    // External links can be played directly if the host allows it
+    if (data.type === "link" && data.download_url) return data.download_url as string;
+    return null;
+  } catch {
+    return null;
+  }
+}
