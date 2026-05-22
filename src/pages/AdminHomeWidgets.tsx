@@ -92,6 +92,9 @@ export default function AdminHomeWidgets() {
   const qc = useQueryClient();
   const [editing, setEditing] = useState<Widget | null>(null);
   const [previewMode, setPreviewMode] = useState<"desktop" | "mobile">("desktop");
+  const [viewMode, setViewMode] = useState<"edit" | "user">("edit");
+  // Local draft for composition (order + active flags); committed via "Publier"
+  const [draft, setDraft] = useState<Widget[] | null>(null);
 
   const { data: widgets = [], isLoading } = useQuery({
     queryKey: ["admin-home-widgets"],
@@ -102,6 +105,16 @@ export default function AdminHomeWidgets() {
       return data as Widget[];
     },
   });
+
+  // Sync draft when server data changes & no pending changes
+  useEffect(() => {
+    if (draft === null) return;
+    // keep current draft; user must publish or discard
+  }, [widgets]);
+
+  const list: Widget[] = draft ?? widgets;
+  const isDirty = draft !== null && JSON.stringify(draft.map(w => ({ id: w.id, position: w.position, is_active: w.is_active })))
+    !== JSON.stringify(widgets.map(w => ({ id: w.id, position: w.position, is_active: w.is_active })));
 
   const upsert = useMutation({
     mutationFn: async (w: Widget) => {
@@ -125,25 +138,25 @@ export default function AdminHomeWidgets() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["admin-home-widgets"] });
+      setDraft(null);
       toast.success("Widget supprimé");
     },
   });
 
-  const reorder = useMutation({
-    mutationFn: async (items: { id: string; position: number }[]) => {
-      await Promise.all(items.map(({ id, position }) =>
-        supabase.from("home_widgets").update({ position }).eq("id", id)
+  const publishDraft = useMutation({
+    mutationFn: async (items: Widget[]) => {
+      await Promise.all(items.map((w) =>
+        supabase.from("home_widgets")
+          .update({ position: w.position, is_active: w.is_active })
+          .eq("id", w.id!)
       ));
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["admin-home-widgets"] }),
-  });
-
-  const toggleActive = useMutation({
-    mutationFn: async ({ id, is_active }: { id: string; is_active: boolean }) => {
-      const { error } = await supabase.from("home_widgets").update({ is_active }).eq("id", id);
-      if (error) throw error;
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin-home-widgets"] });
+      setDraft(null);
+      toast.success("Modifications publiées");
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["admin-home-widgets"] }),
+    onError: (e: any) => toast.error(e?.message || "Erreur de publication"),
   });
 
   const sensors = useSensors(
@@ -154,18 +167,21 @@ export default function AdminHomeWidgets() {
   const onDragEnd = (e: DragEndEvent) => {
     const { active, over } = e;
     if (!over || active.id === over.id) return;
-    const oldIdx = widgets.findIndex((w) => w.id === active.id);
-    const newIdx = widgets.findIndex((w) => w.id === over.id);
+    const oldIdx = list.findIndex((w) => w.id === active.id);
+    const newIdx = list.findIndex((w) => w.id === over.id);
     if (oldIdx < 0 || newIdx < 0) return;
-    const next = arrayMove(widgets, oldIdx, newIdx);
-    qc.setQueryData(["admin-home-widgets"], next.map((w, i) => ({ ...w, position: i })));
-    reorder.mutate(next.map((w, i) => ({ id: w.id!, position: i })));
+    const next = arrayMove(list, oldIdx, newIdx).map((w, i) => ({ ...w, position: i }));
+    setDraft(next);
+  };
+
+  const toggleActiveLocal = (id: string, is_active: boolean) => {
+    setDraft(list.map((w) => (w.id === id ? { ...w, is_active } : w)));
   };
 
   const addNew = (type: string) => {
     const meta = TYPE_META[type];
     setEditing({
-      type, position: widgets.length, config: { ...meta.defaults }, is_active: true,
+      type, position: list.length, config: { ...meta.defaults }, is_active: true,
     });
   };
 
@@ -174,10 +190,69 @@ export default function AdminHomeWidgets() {
     return acc;
   }, {} as Record<string, [string, typeof TYPE_META[string]][]>);
 
-  const activePreview = widgets.filter((w) => w.is_active) as HWidget[];
+  const activePreview = list.filter((w) => w.is_active) as HWidget[];
 
   return (
     <AdminLayout title="Widgets Homepage" subtitle="La page d'accueil = des blocs modulaires." wide>
+      {/* ─── Top toolbar : mode toggle + draft actions ─── */}
+      <div className="sticky top-0 z-30 -mx-4 px-4 py-3 mb-4 bg-background/85 backdrop-blur-xl border-b border-border flex flex-wrap items-center gap-3">
+        <div className="inline-flex rounded-xl border border-border bg-card p-1 shadow-sm">
+          <button
+            onClick={() => setViewMode("edit")}
+            className={`relative flex items-center gap-1.5 px-3 h-8 rounded-lg text-xs font-bold uppercase tracking-wider transition ${
+              viewMode === "edit" ? "bg-primary text-primary-foreground shadow" : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <Pencil className="h-3.5 w-3.5" /> Édition
+          </button>
+          <button
+            onClick={() => setViewMode("user")}
+            className={`relative flex items-center gap-1.5 px-3 h-8 rounded-lg text-xs font-bold uppercase tracking-wider transition ${
+              viewMode === "user" ? "bg-primary text-primary-foreground shadow" : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <Eye className="h-3.5 w-3.5" /> Voir comme user
+          </button>
+        </div>
+
+        <div className="inline-flex rounded-xl border border-border bg-card p-1 shadow-sm">
+          <Button
+            size="sm" variant={previewMode === "desktop" ? "secondary" : "ghost"}
+            className="h-8 px-2" onClick={() => setPreviewMode("desktop")}
+            title="Desktop"
+          >
+            <Monitor className="h-3.5 w-3.5" />
+          </Button>
+          <Button
+            size="sm" variant={previewMode === "mobile" ? "secondary" : "ghost"}
+            className="h-8 px-2" onClick={() => setPreviewMode("mobile")}
+            title="Mobile"
+          >
+            <Smartphone className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+
+        <AnimatePresence>
+          {isDirty && (
+            <motion.div
+              initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -8 }}
+              className="ml-auto flex items-center gap-2"
+            >
+              <Badge className="bg-amber-500/15 text-amber-600 border-amber-500/30 border">
+                Brouillon non publié
+              </Badge>
+              <Button size="sm" variant="outline" onClick={() => setDraft(null)} disabled={publishDraft.isPending}>
+                <Undo2 className="h-3.5 w-3.5 mr-1" /> Annuler
+              </Button>
+              <Button size="sm" onClick={() => publishDraft.mutate(draft!)} disabled={publishDraft.isPending}>
+                <CheckCircle2 className="h-3.5 w-3.5 mr-1" />
+                {publishDraft.isPending ? "Publication…" : "Publier"}
+              </Button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
       {editing ? (
         <Editor
           widget={editing}
@@ -185,7 +260,32 @@ export default function AdminHomeWidgets() {
           onSave={(w) => upsert.mutate(w)}
           saving={upsert.isPending}
         />
+      ) : viewMode === "user" ? (
+        /* ─── USER MODE : preview only, full width, no admin chrome ─── */
+        <motion.div
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+          className="rounded-2xl border border-border bg-background overflow-hidden shadow-xl"
+        >
+          <div className="flex items-center gap-2 px-4 h-9 border-b border-border bg-muted/40 text-[11px] text-muted-foreground">
+            <span className="w-2.5 h-2.5 rounded-full bg-destructive/70" />
+            <span className="w-2.5 h-2.5 rounded-full bg-amber-500/70" />
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500/70" />
+            <span className="ml-3 truncate">frenchrecordpool.com / — vu comme un visiteur</span>
+          </div>
+          <ScrollArea className="h-[calc(100vh-220px)]">
+            <div className={previewMode === "mobile" ? "max-w-[420px] mx-auto py-4" : "py-4"}>
+              {activePreview.length === 0 ? (
+                <div className="text-center text-sm text-muted-foreground py-20">
+                  Aucun widget actif. Revenez en mode Édition.
+                </div>
+              ) : (
+                <HomeWidgets widgets={activePreview} preview />
+              )}
+            </div>
+          </ScrollArea>
+        </motion.div>
       ) : (
+        /* ─── EDIT MODE : split list + live preview ─── */
         <div className="grid lg:grid-cols-[1fr_1fr] gap-6 min-h-[700px]">
           {/* LEFT: List + add */}
           <div className="space-y-6">
@@ -220,27 +320,27 @@ export default function AdminHomeWidgets() {
             <div>
               <div className="flex items-center justify-between mb-3">
                 <Label className="text-xs uppercase tracking-wider text-muted-foreground">
-                  Composition ({widgets.length})
+                  Composition ({list.length})
                 </Label>
-                <p className="text-[10px] text-muted-foreground">Glisse pour réordonner</p>
+                <p className="text-[10px] text-muted-foreground">Glisse pour réordonner · publie pour valider</p>
               </div>
               {isLoading ? (
                 <p className="text-muted-foreground text-sm">Chargement…</p>
-              ) : widgets.length === 0 ? (
+              ) : list.length === 0 ? (
                 <div className="text-center py-12 rounded-2xl border border-dashed text-sm text-muted-foreground">
                   Aucun widget. Ajoute ton premier bloc.
                 </div>
               ) : (
                 <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
-                  <SortableContext items={widgets.map((w) => w.id!)} strategy={verticalListSortingStrategy}>
+                  <SortableContext items={list.map((w) => w.id!)} strategy={verticalListSortingStrategy}>
                     <div className="space-y-2">
-                      {widgets.map((w) => (
+                      {list.map((w) => (
                         <SortableItem
                           key={w.id}
                           widget={w}
                           onEdit={() => setEditing(w)}
                           onRemove={() => confirm("Supprimer ce widget ?") && remove.mutate(w.id!)}
-                          onToggle={(v) => toggleActive.mutate({ id: w.id!, is_active: v })}
+                          onToggle={(v) => toggleActiveLocal(w.id!, v)}
                         />
                       ))}
                     </div>
@@ -251,25 +351,11 @@ export default function AdminHomeWidgets() {
           </div>
 
           {/* RIGHT: Live preview */}
-          <div className="lg:sticky lg:top-4 lg:h-[calc(100vh-100px)]">
-            <div className="flex items-center justify-between mb-3">
-              <Label className="text-xs uppercase tracking-wider text-muted-foreground">Aperçu en direct</Label>
-              <div className="flex gap-1 rounded-lg border border-border p-0.5">
-                <Button
-                  size="sm" variant={previewMode === "desktop" ? "secondary" : "ghost"}
-                  className="h-7 px-2" onClick={() => setPreviewMode("desktop")}
-                >
-                  <Monitor className="h-3.5 w-3.5" />
-                </Button>
-                <Button
-                  size="sm" variant={previewMode === "mobile" ? "secondary" : "ghost"}
-                  className="h-7 px-2" onClick={() => setPreviewMode("mobile")}
-                >
-                  <Smartphone className="h-3.5 w-3.5" />
-                </Button>
-              </div>
-            </div>
-            <div className="rounded-2xl border border-border bg-background overflow-hidden h-[calc(100%-40px)]">
+          <div className="lg:sticky lg:top-24 lg:h-[calc(100vh-180px)]">
+            <Label className="text-xs uppercase tracking-wider text-muted-foreground mb-2 block">
+              Aperçu en direct {isDirty && <span className="text-amber-500 normal-case">· brouillon</span>}
+            </Label>
+            <div className="rounded-2xl border border-border bg-background overflow-hidden h-[calc(100%-28px)]">
               <ScrollArea className="h-full">
                 <div className={previewMode === "mobile" ? "max-w-[380px] mx-auto py-4" : "py-4"}>
                   {activePreview.length === 0 ? (
@@ -288,6 +374,7 @@ export default function AdminHomeWidgets() {
     </AdminLayout>
   );
 }
+
 
 /* ─── Sortable item ─── */
 function SortableItem({
