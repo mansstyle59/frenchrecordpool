@@ -1,4 +1,4 @@
-import { Play, Heart, Download, ExternalLink, Headphones, Clock, Music2 } from "lucide-react";
+import { Play, Heart, Download, ExternalLink, Headphones, Clock, Music2, Lock, Crown } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
