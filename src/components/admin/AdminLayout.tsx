@@ -19,7 +19,7 @@ const items = [
   { to: "/admin/tracks", label: "Tracks", icon: Music },
   { to: "/admin/queue", label: "File de modération", icon: Inbox },
   { to: "/admin/users", label: "Utilisateurs", icon: Users },
-  { to: "/admin/artists", label: "DJs / Artistes", icon: Mic2 },
+  { to: "/admin/artists", label: "DJs / Remixers", icon: Mic2 },
   { to: "/admin/plans", label: "Plans", icon: Layers },
   { to: "/admin/subscriptions", label: "Abonnements", icon: CreditCard },
   { to: "/admin/promo-codes", label: "Codes promo", icon: Ticket },
