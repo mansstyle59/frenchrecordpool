@@ -9,6 +9,7 @@ import {
   Images, Megaphone as MegaphoneIcon, Repeat, Music2,
 } from "lucide-react";
 
+import IconPicker from "@/components/admin/IconPicker";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -1117,7 +1118,7 @@ function TypeFields({ w, setC }: { w: Widget; setC: (k: string, v: any) => void 
             render={(it, set) => (
               <div className="space-y-2">
                 <div className="grid grid-cols-2 gap-2">
-                  <Input placeholder="Icône (Download, Music2, Star, Headphones, Sparkles, Radio, Disc3, Mail, Clock)" value={it.icon ?? ""} onChange={(e) => set({ ...it, icon: e.target.value })} />
+                  <IconPicker value={it.icon ?? ""} onChange={(name) => set({ ...it, icon: name })} />
                   <Input placeholder="Titre" value={it.title ?? ""} onChange={(e) => set({ ...it, title: e.target.value })} />
                 </div>
                 <Textarea rows={2} placeholder="Description" value={it.body ?? ""} onChange={(e) => set({ ...it, body: e.target.value })} />
