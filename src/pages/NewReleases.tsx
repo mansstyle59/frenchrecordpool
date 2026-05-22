@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { Search, SlidersHorizontal, X, Clock, Flame, ArrowUpDown, Disc3 } from "lucide-react";
 import Layout from "@/components/Layout";
 import PageHero from "@/components/PageHero";
-import TrackRow from "@/components/TrackRow";
+import TrackRow, { TrackListHeader } from "@/components/TrackRow";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
@@ -220,9 +220,7 @@ export default function NewReleases() {
         ) : (
           <>
             <div className="rounded-2xl border border-border bg-card/40 backdrop-blur overflow-hidden shadow-lg shadow-primary/5">
-              <div className="hidden md:grid grid-cols-[32px_56px_1fr_auto_112px_56px_48px_48px_auto] gap-3 px-4 py-2.5 border-b border-border/60 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70 bg-secondary/30">
-                <span>#</span><span></span><span>Titre · Remixeur</span><span className="hidden sm:block">Version</span><span className="hidden md:block">Genre</span><span className="hidden lg:block text-center">BPM</span><span className="hidden lg:block text-center">Key</span><span className="text-right">Time</span><span></span>
-              </div>
+              <TrackListHeader />
               {groupedVisible.map((g, i) => <TrackGroupRow key={g.key} group={g} index={i} />)}
             </div>
 

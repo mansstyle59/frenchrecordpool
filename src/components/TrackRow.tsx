@@ -1,10 +1,9 @@
-import { Play, Heart, Download, ExternalLink, Headphones } from "lucide-react";
+import { Play, Heart, Download, ExternalLink, Headphones, Clock, Music2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { Badge } from "@/components/ui/badge";
 import { usePlayer } from "@/contexts/PlayerContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { downloadTrack } from "@/lib/downloadTrack";
@@ -12,12 +11,38 @@ import { useFavorites } from "@/hooks/useFavorites";
 import type { DbTrack } from "@/hooks/useTracks";
 import { resolveCover } from "@/lib/trackCover";
 
+/* ─── Shared column template (header + rows MUST match) ─── */
+//          cover  | title/artist | version | BPM | KEY  | GENRE | TIME | actions
+const COLS = "48px minmax(0,1fr) 110px 56px 56px 120px 56px auto";
+const COL_GAP = "gap-x-4";
+
 interface TrackRowProps {
   track: DbTrack;
   index?: number;
 }
 
-export default function TrackRow({ track, index }: TrackRowProps) {
+/* ─── Header row (column labels) — shares the same grid template ─── */
+export function TrackListHeader() {
+  return (
+    <div
+      className={`hidden sm:grid items-center ${COL_GAP} px-3 sm:px-5 py-2 border-b border-border/40 bg-muted/30 text-[10px] uppercase tracking-wider font-semibold text-muted-foreground`}
+      style={{ gridTemplateColumns: COLS }}
+    >
+      <span />
+      <span>Titre / Artiste</span>
+      <span className="hidden md:block">Version</span>
+      <span className="hidden md:block text-right">BPM</span>
+      <span className="hidden lg:block text-right">Key</span>
+      <span className="hidden lg:block">Genre</span>
+      <span className="hidden xl:flex items-center gap-1 text-right justify-end">
+        <Clock className="h-3 w-3" />
+      </span>
+      <span className="text-right">Actions</span>
+    </div>
+  );
+}
+
+export default function TrackRow({ track }: TrackRowProps) {
   const { play, currentTrack, isPlaying, toggle } = usePlayer();
   const { user, hasActiveSubscription } = useAuth();
   const { isFavorite, toggleFavorite } = useFavorites();
@@ -25,13 +50,11 @@ export default function TrackRow({ track, index }: TrackRowProps) {
   const previewRef = useRef<HTMLAudioElement | null>(null);
   const hoverTimer = useRef<number | null>(null);
   const [previewing, setPreviewing] = useState(false);
-  // For audio playback: subscribers get the full audio_url, others ONLY get the short preview_url.
-  // Non-subscribers must never stream the full file, even if no preview is uploaded.
+
   const fullSrc = track.audio_url || null;
   const shortSrc = track.preview_url || null;
   const playbackSrc = hasActiveSubscription ? (fullSrc || shortSrc) : shortSrc;
   const isFullPlayback = hasActiveSubscription && !!fullSrc;
-  // Hover preview ALWAYS prefers the short clip; if missing and user is NOT subscribed, no hover preview.
   const previewSrc = shortSrc || (hasActiveSubscription ? fullSrc : null);
   const previewIsFull = !shortSrc && !!fullSrc && hasActiveSubscription;
   const stopAtRef = useRef<number | null>(null);
@@ -56,7 +79,6 @@ export default function TrackRow({ track, index }: TrackRowProps) {
         audio.currentTime = 0;
         audio.preload = "auto";
         previewRef.current = audio;
-        // Auto-stop after 30s if we are streaming the full track as preview
         if (previewIsFull) {
           stopAtRef.current = window.setTimeout(() => stopPreview(), 30_000) as unknown as number;
         }
@@ -77,18 +99,13 @@ export default function TrackRow({ track, index }: TrackRowProps) {
     if (hoverTimer.current) { window.clearTimeout(hoverTimer.current); hoverTimer.current = null; }
     if (stopAtRef.current) { window.clearTimeout(stopAtRef.current); stopAtRef.current = null; }
     const audio = previewRef.current;
-    if (audio) {
-      try { audio.pause(); audio.currentTime = 0; } catch {}
-    }
+    if (audio) { try { audio.pause(); audio.currentTime = 0; } catch {} }
     setPreviewing(false);
   };
 
   const handlePlay = () => {
     stopPreview();
-    if (isCurrentTrack) {
-      toggle();
-      return;
-    }
+    if (isCurrentTrack) { toggle(); return; }
     if (!playbackSrc) {
       if (!hasActiveSubscription && fullSrc) {
         toast.info("Aucun extrait disponible. Abonnez-vous pour écouter le titre complet.");
@@ -98,12 +115,8 @@ export default function TrackRow({ track, index }: TrackRowProps) {
       return;
     }
     play({
-      id: track.id,
-      title: track.title,
-      artist: track.artist,
-      coverUrl: resolveCover(track),
-      previewUrl: playbackSrc,
-      isFull: isFullPlayback,
+      id: track.id, title: track.title, artist: track.artist,
+      coverUrl: resolveCover(track), previewUrl: playbackSrc, isFull: isFullPlayback,
     });
   };
 
@@ -113,17 +126,20 @@ export default function TrackRow({ track, index }: TrackRowProps) {
   const DownloadIcon = isExternalLink ? ExternalLink : Download;
 
   const isActive = isCurrentTrack && isPlaying;
+  const fav = isFavorite(track.id);
 
   return (
     <div
-      className="group grid items-center gap-3 px-3 sm:px-5 py-2.5 border-b border-border/30 last:border-0 hover:bg-foreground/[0.03] transition-colors cursor-pointer"
-      style={{ gridTemplateColumns: "auto 1fr auto auto auto" }}
+      className={`group grid items-center ${COL_GAP} px-3 sm:px-5 py-2 border-b border-border/30 last:border-0 hover:bg-foreground/[0.04] transition-colors cursor-pointer ${
+        isCurrentTrack ? "bg-primary/[0.06]" : ""
+      }`}
+      style={{ gridTemplateColumns: COLS }}
       onDoubleClick={handlePlay}
       title="Double-cliquez pour lire"
     >
-      {/* Cover + play button */}
+      {/* Cover + play overlay */}
       <div
-        className="relative h-12 w-12 shrink-0 rounded-md overflow-hidden bg-secondary/50"
+        className="relative h-12 w-12 shrink-0 rounded-md overflow-hidden bg-secondary/50 ring-1 ring-border/40"
         onMouseEnter={startPreview}
         onMouseLeave={stopPreview}
       >
@@ -158,20 +174,13 @@ export default function TrackRow({ track, index }: TrackRowProps) {
 
       {/* Title + artist */}
       <div className="min-w-0">
-        <div className="flex items-center gap-2 min-w-0">
-          <Link
-            to={`/tracks/${track.id}`}
-            onDoubleClick={(e) => e.stopPropagation()}
-            className={`text-sm font-semibold truncate hover:text-primary transition-colors ${isCurrentTrack ? "text-primary" : "text-foreground"}`}
-          >
-            {track.title}
-          </Link>
-          {track.version && (
-            <span className="hidden sm:inline text-[11px] font-medium text-muted-foreground/70 truncate">
-              · {track.version}
-            </span>
-          )}
-        </div>
+        <Link
+          to={`/tracks/${track.id}`}
+          onDoubleClick={(e) => e.stopPropagation()}
+          className={`block text-sm font-semibold truncate hover:text-primary transition-colors ${isCurrentTrack ? "text-primary" : "text-foreground"}`}
+        >
+          {track.title}
+        </Link>
         <Link
           to={`/artists/${encodeURIComponent(track.artist)}`}
           onDoubleClick={(e) => e.stopPropagation()}
@@ -181,29 +190,52 @@ export default function TrackRow({ track, index }: TrackRowProps) {
         </Link>
       </div>
 
-      {/* BPM */}
-      <div className="hidden md:flex w-12 justify-end text-sm font-mono tabular-nums text-foreground/90">
-        {track.bpm || ""}
+      {/* Version (badge) */}
+      <div className="hidden md:flex min-w-0">
+        {track.version ? (
+          <span className="inline-flex items-center px-2 py-0.5 max-w-full rounded-md text-[10px] font-bold uppercase tracking-wider bg-accent/10 text-accent border border-accent/30 truncate">
+            {track.version}
+          </span>
+        ) : null}
       </div>
 
-      {/* Genre / Key */}
-      <div className="hidden lg:flex flex-col items-end w-24 leading-tight">
-        <span className="text-xs font-semibold text-primary truncate max-w-full">
-          {track.genre || ""}
-        </span>
-        {track.musical_key && (
-          <span className="text-[10px] font-mono text-muted-foreground/80">
-            {track.musical_key} · {track.duration}
-          </span>
+      {/* BPM */}
+      <div className="hidden md:block text-right text-sm font-mono tabular-nums text-foreground/90">
+        {track.bpm || <span className="text-muted-foreground/40">—</span>}
+      </div>
+
+      {/* Musical key */}
+      <div className="hidden lg:block text-right text-xs font-mono tabular-nums text-foreground/80">
+        {track.musical_key || <span className="text-muted-foreground/40">—</span>}
+      </div>
+
+      {/* Genre */}
+      <div className="hidden lg:flex min-w-0 items-center gap-1">
+        {track.genre ? (
+          <Link
+            to={`/new?genre=${encodeURIComponent(track.genre)}`}
+            onDoubleClick={(e) => e.stopPropagation()}
+            className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline truncate"
+          >
+            <Music2 className="h-3 w-3 shrink-0" />
+            <span className="truncate">{track.genre}</span>
+          </Link>
+        ) : (
+          <span className="text-muted-foreground/40 text-xs">—</span>
         )}
       </div>
 
+      {/* Duration */}
+      <div className="hidden xl:block text-right text-xs font-mono tabular-nums text-muted-foreground">
+        {track.duration || "—"}
+      </div>
+
       {/* Actions */}
-      <div className="flex items-center gap-0.5 shrink-0">
+      <div className="flex items-center gap-0.5 shrink-0 justify-end">
         <Button
           variant="ghost"
           size="icon"
-          className={`h-8 w-8 ${isFavorite(track.id) ? "text-accent hover:text-accent" : "text-muted-foreground/70 hover:text-accent opacity-0 group-hover:opacity-100 transition-opacity"}`}
+          className={`h-8 w-8 ${fav ? "text-accent hover:text-accent" : "text-muted-foreground/70 hover:text-accent opacity-0 group-hover:opacity-100 transition-opacity"}`}
           onClick={() => {
             if (!user) { toast.error("Connectez-vous pour ajouter aux favoris"); return; }
             toggleFavorite(track.id);
@@ -211,7 +243,7 @@ export default function TrackRow({ track, index }: TrackRowProps) {
           onDoubleClick={(e) => e.stopPropagation()}
           aria-label="Favori"
         >
-          <Heart className={`h-4 w-4 ${isFavorite(track.id) ? "fill-current" : ""}`} />
+          <Heart className={`h-4 w-4 ${fav ? "fill-current" : ""}`} />
         </Button>
         <Tooltip>
           <TooltipTrigger asChild>

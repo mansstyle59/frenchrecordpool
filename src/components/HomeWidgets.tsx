@@ -31,7 +31,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import TrackRow from "@/components/TrackRow";
+import TrackRow, { TrackListHeader } from "@/components/TrackRow";
 import { resolveCover } from "@/lib/trackCover";
 import { usePlayer } from "@/contexts/PlayerContext";
 import { titleStyle, bodyStyle } from "@/lib/widgetTypography";
@@ -348,7 +348,10 @@ function TrackGridWidget({ config, preview }: { config: any; preview: boolean })
             Aucun titre {activeGenre ? `pour le genre "${activeGenre}"` : "à afficher"}.
           </div>
         ) : (
-          tracks.map((t, i) => <TrackRow key={t.id} track={t} index={i} />)
+          <>
+            <TrackListHeader />
+            {tracks.map((t, i) => <TrackRow key={t.id} track={t} index={i} />)}
+          </>
         )}
       </div>
     </div>
@@ -392,6 +395,7 @@ function TopGenreWidget({ config, preview }: { config: any; preview: boolean }) 
         )}
       </div>
       <div className="rounded-2xl border border-border bg-card/40 backdrop-blur-sm overflow-hidden">
+        <TrackListHeader />
         {tracks.map((t, i) => <TrackRow key={t.id} track={t} index={i} />)}
       </div>
     </div>
