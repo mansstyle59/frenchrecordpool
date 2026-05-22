@@ -115,17 +115,18 @@ function HeroWidget({ config, preview }: { config: any; preview: boolean }) {
             <Sparkles className="h-3 w-3" /> {config.eyebrow}
           </span>
         )}
-        <h1 className={`font-display font-black tracking-tight ${preview ? "text-3xl" : "text-5xl md:text-7xl"} mb-4`}>
+        <h1 className={`font-display font-black tracking-tight ${preview ? "text-3xl" : "text-5xl md:text-7xl"} mb-4`} style={titleStyle(config.typo)}>
           {config.title || "Le pool de musique des DJs"}
           {config.highlight && (
             <> <span className="gradient-text">{config.highlight}</span></>
           )}
         </h1>
         {config.subtitle && (
-          <p className={`text-muted-foreground mx-auto ${preview ? "text-sm max-w-xl" : "text-lg md:text-xl max-w-2xl"} mb-8`}>
+          <p className={`text-muted-foreground mx-auto ${preview ? "text-sm max-w-xl" : "text-lg md:text-xl max-w-2xl"} mb-8`} style={bodyStyle(config.typo)}>
             {config.subtitle}
           </p>
         )}
+
         <div className="flex flex-wrap justify-center gap-3">
           {config.cta_primary_label && (
             <Button asChild size={preview ? "default" : "lg"} variant="hero">
