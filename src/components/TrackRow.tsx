@@ -269,6 +269,23 @@ export default function TrackRow({ track }: TrackRowProps) {
 
       {/* Actions */}
       <div className="flex items-center gap-0.5 shrink-0 justify-end">
+        {(shortSrc || fullSrc) && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                onClick={handlePlayPreview}
+                onDoubleClick={(e) => e.stopPropagation()}
+                className="hidden sm:inline-flex items-center gap-1 h-7 px-2 rounded-md text-[10px] font-bold uppercase tracking-wider bg-primary/10 text-primary border border-primary/30 hover:bg-primary/20 transition-colors"
+                aria-label="Écouter l'extrait"
+              >
+                <Headphones className="h-3 w-3" />
+                Extrait
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>Écouter l'extrait (30s)</TooltipContent>
+          </Tooltip>
+        )}
         <Button
           variant="ghost"
           size="icon"
