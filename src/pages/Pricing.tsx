@@ -85,11 +85,15 @@ export default function Pricing() {
                         </li>
                       ))}
                     </ul>
-                    <Button asChild className="w-full" variant={featured ? "hero" : "outline"}>
-                      <Link to={user ? "/dashboard" : "/signup"}>
-                        {user ? "Activer" : "Commencer"}
-                      </Link>
-                    </Button>
+                    <PlanRequestDialog
+                      plan={{ id: p.id, name: p.name }}
+                      trigger={
+                        <Button className="w-full" variant={featured ? "hero" : "outline"}>
+                          {user ? "Activer ce plan" : "Commencer"}
+                        </Button>
+                      }
+                    />
+
                   </Card>
                 </motion.div>
               );
