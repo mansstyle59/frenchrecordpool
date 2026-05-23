@@ -104,7 +104,8 @@ export default function AdminArtists() {
   const openEdit = (a: Artist) => {
     setEditing(a);
     setForm({
-      name: a.name, slug: a.slug, kind: a.kind || "remixer",
+      name: a.name, slug: a.slug, kind: a.kind || "artist",
+      roles: normalizeRoles(a.roles, a.kind),
       photo_url: a.photo_url ?? "", bio: a.bio ?? "",
       country: a.country ?? "", genre: a.genre ?? "",
       soundcloud_url: a.soundcloud_url ?? "",
