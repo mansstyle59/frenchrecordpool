@@ -77,7 +77,7 @@ function resolveSize(v: SizeValue | null | undefined, bp: Breakpoint): number | 
 }
 
 export default function CmsText({
-  editKey, as: Tag = "span", className, multiline = false, maxLength = 5000, children,
+  editKey, as: Tag = "span", className, multiline = false, maxLength = 5000, lockSize = false, children,
 }: CmsTextProps) {
   const value = useCmsValue<string>(editKey, children);
   const sizeKey = `${editKey}__size`;
