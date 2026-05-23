@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Trash2, Pencil, Save, X, Eye, EyeOff, Video, ArrowUp, ArrowDown } from "lucide-react";
+import { Plus, Trash2, Pencil, Save, X, Eye, EyeOff, Video, ArrowUp, ArrowDown, Youtube, Instagram } from "lucide-react";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,7 +10,7 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { extractYouTubeId, youtubeThumb } from "@/lib/youtube";
+import { detectProvider, extractShortId, shortThumbnail, providerLabel, type ShortProvider } from "@/lib/shorts";
 
 type ShortRow = {
   id: string;
