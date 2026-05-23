@@ -118,7 +118,7 @@ export default function Admin() {
       }
     >
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
         {stats.map((s) => (
           <div key={s.label} className={`relative overflow-hidden bg-gradient-to-br ${s.accent} border border-border rounded-xl p-4`}>
             <s.icon className={`h-5 w-5 ${s.iconColor} mb-3`} />
