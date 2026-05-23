@@ -101,7 +101,7 @@ export default function CmsText({
               {sizeVal?.fontSize ?? "auto"}
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="max-h-80 overflow-y-auto w-28">
+          <DropdownMenuContent align="end" className="max-h-80 overflow-y-auto w-32">
             <DropdownMenuLabel className="text-[10px]">Taille (px)</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => setSize(null)} className="text-xs">
@@ -117,6 +117,28 @@ export default function CmsText({
                 {s}px
               </DropdownMenuItem>
             ))}
+            <DropdownMenuSeparator />
+            <DropdownMenuLabel className="text-[10px]">Personnalisé</DropdownMenuLabel>
+            <div className="px-2 py-1">
+              <input
+                type="number"
+                min={1}
+                max={999}
+                value={customSize}
+                placeholder="ex: 34"
+                onChange={(e) => setCustomSize(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    const n = parseInt(customSize, 10);
+                    if (!isNaN(n) && n >= 1 && n <= 999) {
+                      setSize(n);
+                      setCustomSize("");
+                    }
+                  }
+                }}
+                className="w-full h-7 px-1.5 text-xs font-mono bg-background border border-border rounded focus:outline-none focus:ring-1 focus:ring-primary"
+              />
+            </div>
           </DropdownMenuContent>
         </DropdownMenu>
       </span>
