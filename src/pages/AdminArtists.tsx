@@ -305,17 +305,20 @@ export default function AdminArtists() {
               <Input value={form.slug} onChange={(e) => setForm({ ...form, slug: slugify(e.target.value) })}
                 placeholder="dj-yass" />
             </div>
-            <div className="space-y-2">
-              <Label>Type *</Label>
-              <select
-                value={form.kind}
-                onChange={(e) => setForm({ ...form, kind: e.target.value })}
-                className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm"
-              >
-                <option value="remixer">Remixer (page Remixers)</option>
-                <option value="artist">DJ / Artiste</option>
-                <option value="both">Les deux</option>
-              </select>
+            <div className="space-y-2 col-span-2">
+              <Label>Rôles *</Label>
+              <div className="flex flex-wrap gap-2">
+                {ALL_ROLES.map((r) => {
+                  const on = form.roles.includes(r);
+                  return (
+                    <button key={r} type="button"
+                      onClick={() => setForm((f) => ({ ...f, roles: on ? f.roles.filter((x) => x !== r) : [...f.roles, r] }))}
+                      className={`px-3 h-8 rounded-md text-xs font-bold uppercase tracking-wider border transition-all ${on ? roleClassName(r) + " ring-2 ring-offset-1 ring-offset-background" : "bg-secondary/40 text-muted-foreground border-border/50 hover:text-foreground"}`}>
+                      {roleLabel(r)}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
             <div className="space-y-2">
               <Label>Genre principal</Label>
