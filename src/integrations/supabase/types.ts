@@ -203,13 +203,16 @@ export type Database = {
           id: string
           is_active: boolean
           position: number
+          provider: string
+          source_id: string | null
+          source_url: string | null
           tags: string[]
           thumbnail_url: string | null
           title: string
           track_id: string | null
           updated_at: string
-          youtube_id: string
-          youtube_url: string
+          youtube_id: string | null
+          youtube_url: string | null
         }
         Insert: {
           artist_id?: string | null
@@ -219,13 +222,16 @@ export type Database = {
           id?: string
           is_active?: boolean
           position?: number
+          provider?: string
+          source_id?: string | null
+          source_url?: string | null
           tags?: string[]
           thumbnail_url?: string | null
           title: string
           track_id?: string | null
           updated_at?: string
-          youtube_id: string
-          youtube_url: string
+          youtube_id?: string | null
+          youtube_url?: string | null
         }
         Update: {
           artist_id?: string | null
@@ -235,13 +241,16 @@ export type Database = {
           id?: string
           is_active?: boolean
           position?: number
+          provider?: string
+          source_id?: string | null
+          source_url?: string | null
           tags?: string[]
           thumbnail_url?: string | null
           title?: string
           track_id?: string | null
           updated_at?: string
-          youtube_id?: string
-          youtube_url?: string
+          youtube_id?: string | null
+          youtube_url?: string | null
         }
         Relationships: []
       }

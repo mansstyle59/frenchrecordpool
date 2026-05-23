@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Trash2, Pencil, Save, X, Eye, EyeOff, Video, ArrowUp, ArrowDown } from "lucide-react";
+import { Plus, Trash2, Pencil, Save, X, Eye, EyeOff, Video, ArrowUp, ArrowDown, Youtube, Instagram } from "lucide-react";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,14 +10,17 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { extractYouTubeId, youtubeThumb } from "@/lib/youtube";
+import { detectProvider, extractShortId, shortThumbnail, providerLabel, type ShortProvider } from "@/lib/shorts";
 
 type ShortRow = {
   id: string;
   title: string;
   description: string | null;
-  youtube_url: string;
-  youtube_id: string;
+  provider: ShortProvider;
+  source_url: string | null;
+  source_id: string | null;
+  youtube_url: string | null;
+  youtube_id: string | null;
   thumbnail_url: string | null;
   tags: string[];
   artist_id: string | null;
@@ -69,14 +72,22 @@ export default function AdminShorts() {
 
   const save = useMutation({
     mutationFn: async (d: Draft) => {
-      const ytId = extractYouTubeId(d.youtube_url || "");
-      if (!ytId) throw new Error("URL YouTube invalide");
+      const url = (d.source_url || d.youtube_url || "").trim();
+      const provider = (d.provider as ShortProvider) || detectProvider(url);
+      if (!provider) throw new Error("Plateforme non reconnue (URL YouTube ou Instagram requise)");
+      const sid = extractShortId(url, provider);
+      if (!sid) throw new Error(`URL ${providerLabel(provider)} invalide`);
+      const thumb = d.thumbnail_url || shortThumbnail(provider, sid) || null;
       const payload: any = {
         title: d.title || "Sans titre",
         description: d.description || null,
-        youtube_url: d.youtube_url,
-        youtube_id: ytId,
-        thumbnail_url: d.thumbnail_url || youtubeThumb(ytId),
+        provider,
+        source_url: url,
+        source_id: sid,
+        // back-compat columns
+        youtube_url: provider === "youtube" ? url : null,
+        youtube_id: provider === "youtube" ? sid : null,
+        thumbnail_url: thumb,
         tags: d.tags ?? [],
         artist_id: d.artist_id || null,
         track_id: d.track_id || null,
@@ -130,7 +141,7 @@ export default function AdminShorts() {
   return (
     <AdminLayout
       title="Shorts DJ"
-      subtitle="Vidéos courtes (YouTube Shorts) affichées sur /shorts et en widget home."
+      subtitle="Vidéos courtes (YouTube Shorts ou Instagram Reels) affichées sur /shorts et en widget home."
       actions={
         <Button
           variant="hero"
@@ -160,14 +171,22 @@ export default function AdminShorts() {
               <p className="text-sm text-muted-foreground">Aucun short. Clique « Nouveau short » pour commencer.</p>
             </div>
           )}
-          {shorts.map((s) => (
+          {shorts.map((s) => {
+            const thumb = s.thumbnail_url || shortThumbnail(s.provider, s.source_id || s.youtube_id);
+            const ProviderIcon = s.provider === "instagram" ? Instagram : Youtube;
+            return (
             <div key={s.id} className="bg-card border border-border rounded-xl overflow-hidden flex flex-col">
               <div className="relative aspect-[9/16] bg-secondary">
-                <img
-                  src={s.thumbnail_url || youtubeThumb(s.youtube_id)}
-                  alt={s.title}
-                  className="w-full h-full object-cover"
-                />
+                {thumb ? (
+                  <img src={thumb} alt={s.title} className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/30 via-secondary to-accent/30">
+                    <ProviderIcon className="h-10 w-10 text-foreground/40" />
+                  </div>
+                )}
+                <div className="absolute top-2 left-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-background/80 backdrop-blur text-[10px] font-bold uppercase tracking-wider">
+                  <ProviderIcon className="h-3 w-3" /> {s.provider === "instagram" ? "Reel" : "Short"}
+                </div>
                 {!s.is_active && (
                   <div className="absolute inset-0 bg-background/70 backdrop-blur-sm flex items-center justify-center">
                     <span className="text-xs uppercase tracking-widest font-bold text-muted-foreground">Inactif</span>
@@ -211,7 +230,7 @@ export default function AdminShorts() {
                 </div>
               </div>
             </div>
-          ))}
+          );})}
         </div>
       )}
     </AdminLayout>
@@ -233,23 +252,52 @@ function ShortEditor({
   onSave: (d: Draft) => void;
   saving: boolean;
 }) {
-  const [d, setD] = useState<Draft>(draft);
+  const [d, setD] = useState<Draft>(() => ({
+    ...draft,
+    source_url: draft.source_url ?? draft.youtube_url ?? "",
+    provider: (draft.provider as ShortProvider) ?? (draft.youtube_url ? "youtube" : undefined),
+  }));
   const tagsText = useMemo(() => (d.tags ?? []).join(", "), [d.tags]);
-  const ytId = extractYouTubeId(d.youtube_url || "");
+  const url = d.source_url || "";
+  const provider = (d.provider as ShortProvider) || detectProvider(url);
+  const sid = provider ? extractShortId(url, provider) : null;
+  const previewThumb = d.thumbnail_url || (provider && sid ? shortThumbnail(provider, sid) : null);
+  const ProviderIcon = provider === "instagram" ? Instagram : Youtube;
 
   return (
     <div className="grid md:grid-cols-[1fr_320px] gap-4 max-w-5xl">
       <div className="bg-card border border-border rounded-xl p-5 space-y-4">
         <div>
-          <Label>URL YouTube *</Label>
+          <Label>URL de la vidéo *</Label>
           <Input
-            placeholder="https://www.youtube.com/shorts/…  ou  https://youtu.be/…"
-            value={d.youtube_url || ""}
-            onChange={(e) => setD({ ...d, youtube_url: e.target.value })}
+            placeholder="YouTube Short  ou  Instagram Reel"
+            value={url}
+            onChange={(e) => {
+              const v = e.target.value;
+              setD({ ...d, source_url: v, provider: detectProvider(v) ?? d.provider });
+            }}
           />
-          {d.youtube_url && !ytId && (
-            <p className="text-xs text-destructive mt-1">URL non reconnue.</p>
-          )}
+          <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1.5">
+            {provider ? (
+              <>
+                <ProviderIcon className="h-3 w-3" />
+                Détecté : <span className="font-semibold text-foreground">{providerLabel(provider)}</span>
+                {sid && <span className="text-muted-foreground/70">· {sid}</span>}
+              </>
+            ) : url ? (
+              <span className="text-destructive">URL non reconnue (YouTube ou Instagram attendu)</span>
+            ) : (
+              <>Colle un lien YouTube Shorts (youtube.com/shorts/…) ou Instagram Reel (instagram.com/reel/…).</>
+            )}
+          </p>
+        </div>
+        <div>
+          <Label>Vignette personnalisée (URL)</Label>
+          <Input
+            placeholder={provider === "instagram" ? "Obligatoire pour Instagram (pas de miniature publique)" : "Optionnel — par défaut, miniature YouTube"}
+            value={d.thumbnail_url || ""}
+            onChange={(e) => setD({ ...d, thumbnail_url: e.target.value })}
+          />
         </div>
         <div>
           <Label>Titre *</Label>
@@ -336,7 +384,7 @@ function ShortEditor({
           </Button>
           <Button
             onClick={() => onSave(d)}
-            disabled={saving || !d.title || !ytId}
+            disabled={saving || !d.title || !sid}
             className="gap-2"
           >
             <Save className="h-4 w-4" /> {saving ? "Enregistrement…" : "Enregistrer"}
@@ -346,12 +394,19 @@ function ShortEditor({
 
       {/* Preview */}
       <div className="bg-card border border-border rounded-xl p-3">
-        <p className="text-xs uppercase tracking-widest font-bold text-muted-foreground mb-2">Aperçu</p>
+        <p className="text-xs uppercase tracking-widest font-bold text-muted-foreground mb-2 flex items-center gap-1.5">
+          <ProviderIcon className="h-3 w-3" /> Aperçu {provider ? `· ${providerLabel(provider)}` : ""}
+        </p>
         <div className="aspect-[9/16] bg-secondary rounded-lg overflow-hidden flex items-center justify-center">
-          {ytId ? (
-            <img src={youtubeThumb(ytId)} alt="" className="w-full h-full object-cover" />
+          {previewThumb ? (
+            <img src={previewThumb} alt="" className="w-full h-full object-cover" />
           ) : (
-            <Video className="h-8 w-8 text-muted-foreground" />
+            <div className="text-center p-3">
+              <Video className="h-8 w-8 text-muted-foreground mx-auto mb-1" />
+              {provider === "instagram" && (
+                <p className="text-[10px] text-muted-foreground">Ajoute une vignette personnalisée (Instagram ne fournit pas de miniature publique).</p>
+              )}
+            </div>
           )}
         </div>
       </div>
