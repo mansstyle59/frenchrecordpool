@@ -10,6 +10,7 @@ import { downloadTrack, getFullStreamUrl } from "@/lib/downloadTrack";
 import { useFavorites } from "@/hooks/useFavorites";
 import type { DbTrack } from "@/hooks/useTracks";
 import { resolveCover } from "@/lib/trackCover";
+import ArtistCredit from "@/components/ArtistCredit";
 
 /* ─── Responsive grid template (header + rows MUST match exactly) ───
    Column count per breakpoint:
