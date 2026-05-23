@@ -242,10 +242,10 @@ export default function MiniPlayer() {
             </div>
 
             {/* Transport */}
-            <Button variant="ghost" size="icon-sm" className="hidden sm:inline-flex" onClick={prev} title="Précédent">
+            <Button aria-label="Précédent" variant="ghost" size="icon-sm" className="hidden sm:inline-flex" onClick={prev} title="Précédent">
               <SkipBack className="h-3.5 w-3.5" />
             </Button>
-            <Button
+            <Button aria-label={isPlaying ? "Pause (Espace)" : "Lecture (Espace)"}
               variant={isFull ? "accent" : "default"}
               size="icon"
               className="shadow-lg"
@@ -254,7 +254,7 @@ export default function MiniPlayer() {
             >
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4 fill-current ml-0.5" />}
             </Button>
-            <Button variant="ghost" size="icon-sm" className="hidden sm:inline-flex" onClick={next} title="Suivant">
+            <Button aria-label="Suivant" variant="ghost" size="icon-sm" className="hidden sm:inline-flex" onClick={next} title="Suivant">
               <SkipForward className="h-3.5 w-3.5" />
             </Button>
 
@@ -309,7 +309,7 @@ export default function MiniPlayer() {
 
           {/* Upgrade CTA when listening to an extract while not subscribed */}
           {!isFull && !hasActiveSubscription && (
-            <Button
+            <Button aria-label="Abonnez-vous pour écouter le titre complet"
               asChild
               size="sm"
               variant="hero"
@@ -324,7 +324,7 @@ export default function MiniPlayer() {
 
           {/* Volume + Mute */}
           <div className="hidden lg:flex items-center gap-1.5 w-24 shrink-0">
-            <Button variant="ghost" size="icon-sm" onClick={toggleMute} title={muted ? "Réactiver le son (M)" : "Couper le son (M)"}>
+            <Button aria-label={muted ? "Réactiver le son (M)" : "Couper le son (M)"} variant="ghost" size="icon-sm" onClick={toggleMute} title={muted ? "Réactiver le son (M)" : "Couper le son (M)"}>
               {muted ? <VolumeX className="h-3.5 w-3.5 text-destructive" /> : <Volume2 className="h-3.5 w-3.5" />}
             </Button>
             <input
@@ -341,7 +341,7 @@ export default function MiniPlayer() {
           {/* Queue */}
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="ghost" size="icon-sm" className="relative" title="File d'attente">
+              <Button aria-label="File d'attente" variant="ghost" size="icon-sm" className="relative" title="File d'attente">
                 <ListMusic className="h-3.5 w-3.5" />
                 {queue.length > 0 && (
                   <span className="absolute -top-0.5 -right-1 h-3.5 min-w-3.5 px-1 rounded-full bg-primary text-primary-foreground text-[9px] font-bold flex items-center justify-center">
@@ -387,7 +387,7 @@ export default function MiniPlayer() {
           </Popover>
 
           {/* Close player */}
-          <Button variant="ghost" size="icon-sm" className="text-muted-foreground hover:text-destructive" onClick={clear} title="Fermer le lecteur">
+          <Button aria-label="Fermer le lecteur" variant="ghost" size="icon-sm" className="text-muted-foreground hover:text-destructive" onClick={clear} title="Fermer le lecteur">
             <X className="h-3.5 w-3.5" />
           </Button>
           </div>

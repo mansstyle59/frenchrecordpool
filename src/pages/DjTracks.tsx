@@ -92,7 +92,7 @@ export default function DjTracks() {
                 <Badge variant="outline" className={`text-[10px] ${st.color}`}>{st.label}</Badge>
                 <div className="flex gap-1">
                   <Link to={`/dj/edit/${t.id}`}>
-                    <Button variant="ghost" size="icon" className="h-8 w-8" title={t.status === "approved" ? "Proposer une modification" : "Modifier"}>
+                    <Button aria-label={t.status === "approved" ? "Proposer une modification" : "Modifier"} variant="ghost" size="icon" className="h-8 w-8" title={t.status === "approved" ? "Proposer une modification" : "Modifier"}>
                       <Pencil className="h-3.5 w-3.5" />
                     </Button>
                   </Link>

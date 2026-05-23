@@ -183,10 +183,10 @@ export default function AdminPlans() {
                     <span className="text-xs text-muted-foreground">Visible</span>
                   </div>
                   <div className="flex gap-1">
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(p)}>
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(p)} aria-label="Modifier le plan">
                       <Pencil className="h-3.5 w-3.5" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => remove(p)}>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => remove(p)} aria-label="Supprimer le plan">
                       <Trash2 className="h-3.5 w-3.5" />
                     </Button>
                   </div>

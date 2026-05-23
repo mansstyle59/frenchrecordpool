@@ -36,7 +36,7 @@ export default function UrlPicker({ value, onChange, placeholder }: Props) {
         />
         <Popover open={open} onOpenChange={setOpen}>
           <PopoverTrigger asChild>
-            <Button type="button" variant="outline" size="icon" title="Choisir une page interne">
+            <Button aria-label="Choisir une page interne" type="button" variant="outline" size="icon" title="Choisir une page interne">
               <ChevronsUpDown className="h-4 w-4" />
             </Button>
           </PopoverTrigger>

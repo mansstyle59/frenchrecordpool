@@ -248,7 +248,7 @@ function Editor({
                 placeholder="https://…"
               />
               {p.image_url && (
-                <Button variant="ghost" size="icon" onClick={() => set("image_url", null)}>
+                <Button variant="ghost" size="icon" onClick={() => set("image_url", null)} aria-label="Retirer l'image">
                   <X className="h-4 w-4" />
                 </Button>
               )}

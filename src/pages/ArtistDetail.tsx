@@ -244,7 +244,7 @@ function SocialLinks({ artist }: { artist: any }) {
   return (
     <div className="flex gap-1.5">
       {items.map((it) => (
-        <Button key={it.label} asChild variant="outline" size="icon" className="h-8 w-8" title={it.label}>
+        <Button aria-label={it.label} key={it.label} asChild variant="outline" size="icon" className="h-8 w-8" title={it.label}>
           <a href={it.url!} target="_blank" rel="noopener noreferrer"><it.icon className="h-3.5 w-3.5" /></a>
         </Button>
       ))}

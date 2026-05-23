@@ -233,6 +233,7 @@ export default function AdminPromoCodes() {
                           <Button
                             variant="ghost" size="icon" className="h-6 w-6"
                             onClick={() => { navigator.clipboard.writeText(c.code); toast({ title: "Copié !" }); }}
+                            aria-label="Copier le code"
                           ><Copy className="h-3 w-3" /></Button>
                         </div>
                         {c.notes && <p className="text-[11px] text-muted-foreground mt-0.5 truncate max-w-[200px]">{c.notes}</p>}
@@ -263,10 +264,10 @@ export default function AdminPromoCodes() {
                       </td>
                       <td className="px-4 py-3 text-right">
                         <div className="flex justify-end gap-1">
-                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(c)}>
+                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(c)} aria-label="Modifier le code promo">
                             <Pencil className="h-3.5 w-3.5" />
                           </Button>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => remove(c)}>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => remove(c)} aria-label="Supprimer le code promo">
                             <Trash2 className="h-3.5 w-3.5" />
                           </Button>
                         </div>

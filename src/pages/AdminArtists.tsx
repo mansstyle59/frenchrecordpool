@@ -223,10 +223,10 @@ export default function AdminArtists() {
                     </Badge>
                   )}
                   <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Button size="icon" variant="secondary" className="h-7 w-7" onClick={() => openEdit(a)}>
+                    <Button size="icon" variant="secondary" className="h-7 w-7" onClick={() => openEdit(a)} aria-label="Modifier l'artiste">
                       <Pencil className="h-3 w-3" />
                     </Button>
-                    <Button size="icon" variant="secondary" className="h-7 w-7 text-destructive" onClick={() => remove(a)}>
+                    <Button size="icon" variant="secondary" className="h-7 w-7 text-destructive" onClick={() => remove(a)} aria-label="Supprimer l'artiste">
                       <Trash2 className="h-3 w-3" />
                     </Button>
                   </div>
