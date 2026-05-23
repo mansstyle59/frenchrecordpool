@@ -32,6 +32,7 @@ export default function CmsText({
   const { editMode, saveDraft } = useCms();
   const ref = useRef<HTMLElement>(null);
   const [editing, setEditing] = useState(false);
+  const [customSize, setCustomSize] = useState("");
 
   useEffect(() => {
     if (!editing && ref.current) ref.current.textContent = value;
