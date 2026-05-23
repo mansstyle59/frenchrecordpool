@@ -1,5 +1,6 @@
-import { useState, useMemo } from "react";
-import { Search, SlidersHorizontal, X, ArrowUpDown, Disc3, Calendar } from "lucide-react";
+import { useState, useMemo, useEffect, useRef, useCallback } from "react";
+import { useSearchParams } from "react-router-dom";
+import { Search, SlidersHorizontal, X, ArrowUpDown, Disc3, Calendar, Loader2 } from "lucide-react";
 import Layout from "@/components/Layout";
 import TrackRow, { TrackListHeader } from "@/components/TrackRow";
 import { Input } from "@/components/ui/input";
@@ -14,7 +15,8 @@ import TrackGroupRow from "@/components/TrackGroupRow";
 
 type SortOption = "newest" | "popular" | "az" | "bpm";
 
-const PAGE_SIZE = 60;
+const PAGE_SIZE = 40;
+
 
 /* ── Group track-groups by release day (DJCity-style date sections) ── */
 function groupByDay(groups: TrackGroup[]): { day: string; label: string; items: TrackGroup[] }[] {
