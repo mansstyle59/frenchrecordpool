@@ -83,7 +83,16 @@ export default function TrackDetail() {
     });
   };
 
-  const handleDownload = () => downloadTrack(track.id, user, hasActiveSubscription);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const handleDownload = async () => {
+    if (isDownloading) return;
+    setIsDownloading(true);
+    try {
+      await downloadTrack(track.id, user, hasActiveSubscription);
+    } finally {
+      setIsDownloading(false);
+    }
+  };
 
   const handleCopyLink = async () => {
     try {
