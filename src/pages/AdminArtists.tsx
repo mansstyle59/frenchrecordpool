@@ -13,12 +13,14 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ALL_ROLES, normalizeRoles, roleClassName, roleLabel, type ArtistRole } from "@/lib/artistRoles";
 
 type Artist = {
   id: string;
   name: string;
   slug: string;
   kind: string;
+  roles: string[] | null;
   photo_url: string | null;
   bio: string | null;
   country: string | null;
@@ -31,7 +33,8 @@ type Artist = {
 };
 
 const empty = {
-  name: "", slug: "", kind: "remixer", photo_url: "", bio: "", country: "", genre: "",
+  name: "", slug: "", kind: "artist", roles: ["dj"] as ArtistRole[],
+  photo_url: "", bio: "", country: "", genre: "",
   soundcloud_url: "", instagram_url: "", website_url: "",
   featured: false, sort_order: 0,
 };
