@@ -190,6 +190,7 @@ function WidgetRenderer({ widget, preview }: { widget: Widget; preview: boolean 
     case "trending_artists": return <TrendingArtists config={widget.config} />;
     case "featured_genres":  return <FeaturedGenres config={widget.config} />;
     case "welcome_banner":   return <WelcomeBanner config={widget.config} />;
+    case "playlists_carousel": return <PlaylistsCarousel config={widget.config} />;
     case "audio_embed":      return <AudioEmbedWidget config={widget.config} />;
     case "newsletter":       return <NewsletterWidget config={widget.config} />;
     case "countdown":        return <CountdownWidget config={widget.config} />;
