@@ -40,6 +40,12 @@ import {
   type WidgetCommon,
 } from "@/lib/widgetCommon";
 import DjShortsWidget from "@/components/DjShortsWidget";
+import TopDownloadsPeriod from "@/components/widgets/TopDownloadsPeriod";
+import TrendingArtists from "@/components/widgets/TrendingArtists";
+import FeaturedGenres from "@/components/widgets/FeaturedGenres";
+import WelcomeBanner from "@/components/widgets/WelcomeBanner";
+import { useAuth } from "@/contexts/AuthContext";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export interface Widget {
   id: string;
