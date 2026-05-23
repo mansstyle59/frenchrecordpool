@@ -229,6 +229,37 @@ const TYPE_META: Record<string, { label: string; icon: any; desc: string; defaul
     desc: "Grille de visuels Instagram (sans API)",
     defaults: { title: "Sur Instagram", handle: "", items: [] },
   },
+  /* ── Nouveaux widgets ── */
+  top_downloads_period: {
+    label: "Top téléchargements (période)", icon: TrendingUp, group: "Catalogue",
+    desc: "Classement par téléchargements sur 7 j / 30 j / tout",
+    defaults: { title: "Top téléchargements", period: "7d", limit: 8, see_all_url: "/popular" },
+  },
+  trending_artists: {
+    label: "Artistes en hausse", icon: Users, group: "Catalogue",
+    desc: "Carrousel des artistes les plus téléchargés (par période)",
+    defaults: { title: "Artistes en hausse", period: "7d", limit: 10 },
+  },
+  featured_genres: {
+    label: "Genres en vedette", icon: Tag, group: "Catalogue",
+    desc: "Mosaïque de genres cliquables (auto ou manuel)",
+    defaults: { title: "Genres en vedette", auto: true, limit: 8, genres: [] },
+  },
+  welcome_banner: {
+    label: "Bannière de bienvenue", icon: Sparkles, group: "Mise en avant",
+    desc: "Message personnalisé selon l'état de l'utilisateur (anon / inscrit / abonné)",
+    defaults: {
+      title_anon: "Le pool des DJs francophones",
+      body_anon: "Crée ton compte gratuit et découvre les exclus.",
+      cta_anon: "Créer un compte", cta_anon_url: "/signup",
+      title_registered: "Active ton accès complet",
+      body_registered: "Choisis ton plan pour télécharger toutes les exclus.",
+      cta_registered: "Voir les plans", cta_registered_url: "/pricing",
+      title_subscribed: "Bon retour, {name}",
+      body_subscribed: "Profite de tes téléchargements illimités.",
+      cta_subscribed: "Voir les nouveautés", cta_subscribed_url: "/new",
+    },
+  },
 };
 
 /* ─── Presets : ready-to-use widget recipes ─── */
