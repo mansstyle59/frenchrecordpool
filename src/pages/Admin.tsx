@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import {
-  Users, Download, Music, Heart, TrendingUp, CreditCard, Upload, ArrowRight, Palette, ScrollText, Clapperboard, ListMusic,
+  Users, Download, Music, Heart, TrendingUp, CreditCard, Upload, ArrowRight, Palette, Inbox,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTracks } from "@/hooks/useTracks";
@@ -8,20 +8,17 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import AdminLayout from "@/components/admin/AdminLayout";
+import { ADMIN_NAV } from "@/components/admin/adminNav";
 import { resolveCover } from "@/lib/trackCover";
 import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid,
 } from "recharts";
 
-const adminLinks = [
-  { to: "/admin/tracks", label: "Gérer les tracks", desc: "Ajout, édition et upload en masse", icon: Music },
-  { to: "/admin/shorts", label: "Shorts DJ", desc: "Vidéos courtes YouTube (mobile)", icon: Clapperboard },
-  { to: "/admin/playlists", label: "Playlists", desc: "Spotify, Deezer, SoundCloud, internes", icon: ListMusic },
-  { to: "/admin/users", label: "Gérer les utilisateurs", desc: "Comptes DJ et rôles", icon: Users },
-  { to: "/admin/subscriptions", label: "Abonnements", desc: "Plans et statuts Stripe", icon: CreditCard },
-  { to: "/admin/branding", label: "Branding Studio", desc: "Couleurs, logos, typographie", icon: Palette },
-  { to: "/admin/audit", label: "Journal d'audit", desc: "Historique des actions admin", icon: ScrollText },
-];
+// Quick links by group (excluding the Dashboard entry itself).
+const quickGroups = ADMIN_NAV
+  .filter((g) => g.label !== "Pilotage")
+  .map((g) => ({ label: g.label, items: g.items }));
+
 
 export default function Admin() {
   const { isAdmin } = useAuth();
@@ -31,13 +28,14 @@ export default function Admin() {
     queryKey: ["admin-counts"],
     enabled: isAdmin,
     queryFn: async () => {
-      const [p, s, d, f] = await Promise.all([
+      const [p, s, d, f, q] = await Promise.all([
         supabase.from("profiles").select("id", { count: "exact", head: true }),
         supabase.from("subscriptions").select("id", { count: "exact", head: true }).eq("status", "active"),
         supabase.from("downloads").select("id", { count: "exact", head: true }),
         supabase.from("favorites").select("id", { count: "exact", head: true }),
+        supabase.from("tracks").select("id", { count: "exact", head: true }).eq("status", "pending"),
       ]);
-      return { users: p.count ?? 0, activeSubs: s.count ?? 0, downloads: d.count ?? 0, favorites: f.count ?? 0 };
+      return { users: p.count ?? 0, activeSubs: s.count ?? 0, downloads: d.count ?? 0, favorites: f.count ?? 0, pending: q.count ?? 0 };
     },
   });
 
@@ -93,9 +91,10 @@ export default function Admin() {
 
   const stats = [
     { label: "Tracks", value: tracks.length, icon: Music, accent: "from-primary/20 to-primary/5", iconColor: "text-primary" },
+    { label: "En attente", value: counts?.pending ?? 0, icon: Inbox, accent: "from-destructive/20 to-destructive/5", iconColor: "text-destructive" },
     { label: "Téléchargements", value: counts?.downloads ?? totalDownloads, icon: Download, accent: "from-accent/20 to-accent/5", iconColor: "text-accent" },
     { label: "Utilisateurs", value: counts?.users ?? "-", icon: Users, accent: "from-primary/20 to-primary/5", iconColor: "text-primary" },
-    { label: "Abonnements actifs", value: counts?.activeSubs ?? "-", icon: CreditCard, accent: "from-accent/20 to-accent/5", iconColor: "text-accent" },
+    { label: "Abonnements", value: counts?.activeSubs ?? "-", icon: CreditCard, accent: "from-accent/20 to-accent/5", iconColor: "text-accent" },
     { label: "Favoris", value: counts?.favorites ?? 0, icon: Heart, accent: "from-primary/20 to-primary/5", iconColor: "text-primary" },
   ];
 
@@ -119,7 +118,7 @@ export default function Admin() {
       }
     >
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
         {stats.map((s) => (
           <div key={s.label} className={`relative overflow-hidden bg-gradient-to-br ${s.accent} border border-border rounded-xl p-4`}>
             <s.icon className={`h-5 w-5 ${s.iconColor} mb-3`} />
@@ -161,25 +160,43 @@ export default function Admin() {
         </div>
       </div>
 
-      {/* Quick links */}
-      <div>
-        <h2 className="font-display text-lg font-semibold mb-3">Raccourcis</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-          {adminLinks.map((link) => (
-            <Link
-              key={link.to} to={link.to}
-              className="group bg-card border border-border rounded-xl p-5 hover:border-primary/50 hover:-translate-y-0.5 transition-all"
-            >
-              <div className="flex items-center justify-between mb-3">
-                <link.icon className="h-5 w-5 text-primary" />
-                <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
-              </div>
-              <p className="font-display font-semibold group-hover:text-primary transition-colors">{link.label}</p>
-              <p className="text-xs text-muted-foreground mt-1">{link.desc}</p>
-            </Link>
-          ))}
-        </div>
+      {/* Quick links grouped */}
+      <div className="space-y-6">
+        {quickGroups.map((group) => (
+          <div key={group.label}>
+            <h2 className="font-display text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-3">
+              {group.label}
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              {group.items.map((link) => {
+                const badge =
+                  link.to === "/admin/queue" ? counts?.pending ?? 0 : 0;
+                return (
+                  <Link
+                    key={link.to} to={link.to}
+                    className="group relative bg-card border border-border rounded-xl p-5 hover:border-primary/50 hover:-translate-y-0.5 transition-all"
+                  >
+                    <div className="flex items-center justify-between mb-3">
+                      <link.icon className="h-5 w-5 text-primary" />
+                      <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+                    </div>
+                    <p className="font-display font-semibold group-hover:text-primary transition-colors flex items-center gap-2">
+                      {link.label}
+                      {badge > 0 && (
+                        <span className="inline-flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold">
+                          {badge > 99 ? "99+" : badge}
+                        </span>
+                      )}
+                    </p>
+                    {link.desc && <p className="text-xs text-muted-foreground mt-1">{link.desc}</p>}
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        ))}
       </div>
+
 
       {/* Recent + Top */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
