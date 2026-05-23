@@ -141,7 +141,7 @@ export default function AdminShorts() {
   return (
     <AdminLayout
       title="Shorts DJ"
-      subtitle="Vidéos courtes (YouTube Shorts) affichées sur /shorts et en widget home."
+      subtitle="Vidéos courtes (YouTube Shorts ou Instagram Reels) affichées sur /shorts et en widget home."
       actions={
         <Button
           variant="hero"
