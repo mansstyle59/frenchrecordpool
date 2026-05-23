@@ -191,6 +191,57 @@ export type Database = {
         }
         Relationships: []
       }
+      dj_shorts: {
+        Row: {
+          artist_id: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          is_active: boolean
+          position: number
+          tags: string[]
+          thumbnail_url: string | null
+          title: string
+          track_id: string | null
+          updated_at: string
+          youtube_id: string
+          youtube_url: string
+        }
+        Insert: {
+          artist_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          position?: number
+          tags?: string[]
+          thumbnail_url?: string | null
+          title: string
+          track_id?: string | null
+          updated_at?: string
+          youtube_id: string
+          youtube_url: string
+        }
+        Update: {
+          artist_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          position?: number
+          tags?: string[]
+          thumbnail_url?: string | null
+          title?: string
+          track_id?: string | null
+          updated_at?: string
+          youtube_id?: string
+          youtube_url?: string
+        }
+        Relationships: []
+      }
       downloads: {
         Row: {
           downloaded_at: string
