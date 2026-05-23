@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { youtubeThumb } from "@/lib/youtube";
 
 interface Props {
-  config?: { title?: string; limit?: number; see_all_url?: string };
+  config?: any;
 }
 
 export default function DjShortsWidget({ config = {} }: Props) {
