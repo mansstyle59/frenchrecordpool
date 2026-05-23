@@ -159,25 +159,43 @@ export default function Admin() {
         </div>
       </div>
 
-      {/* Quick links */}
-      <div>
-        <h2 className="font-display text-lg font-semibold mb-3">Raccourcis</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-          {adminLinks.map((link) => (
-            <Link
-              key={link.to} to={link.to}
-              className="group bg-card border border-border rounded-xl p-5 hover:border-primary/50 hover:-translate-y-0.5 transition-all"
-            >
-              <div className="flex items-center justify-between mb-3">
-                <link.icon className="h-5 w-5 text-primary" />
-                <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
-              </div>
-              <p className="font-display font-semibold group-hover:text-primary transition-colors">{link.label}</p>
-              <p className="text-xs text-muted-foreground mt-1">{link.desc}</p>
-            </Link>
-          ))}
-        </div>
+      {/* Quick links grouped */}
+      <div className="space-y-6">
+        {quickGroups.map((group) => (
+          <div key={group.label}>
+            <h2 className="font-display text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-3">
+              {group.label}
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              {group.items.map((link) => {
+                const badge =
+                  link.to === "/admin/queue" ? counts?.pending ?? 0 : 0;
+                return (
+                  <Link
+                    key={link.to} to={link.to}
+                    className="group relative bg-card border border-border rounded-xl p-5 hover:border-primary/50 hover:-translate-y-0.5 transition-all"
+                  >
+                    <div className="flex items-center justify-between mb-3">
+                      <link.icon className="h-5 w-5 text-primary" />
+                      <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+                    </div>
+                    <p className="font-display font-semibold group-hover:text-primary transition-colors flex items-center gap-2">
+                      {link.label}
+                      {badge > 0 && (
+                        <span className="inline-flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold">
+                          {badge > 99 ? "99+" : badge}
+                        </span>
+                      )}
+                    </p>
+                    {link.desc && <p className="text-xs text-muted-foreground mt-1">{link.desc}</p>}
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        ))}
       </div>
+
 
       {/* Recent + Top */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
