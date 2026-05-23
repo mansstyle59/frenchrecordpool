@@ -95,7 +95,7 @@ export default function CmsText({
 
   // Build a stable class + scoped <style> with media queries
   const cls = useMemo(() => safeId(editKey), [editKey]);
-  const hasAnySize = !!(sizeVal && (sizeVal.mobile || sizeVal.tablet || sizeVal.desktop || sizeVal.fontSize));
+  const hasAnySize = !lockSize && !!(sizeVal && (sizeVal.mobile || sizeVal.tablet || sizeVal.desktop || sizeVal.fontSize));
 
   const styleTag = hasAnySize ? (
     <style>{[
