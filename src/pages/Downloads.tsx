@@ -290,7 +290,7 @@ function DownloadRowDesktop({
         <p className="text-[10px] text-muted-foreground/60">{format(new Date(row.downloaded_at), "d MMM yyyy HH:mm", { locale: fr })}</p>
       </div>
       <div className="flex items-center justify-end gap-1">
-        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onCopyLink} title="Copier le lien">
+        <Button aria-label="Copier le lien" variant="ghost" size="icon" className="h-8 w-8" onClick={onCopyLink} title="Copier le lien">
           <Copy className="h-3.5 w-3.5" />
         </Button>
         <Button

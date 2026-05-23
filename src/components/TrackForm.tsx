@@ -700,7 +700,7 @@ export default function TrackForm({ initialData, saving, onSubmit, existingGenre
                     maxLength={12}
                     className="bg-secondary border-border font-mono uppercase"
                   />
-                  <Button
+                  <Button aria-label="Générer un ISRC (FR + registrant + année + n°)"
                     type="button"
                     variant="outline"
                     size="icon"

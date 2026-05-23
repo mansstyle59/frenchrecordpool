@@ -83,10 +83,10 @@ export default function CmsEditBar() {
       </div>
 
       <div className="grid grid-cols-2 gap-1.5">
-        <Button size="sm" variant="outline" className="gap-1.5 h-8" disabled={!canUndo} onClick={undo} title="Annuler (Ctrl+Z)">
+        <Button aria-label="Annuler (Ctrl+Z)" size="sm" variant="outline" className="gap-1.5 h-8" disabled={!canUndo} onClick={undo} title="Annuler (Ctrl+Z)">
           <Undo2 className="h-3.5 w-3.5" /> Annuler
         </Button>
-        <Button size="sm" variant="outline" className="gap-1.5 h-8" disabled={!canRedo} onClick={redo} title="Rétablir (Ctrl+Shift+Z)">
+        <Button aria-label="Rétablir (Ctrl+Shift+Z)" size="sm" variant="outline" className="gap-1.5 h-8" disabled={!canRedo} onClick={redo} title="Rétablir (Ctrl+Shift+Z)">
           <Redo2 className="h-3.5 w-3.5" /> Rétablir
         </Button>
       </div>

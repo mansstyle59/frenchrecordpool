@@ -440,7 +440,7 @@ export default function AdminTracks() {
                         >
                           <Heart className={`h-3 w-3 ${isFavorite(track.id) ? "fill-current" : ""}`} />
                         </Button>
-                        <Button variant="ghost" size="icon" className="h-7 w-7" asChild title="Voir détails">
+                        <Button aria-label="Voir détails" variant="ghost" size="icon" className="h-7 w-7" asChild title="Voir détails">
                           <Link to={`/tracks/${track.id}`}><Eye className="h-3 w-3" /></Link>
                         </Button>
                         <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(track)} title="Éditer">
