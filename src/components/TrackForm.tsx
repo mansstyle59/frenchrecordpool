@@ -942,7 +942,7 @@ export default function TrackForm({ initialData, saving, onSubmit, existingGenre
 
                 {previewFile && previewBlobUrl && (
                   <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-background/60 border border-border">
-                    <Button type="button" variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={togglePreviewPlayback}>
+                    <Button type="button" variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={togglePreviewPlayback} aria-label={previewPlaying ? "Pause de l'extrait" : "Lecture de l'extrait"}>
                       {previewPlaying ? <Pause className="h-4 w-4 text-primary" /> : <Play className="h-4 w-4 text-primary fill-current" />}
                     </Button>
                     <div className="min-w-0 flex-1">
@@ -1036,7 +1036,7 @@ export default function TrackForm({ initialData, saving, onSubmit, existingGenre
             </div>
             {previewFile && previewBlobUrl && (
               <div className="flex items-center gap-2 px-3 py-2 mt-3 rounded-md bg-background/60 border border-border">
-                <Button type="button" variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={togglePreviewPlayback}>
+                <Button type="button" variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={togglePreviewPlayback} aria-label={previewPlaying ? "Pause de l'extrait" : "Lecture de l'extrait"}>
                   {previewPlaying ? <Pause className="h-4 w-4 text-primary" /> : <Play className="h-4 w-4 text-primary fill-current" />}
                 </Button>
                 <p className="text-xs text-muted-foreground">Écouter l'extrait généré</p>

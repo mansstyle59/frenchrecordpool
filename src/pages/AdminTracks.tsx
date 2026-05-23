@@ -437,6 +437,8 @@ export default function AdminTracks() {
                           className={`h-7 w-7 ${isFavorite(track.id) ? "text-red-500" : ""}`}
                           onClick={() => handleFavorite(track.id)}
                           title="Favori"
+                          aria-label="Favori"
+                          aria-pressed={isFavorite(track.id)}
                         >
                           <Heart className={`h-3 w-3 ${isFavorite(track.id) ? "fill-current" : ""}`} />
                         </Button>
