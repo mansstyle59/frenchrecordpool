@@ -264,6 +264,11 @@ const TYPE_META: Record<string, { label: string; icon: any; desc: string; defaul
       cta_subscribed: "Voir les nouveautés", cta_subscribed_url: "/new",
     },
   },
+  playlists_carousel: {
+    label: "Playlists (carrousel)", icon: ListMusic, group: "Mise en avant",
+    desc: "Carrousel de playlists Spotify/Deezer/SoundCloud/internes",
+    defaults: { title: "Playlists", auto: true, limit: 8, playlist_ids: [], see_all_url: "/playlists" },
+  },
 };
 
 /* ─── Presets : ready-to-use widget recipes ─── */
