@@ -84,7 +84,6 @@ export default function TrackDetail() {
     });
   };
 
-  const [isDownloading, setIsDownloading] = useState(false);
   const handleDownload = async () => {
     if (isDownloading) return;
     setIsDownloading(true);
