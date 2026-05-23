@@ -381,6 +381,60 @@ export type Database = {
         }
         Relationships: []
       }
+      playlists: {
+        Row: {
+          accent_color: string
+          cover_url: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          embed_id: string | null
+          id: string
+          is_active: boolean
+          position: number
+          source: string
+          source_url: string | null
+          tags: string[]
+          title: string
+          track_ids: string[]
+          updated_at: string
+        }
+        Insert: {
+          accent_color?: string
+          cover_url?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          embed_id?: string | null
+          id?: string
+          is_active?: boolean
+          position?: number
+          source: string
+          source_url?: string | null
+          tags?: string[]
+          title: string
+          track_ids?: string[]
+          updated_at?: string
+        }
+        Update: {
+          accent_color?: string
+          cover_url?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          embed_id?: string | null
+          id?: string
+          is_active?: boolean
+          position?: number
+          source?: string
+          source_url?: string | null
+          tags?: string[]
+          title?: string
+          track_ids?: string[]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       popups: {
         Row: {
           accent_color: string
