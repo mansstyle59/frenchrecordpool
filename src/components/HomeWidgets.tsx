@@ -217,7 +217,7 @@ function HeroWidget({ config, preview }: { config: any; preview: boolean }) {
               </Button>
             )}
             {config.cta_secondary_label && (
-              <Button asChild size={preview ? "default" : "lg"} variant="outline">
+              <Button asChild size={preview ? "default" : "lg"} variant="ghost">
                 <Link to={config.cta_secondary_url || "/pricing"}>{config.cta_secondary_label}</Link>
               </Button>
             )}
