@@ -252,23 +252,52 @@ function ShortEditor({
   onSave: (d: Draft) => void;
   saving: boolean;
 }) {
-  const [d, setD] = useState<Draft>(draft);
+  const [d, setD] = useState<Draft>(() => ({
+    ...draft,
+    source_url: draft.source_url ?? draft.youtube_url ?? "",
+    provider: (draft.provider as ShortProvider) ?? (draft.youtube_url ? "youtube" : undefined),
+  }));
   const tagsText = useMemo(() => (d.tags ?? []).join(", "), [d.tags]);
-  const ytId = extractYouTubeId(d.youtube_url || "");
+  const url = d.source_url || "";
+  const provider = (d.provider as ShortProvider) || detectProvider(url);
+  const sid = provider ? extractShortId(url, provider) : null;
+  const previewThumb = d.thumbnail_url || (provider && sid ? shortThumbnail(provider, sid) : null);
+  const ProviderIcon = provider === "instagram" ? Instagram : Youtube;
 
   return (
     <div className="grid md:grid-cols-[1fr_320px] gap-4 max-w-5xl">
       <div className="bg-card border border-border rounded-xl p-5 space-y-4">
         <div>
-          <Label>URL YouTube *</Label>
+          <Label>URL de la vidéo *</Label>
           <Input
-            placeholder="https://www.youtube.com/shorts/…  ou  https://youtu.be/…"
-            value={d.youtube_url || ""}
-            onChange={(e) => setD({ ...d, youtube_url: e.target.value })}
+            placeholder="YouTube Short  ou  Instagram Reel"
+            value={url}
+            onChange={(e) => {
+              const v = e.target.value;
+              setD({ ...d, source_url: v, provider: detectProvider(v) ?? d.provider });
+            }}
           />
-          {d.youtube_url && !ytId && (
-            <p className="text-xs text-destructive mt-1">URL non reconnue.</p>
-          )}
+          <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1.5">
+            {provider ? (
+              <>
+                <ProviderIcon className="h-3 w-3" />
+                Détecté : <span className="font-semibold text-foreground">{providerLabel(provider)}</span>
+                {sid && <span className="text-muted-foreground/70">· {sid}</span>}
+              </>
+            ) : url ? (
+              <span className="text-destructive">URL non reconnue (YouTube ou Instagram attendu)</span>
+            ) : (
+              <>Colle un lien YouTube Shorts (youtube.com/shorts/…) ou Instagram Reel (instagram.com/reel/…).</>
+            )}
+          </p>
+        </div>
+        <div>
+          <Label>Vignette personnalisée (URL)</Label>
+          <Input
+            placeholder={provider === "instagram" ? "Obligatoire pour Instagram (pas de miniature publique)" : "Optionnel — par défaut, miniature YouTube"}
+            value={d.thumbnail_url || ""}
+            onChange={(e) => setD({ ...d, thumbnail_url: e.target.value })}
+          />
         </div>
         <div>
           <Label>Titre *</Label>
