@@ -39,6 +39,7 @@ import {
   ANIM_VARIANTS, CONTAINER_CLASS, PAD_X, padYClasses, bgStyle,
   type WidgetCommon,
 } from "@/lib/widgetCommon";
+import DjShortsWidget from "@/components/DjShortsWidget";
 
 export interface Widget {
   id: string;
@@ -136,6 +137,7 @@ function WidgetRenderer({ widget, preview }: { widget: Widget; preview: boolean 
     case "cta":              return <CtaWidget config={widget.config} />;
     case "rich_text":        return <RichTextWidget config={widget.config} />;
     case "video_embed":      return <VideoEmbedWidget config={widget.config} />;
+    case "dj_shorts":        return <DjShortsWidget config={widget.config} />;
     case "audio_embed":      return <AudioEmbedWidget config={widget.config} />;
     case "newsletter":       return <NewsletterWidget config={widget.config} />;
     case "countdown":        return <CountdownWidget config={widget.config} />;

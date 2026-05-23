@@ -48,6 +48,8 @@ import Remixers from "./pages/Remixers";
 
 import NewReleases from "./pages/NewReleases";
 import Stems from "./pages/Stems";
+import Shorts from "./pages/Shorts";
+import AdminShorts from "./pages/AdminShorts";
 import NotFound from "./pages/NotFound";
 
 
@@ -102,6 +104,8 @@ const App = () => (
               <Route path="/top" element={<Navigate to="/new" replace />} />
               <Route path="/new" element={<NewReleases />} />
               <Route path="/stems" element={<Stems />} />
+              <Route path="/shorts" element={<Shorts />} />
+              <Route path="/admin/shorts" element={<AdminShorts />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
             <PageTransition />

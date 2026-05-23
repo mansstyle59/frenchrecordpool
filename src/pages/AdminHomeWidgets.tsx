@@ -73,6 +73,11 @@ const TYPE_META: Record<string, { label: string; icon: any; desc: string; defaul
     desc: "Intégration vidéo responsive",
     defaults: { title: "", url: "" },
   },
+  dj_shorts: {
+    label: "Shorts DJ (carrousel)", icon: Video, group: "Mise en avant",
+    desc: "Carrousel horizontal des Shorts DJ — lien vers /shorts",
+    defaults: { title: "Shorts DJ", limit: 8, see_all_url: "/shorts" },
+  },
   newsletter: {
     label: "Newsletter", icon: Mail, group: "Marketing",
     desc: "Capture e-mails", defaults: { title: "Reste informé", body: "Nos exclus par e-mail.", cta_label: "S'inscrire" },
