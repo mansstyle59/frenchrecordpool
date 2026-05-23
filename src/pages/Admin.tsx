@@ -19,12 +19,6 @@ const quickGroups = ADMIN_NAV
   .filter((g) => g.label !== "Pilotage")
   .map((g) => ({ label: g.label, items: g.items }));
 
-const _legacy = [
-  { to: "/admin/users", label: "Gérer les utilisateurs", desc: "Comptes DJ et rôles", icon: Users },
-  { to: "/admin/subscriptions", label: "Abonnements", desc: "Plans et statuts Stripe", icon: CreditCard },
-  { to: "/admin/branding", label: "Branding Studio", desc: "Couleurs, logos, typographie", icon: Palette },
-  { to: "/admin/audit", label: "Journal d'audit", desc: "Historique des actions admin", icon: ScrollText },
-];
 
 export default function Admin() {
   const { isAdmin } = useAuth();
