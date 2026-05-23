@@ -341,10 +341,10 @@ export default function MiniPlayer() {
           {/* Queue */}
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="ghost" size="icon" className="shrink-0 relative h-8 w-8" title="File d'attente">
+              <Button variant="ghost" size="icon-sm" className="relative" title="File d'attente">
                 <ListMusic className="h-3.5 w-3.5" />
                 {queue.length > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 h-3.5 min-w-3.5 px-1 rounded-full bg-primary text-primary-foreground text-[9px] font-bold flex items-center justify-center">
+                  <span className="absolute -top-0.5 -right-1 h-3.5 min-w-3.5 px-1 rounded-full bg-primary text-primary-foreground text-[9px] font-bold flex items-center justify-center">
                     {queue.length}
                   </span>
                 )}
