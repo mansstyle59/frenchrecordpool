@@ -40,6 +40,10 @@ interface Widget {
   position: number;
   config: Record<string, any>;
   is_active: boolean;
+  audience?: string | null;
+  devices?: string | null;
+  starts_at?: string | null;
+  ends_at?: string | null;
 }
 
 const TYPE_META: Record<string, { label: string; icon: any; desc: string; defaults: any; group: string }> = {
@@ -228,6 +232,37 @@ const TYPE_META: Record<string, { label: string; icon: any; desc: string; defaul
     label: "Instagram (cartes statiques)", icon: Instagram, group: "Contenu",
     desc: "Grille de visuels Instagram (sans API)",
     defaults: { title: "Sur Instagram", handle: "", items: [] },
+  },
+  /* ── Nouveaux widgets ── */
+  top_downloads_period: {
+    label: "Top téléchargements (période)", icon: TrendingUp, group: "Catalogue",
+    desc: "Classement par téléchargements sur 7 j / 30 j / tout",
+    defaults: { title: "Top téléchargements", period: "7d", limit: 8, see_all_url: "/popular" },
+  },
+  trending_artists: {
+    label: "Artistes en hausse", icon: Users, group: "Catalogue",
+    desc: "Carrousel des artistes les plus téléchargés (par période)",
+    defaults: { title: "Artistes en hausse", period: "7d", limit: 10 },
+  },
+  featured_genres: {
+    label: "Genres en vedette", icon: Tag, group: "Catalogue",
+    desc: "Mosaïque de genres cliquables (auto ou manuel)",
+    defaults: { title: "Genres en vedette", auto: true, limit: 8, genres: [] },
+  },
+  welcome_banner: {
+    label: "Bannière de bienvenue", icon: Sparkles, group: "Mise en avant",
+    desc: "Message personnalisé selon l'état de l'utilisateur (anon / inscrit / abonné)",
+    defaults: {
+      title_anon: "Le pool des DJs francophones",
+      body_anon: "Crée ton compte gratuit et découvre les exclus.",
+      cta_anon: "Créer un compte", cta_anon_url: "/signup",
+      title_registered: "Active ton accès complet",
+      body_registered: "Choisis ton plan pour télécharger toutes les exclus.",
+      cta_registered: "Voir les plans", cta_registered_url: "/pricing",
+      title_subscribed: "Bon retour, {name}",
+      body_subscribed: "Profite de tes téléchargements illimités.",
+      cta_subscribed: "Voir les nouveautés", cta_subscribed_url: "/new",
+    },
   },
 };
 
@@ -693,6 +728,11 @@ function Editor({ widget, onCancel, onSave, saving }: { widget: Widget; onCancel
         )}
 
         <SpacingEditor value={w.config.common ?? {}} onChange={setCommon} />
+
+        <TargetingEditor
+          value={{ audience: w.audience, devices: w.devices, starts_at: w.starts_at, ends_at: w.ends_at }}
+          onChange={(patch) => setW((s) => ({ ...s, ...patch }))}
+        />
 
         <div className="flex items-center gap-2 pt-2 border-t border-border">
           <Switch checked={w.is_active} onCheckedChange={(v) => setW((s) => ({ ...s, is_active: v }))} />
@@ -1223,6 +1263,107 @@ function TypeFields({ w, setC }: { w: Widget; setC: (k: string, v: any) => void 
             )} />
         </>
       );
+    case "top_downloads_period":
+      return (
+        <>
+          <Field label="Titre"><Input value={c.title ?? ""} onChange={(e) => setC("title", e.target.value)} /></Field>
+          <div className="grid grid-cols-3 gap-3">
+            <Field label="Période par défaut">
+              <Select value={c.period ?? "7d"} onValueChange={(v) => setC("period", v)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="7d">7 jours</SelectItem>
+                  <SelectItem value="30d">30 jours</SelectItem>
+                  <SelectItem value="all">Tout</SelectItem>
+                </SelectContent>
+              </Select>
+            </Field>
+            <Field label="Limite"><Input type="number" min={3} max={24} value={c.limit ?? 8} onChange={(e) => setC("limit", parseInt(e.target.value) || 8)} /></Field>
+            <Field label="URL « Tout voir »"><Input value={c.see_all_url ?? ""} onChange={(e) => setC("see_all_url", e.target.value)} placeholder="/popular" /></Field>
+          </div>
+        </>
+      );
+    case "trending_artists":
+      return (
+        <>
+          <Field label="Titre"><Input value={c.title ?? ""} onChange={(e) => setC("title", e.target.value)} /></Field>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Période par défaut">
+              <Select value={c.period ?? "7d"} onValueChange={(v) => setC("period", v)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="7d">7 jours</SelectItem>
+                  <SelectItem value="30d">30 jours</SelectItem>
+                  <SelectItem value="all">Tout</SelectItem>
+                </SelectContent>
+              </Select>
+            </Field>
+            <Field label="Limite"><Input type="number" min={3} max={24} value={c.limit ?? 10} onChange={(e) => setC("limit", parseInt(e.target.value) || 10)} /></Field>
+          </div>
+        </>
+      );
+    case "featured_genres":
+      return (
+        <>
+          <Field label="Titre"><Input value={c.title ?? ""} onChange={(e) => setC("title", e.target.value)} /></Field>
+          <div className="flex items-center gap-2">
+            <Switch checked={c.auto !== false} onCheckedChange={(v) => setC("auto", v)} />
+            <span className="text-sm">Auto (top genres par téléchargements)</span>
+          </div>
+          {c.auto !== false ? (
+            <Field label="Limite"><Input type="number" min={3} max={16} value={c.limit ?? 8} onChange={(e) => setC("limit", parseInt(e.target.value) || 8)} /></Field>
+          ) : (
+            <RepeaterField
+              label="Genres (manuel)"
+              items={c.genres ?? []}
+              empty={{ name: "", image_url: "", url: "", accent: "" }}
+              onChange={(v) => setC("genres", v)}
+              render={(it, set) => (
+                <div className="grid grid-cols-2 gap-2">
+                  <Input placeholder="Nom (ex: House)" value={it.name ?? ""} onChange={(e) => set({ ...it, name: e.target.value })} />
+                  <Input placeholder="Lien (optionnel)" value={it.url ?? ""} onChange={(e) => set({ ...it, url: e.target.value })} />
+                  <Input placeholder="Image URL (optionnel)" value={it.image_url ?? ""} onChange={(e) => set({ ...it, image_url: e.target.value })} className="col-span-2" />
+                  <Input placeholder="Accent HSL ex: 220 80% 50%" value={it.accent ?? ""} onChange={(e) => set({ ...it, accent: e.target.value })} className="col-span-2" />
+                </div>
+              )}
+            />
+          )}
+        </>
+      );
+    case "welcome_banner":
+      return (
+        <>
+          <Field label="Image de fond (optionnel)"><Input value={c.bg_url ?? ""} onChange={(e) => setC("bg_url", e.target.value)} placeholder="https://..." /></Field>
+          <div className="rounded-lg border border-border bg-background p-3 space-y-2">
+            <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Visiteur anonyme</p>
+            <Input placeholder="Eyebrow" value={c.eyebrow_anon ?? ""} onChange={(e) => setC("eyebrow_anon", e.target.value)} />
+            <Input placeholder="Titre" value={c.title_anon ?? ""} onChange={(e) => setC("title_anon", e.target.value)} />
+            <Textarea rows={2} placeholder="Texte" value={c.body_anon ?? ""} onChange={(e) => setC("body_anon", e.target.value)} />
+            <div className="grid grid-cols-2 gap-2">
+              <Input placeholder="CTA label" value={c.cta_anon ?? ""} onChange={(e) => setC("cta_anon", e.target.value)} />
+              <Input placeholder="CTA URL" value={c.cta_anon_url ?? ""} onChange={(e) => setC("cta_anon_url", e.target.value)} />
+            </div>
+          </div>
+          <div className="rounded-lg border border-border bg-background p-3 space-y-2">
+            <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Inscrit sans abonnement</p>
+            <Input placeholder="Titre" value={c.title_registered ?? ""} onChange={(e) => setC("title_registered", e.target.value)} />
+            <Textarea rows={2} placeholder="Texte" value={c.body_registered ?? ""} onChange={(e) => setC("body_registered", e.target.value)} />
+            <div className="grid grid-cols-2 gap-2">
+              <Input placeholder="CTA label" value={c.cta_registered ?? ""} onChange={(e) => setC("cta_registered", e.target.value)} />
+              <Input placeholder="CTA URL" value={c.cta_registered_url ?? ""} onChange={(e) => setC("cta_registered_url", e.target.value)} />
+            </div>
+          </div>
+          <div className="rounded-lg border border-border bg-background p-3 space-y-2">
+            <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Abonné actif</p>
+            <Input placeholder="Titre (utilise {name})" value={c.title_subscribed ?? ""} onChange={(e) => setC("title_subscribed", e.target.value)} />
+            <Textarea rows={2} placeholder="Texte" value={c.body_subscribed ?? ""} onChange={(e) => setC("body_subscribed", e.target.value)} />
+            <div className="grid grid-cols-2 gap-2">
+              <Input placeholder="CTA label" value={c.cta_subscribed ?? ""} onChange={(e) => setC("cta_subscribed", e.target.value)} />
+              <Input placeholder="CTA URL" value={c.cta_subscribed_url ?? ""} onChange={(e) => setC("cta_subscribed_url", e.target.value)} />
+            </div>
+          </div>
+        </>
+      );
     default:
       return null;
   }
@@ -1345,4 +1486,59 @@ function SpacingEditor({ value, onChange }: { value: any; onChange: (k: string, 
     </details>
   );
 }
+
+/* ─── Targeting editor (audience / device / date window) ─── */
+function TargetingEditor({
+  value,
+  onChange,
+}: {
+  value: { audience?: string | null; devices?: string | null; starts_at?: string | null; ends_at?: string | null };
+  onChange: (patch: Partial<{ audience: string; devices: string; starts_at: string | null; ends_at: string | null }>) => void;
+}) {
+  const toLocalInput = (iso?: string | null) => (iso ? new Date(iso).toISOString().slice(0, 16) : "");
+  return (
+    <details className="group rounded-lg border border-border/60 bg-card/40">
+      <summary className="cursor-pointer list-none flex items-center justify-between px-3 py-2 text-sm font-medium">
+        <span className="flex items-center gap-2">
+          <Users className="h-4 w-4 text-primary" /> Ciblage (audience · device · dates)
+        </span>
+        <span className="text-xs text-muted-foreground group-open:hidden">Régler</span>
+      </summary>
+      <div className="px-3 pb-3 pt-1 grid grid-cols-2 gap-3">
+        <Field label="Audience">
+          <Select value={value.audience ?? "all"} onValueChange={(v) => onChange({ audience: v })}>
+            <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tous</SelectItem>
+              <SelectItem value="anon">Visiteurs anonymes</SelectItem>
+              <SelectItem value="registered">Inscrits (tous)</SelectItem>
+              <SelectItem value="subscribed">Abonnés actifs</SelectItem>
+            </SelectContent>
+          </Select>
+        </Field>
+        <Field label="Appareil">
+          <Select value={value.devices ?? "all"} onValueChange={(v) => onChange({ devices: v })}>
+            <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tous</SelectItem>
+              <SelectItem value="mobile">Mobile uniquement</SelectItem>
+              <SelectItem value="desktop">Desktop uniquement</SelectItem>
+            </SelectContent>
+          </Select>
+        </Field>
+        <Field label="Démarre le (optionnel)">
+          <Input type="datetime-local" value={toLocalInput(value.starts_at)}
+            onChange={(e) => onChange({ starts_at: e.target.value ? new Date(e.target.value).toISOString() : null })}
+            className="h-8 text-xs" />
+        </Field>
+        <Field label="Termine le (optionnel)">
+          <Input type="datetime-local" value={toLocalInput(value.ends_at)}
+            onChange={(e) => onChange({ ends_at: e.target.value ? new Date(e.target.value).toISOString() : null })}
+            className="h-8 text-xs" />
+        </Field>
+      </div>
+    </details>
+  );
+}
+
 
