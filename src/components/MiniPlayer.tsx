@@ -324,14 +324,9 @@ export default function MiniPlayer() {
 
           {/* Volume + Mute */}
           <div className="hidden lg:flex items-center gap-1.5 w-24 shrink-0">
-            <button
-              type="button"
-              onClick={toggleMute}
-              className="text-muted-foreground hover:text-foreground transition-colors"
-              title={muted ? "Réactiver le son (M)" : "Couper le son (M)"}
-            >
+            <Button variant="ghost" size="icon-sm" onClick={toggleMute} title={muted ? "Réactiver le son (M)" : "Couper le son (M)"}>
               {muted ? <VolumeX className="h-3.5 w-3.5 text-destructive" /> : <Volume2 className="h-3.5 w-3.5" />}
-            </button>
+            </Button>
             <input
               type="range"
               min={0}
