@@ -5,6 +5,8 @@ import { motion } from "framer-motion";
 import {
   Music, Clock, CheckCircle2, XCircle, Download, Upload, Bell, Pencil,
   Headphones, Disc3, Globe, Instagram, Youtube, Music2, ExternalLink,
+  TrendingUp, Trophy, Sparkles, UserCircle, ListMusic, Image as ImageIcon,
+  FileText, AtSign, ArrowRight,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useMyTracks } from "@/hooks/useTracks";
@@ -14,6 +16,7 @@ import DjLayout from "@/components/dj/DjLayout";
 import TrackRow, { TrackListHeader } from "@/components/TrackRow";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
 import { resolveCover } from "@/lib/trackCover";
@@ -25,20 +28,20 @@ const STATUS_LABEL: Record<string, { label: string; color: string }> = {
   rejected: { label: "Refusé", color: "bg-destructive/15 text-destructive border-destructive/30" },
 };
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+
 export default function DjDashboard() {
   const { user } = useAuth();
   const { data: myTracks = [] } = useMyTracks(user?.id);
   const { notifications } = useNotifications();
 
-  // ── Studio profile: artist linked to this user, or fallback by track submissions ──
+  // ── Studio profile ──
   const { data: studio } = useQuery({
     queryKey: ["dj-studio-profile", user?.id],
     enabled: !!user?.id,
     queryFn: async () => {
-      // 1) direct link
       const linked = await supabase.from("artists").select("*").eq("user_id", user!.id).maybeSingle();
       if (linked.data) return linked.data as any;
-      // 2) fallback: most-used artist_id from this user's submissions
       const fallbackId = myTracks.find((t) => (t as any).artist_id)?.["artist_id" as keyof DbTrack];
       if (fallbackId) {
         const { data } = await supabase.from("artists").select("*").eq("id", fallbackId as string).maybeSingle();
@@ -48,7 +51,6 @@ export default function DjDashboard() {
     },
   });
 
-  // ── Tracks where I'm credited as a remixer (via studio.id) ──
   const { data: remixTracks = [] } = useQuery({
     queryKey: ["dj-as-remixer", studio?.id],
     enabled: !!studio?.id,
@@ -63,13 +65,37 @@ export default function DjDashboard() {
   });
 
   const stats = useMemo(() => {
+    const allTracks = [...myTracks, ...remixTracks];
     const pending = myTracks.filter((t) => t.status === "pending").length;
     const approved = myTracks.filter((t) => t.status === "approved").length;
     const rejected = myTracks.filter((t) => t.status === "rejected").length;
-    const downloads = myTracks.reduce((s, t) => s + (t.downloads ?? 0), 0)
-      + remixTracks.reduce((s, t) => s + (t.downloads ?? 0), 0);
-    return { pending, approved, rejected, downloads, total: myTracks.length + remixTracks.length };
+    const downloads = allTracks.reduce((s, t) => s + (t.downloads ?? 0), 0);
+    const now = Date.now();
+    const last30 = allTracks.filter((t) => now - new Date(t.created_at).getTime() < 30 * DAY_MS).length;
+    const last7 = allTracks.filter((t) => now - new Date(t.created_at).getTime() < 7 * DAY_MS).length;
+    return { pending, approved, rejected, downloads, total: allTracks.length, last30, last7 };
   }, [myTracks, remixTracks]);
+
+  // Top morceau (le plus téléchargé, approuvé)
+  const topTrack = useMemo(() => {
+    return [...myTracks, ...remixTracks]
+      .filter((t) => t.status === "approved")
+      .sort((a, b) => (b.downloads ?? 0) - (a.downloads ?? 0))[0] ?? null;
+  }, [myTracks, remixTracks]);
+
+  // Profile completion (only when studio linked)
+  const completion = useMemo(() => {
+    if (!studio) return null;
+    const checks: { ok: boolean; label: string; icon: any; field: string }[] = [
+      { ok: !!studio.photo_url, label: "Photo de profil", icon: ImageIcon, field: "photo" },
+      { ok: !!studio.banner_url, label: "Bannière studio", icon: ImageIcon, field: "banner" },
+      { ok: !!(studio.bio_long || studio.bio), label: "Biographie", icon: FileText, field: "bio" },
+      { ok: !!studio.tagline, label: "Tagline", icon: Sparkles, field: "tagline" },
+      { ok: !!(studio.instagram_url || studio.soundcloud_url || studio.spotify_url || studio.youtube_url || studio.beatport_url || studio.tiktok_url || studio.website_url), label: "Au moins 1 réseau social", icon: AtSign, field: "socials" },
+    ];
+    const done = checks.filter((c) => c.ok).length;
+    return { done, total: checks.length, pct: Math.round((done / checks.length) * 100), checks };
+  }, [studio]);
 
   const recent = myTracks.slice(0, 5);
   const displayName = studio?.name || (user?.email?.split("@")[0] ?? "Mon studio");
@@ -131,13 +157,11 @@ export default function DjDashboard() {
               </div>
             </div>
             <div className="flex sm:flex-col gap-2 shrink-0">
-              {profileUrl && (
-                <Link to={profileUrl}>
-                  <Button size="sm" variant="secondary" className="gap-1.5 w-full">
-                    <Pencil className="h-3.5 w-3.5" /> Studio
-                  </Button>
-                </Link>
-              )}
+              <Link to="/dj/profile">
+                <Button size="sm" variant="secondary" className="gap-1.5 w-full">
+                  <Pencil className="h-3.5 w-3.5" /> Studio
+                </Button>
+              </Link>
               {profileUrl && (
                 <Link to={profileUrl} target="_blank">
                   <Button size="sm" variant="ghost" className="gap-1.5 w-full">
@@ -155,16 +179,36 @@ export default function DjDashboard() {
         </div>
       </motion.div>
 
-      {/* ───── Compact stats ───── */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
-        <StatCard icon={Music} label="Total" value={stats.total} accent="from-primary/20 to-primary/5" iconColor="text-primary" />
-        <StatCard icon={Clock} label="En attente" value={stats.pending} accent="from-accent/10 to-accent/5" iconColor="text-accent" />
-        <StatCard icon={CheckCircle2} label="Approuvés" value={stats.approved} accent="from-primary/15 to-primary/5" iconColor="text-primary" />
-        <StatCard icon={XCircle} label="Refusés" value={stats.rejected} accent="from-destructive/15 to-destructive/5" iconColor="text-destructive" />
-        <StatCard icon={Download} label="Téléchargements" value={stats.downloads} accent="from-accent/20 to-accent/5" iconColor="text-accent" />
+      {/* ───── Quick actions ribbon ───── */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        <QuickAction to="/dj/upload" icon={Upload} label="Nouveau morceau" accent="primary" />
+        <QuickAction to="/dj/tracks" icon={ListMusic} label="Mes morceaux" accent="accent" />
+        <QuickAction to="/dj/profile" icon={UserCircle} label="Mon studio" accent="primary" />
+        <QuickAction to={profileUrl || "/dj/profile"} icon={ExternalLink} label="Page publique" accent="accent" external={!!profileUrl} />
       </div>
 
-      {/* ───── Remix discography (all tracks where I'm credited as remixer) ───── */}
+      {/* ───── Stats ───── */}
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+        <StatCard icon={Music} label="Total titres" value={stats.total} hint={stats.last30 > 0 ? `+${stats.last30} ce mois` : "—"} accent="from-primary/20 to-primary/5" iconColor="text-primary" />
+        <StatCard icon={Clock} label="En attente" value={stats.pending} hint={stats.pending > 0 ? "Validation 24-48h" : "À jour"} accent="from-accent/15 to-accent/5" iconColor="text-accent" />
+        <StatCard icon={CheckCircle2} label="Approuvés" value={stats.approved} hint={`${stats.total > 0 ? Math.round((stats.approved / stats.total) * 100) : 0}% du total`} accent="from-primary/15 to-primary/5" iconColor="text-primary" />
+        <StatCard icon={XCircle} label="Refusés" value={stats.rejected} hint={stats.rejected > 0 ? "Voir motifs" : "Aucun refus"} accent="from-destructive/15 to-destructive/5" iconColor="text-destructive" />
+        <StatCard icon={Download} label="Téléchargements" value={stats.downloads.toLocaleString()} hint={stats.last7 > 0 ? `+${stats.last7} titres cette semaine` : "Cumulés"} accent="from-accent/20 to-accent/5" iconColor="text-accent" />
+      </div>
+
+      {/* ───── Profile completion + Top track ───── */}
+      {(completion || topTrack) && (
+        <div className="grid lg:grid-cols-2 gap-4">
+          {completion && completion.pct < 100 && (
+            <CompletionCard completion={completion} />
+          )}
+          {topTrack && (
+            <TopTrackCard track={topTrack} />
+          )}
+        </div>
+      )}
+
+      {/* ───── Remix discography ───── */}
       {remixTracks.length > 0 && (
         <section className="space-y-2">
           <div className="flex items-center justify-between">
@@ -186,7 +230,7 @@ export default function DjDashboard() {
         </section>
       )}
 
-      {/* ───── Two columns: recent submissions + notifications ───── */}
+      {/* ───── Recent + Notifications ───── */}
       <div className="grid lg:grid-cols-2 gap-4">
         <div className="rounded-2xl border border-border bg-card/40 backdrop-blur-xl p-5">
           <div className="flex items-center justify-between mb-4">
@@ -251,12 +295,93 @@ export default function DjDashboard() {
   );
 }
 
-function StatCard({ icon: Icon, label, value, accent, iconColor }: any) {
+function StatCard({ icon: Icon, label, value, hint, accent, iconColor }: any) {
   return (
     <div className={`relative overflow-hidden bg-gradient-to-br ${accent} border border-border rounded-2xl p-4 backdrop-blur-xl`}>
       <Icon className={`h-5 w-5 ${iconColor} mb-3`} />
       <p className="text-3xl font-display font-black leading-none tracking-tight">{value}</p>
       <p className="text-[11px] uppercase tracking-wider text-muted-foreground mt-1.5 font-semibold">{label}</p>
+      {hint && (
+        <p className="text-[10px] text-muted-foreground/80 mt-1 truncate flex items-center gap-1">
+          <TrendingUp className="h-2.5 w-2.5" /> {hint}
+        </p>
+      )}
+    </div>
+  );
+}
+
+function QuickAction({ to, icon: Icon, label, accent, external }: any) {
+  const colorCls = accent === "accent"
+    ? "from-accent/15 to-accent/5 group-hover:from-accent/25 group-hover:to-accent/10 text-accent"
+    : "from-primary/15 to-primary/5 group-hover:from-primary/25 group-hover:to-primary/10 text-primary";
+  return (
+    <Link to={to} target={external ? "_blank" : undefined} className="group">
+      <div className={`relative overflow-hidden bg-gradient-to-br ${colorCls} border border-border rounded-2xl p-3 flex items-center gap-3 transition-all hover:border-primary/40 hover:-translate-y-0.5`}>
+        <div className="h-9 w-9 rounded-xl bg-background/60 backdrop-blur flex items-center justify-center shrink-0">
+          <Icon className="h-4 w-4" />
+        </div>
+        <span className="font-semibold text-sm text-foreground truncate">{label}</span>
+        <ArrowRight className="h-3.5 w-3.5 ml-auto text-muted-foreground group-hover:text-foreground group-hover:translate-x-0.5 transition-all" />
+      </div>
+    </Link>
+  );
+}
+
+function CompletionCard({ completion }: { completion: { done: number; total: number; pct: number; checks: { ok: boolean; label: string; icon: any }[] } }) {
+  return (
+    <div className="rounded-2xl border border-border bg-card/40 backdrop-blur-xl p-5">
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="font-display text-lg font-bold tracking-tight flex items-center gap-2">
+          <Sparkles className="h-4 w-4 text-primary" /> Complète ton studio
+        </h3>
+        <span className="text-2xl font-display font-black tracking-tight text-primary">{completion.pct}%</span>
+      </div>
+      <Progress value={completion.pct} className="h-2 mb-4" />
+      <ul className="space-y-1.5 mb-4">
+        {completion.checks.map((c) => (
+          <li key={c.label} className={`flex items-center gap-2 text-sm ${c.ok ? "text-muted-foreground line-through" : "text-foreground"}`}>
+            {c.ok ? (
+              <CheckCircle2 className="h-3.5 w-3.5 text-primary shrink-0" />
+            ) : (
+              <c.icon className="h-3.5 w-3.5 text-accent shrink-0" />
+            )}
+            <span className="truncate">{c.label}</span>
+          </li>
+        ))}
+      </ul>
+      <Link to="/dj/profile">
+        <Button size="sm" variant="hero" className="w-full gap-2">
+          <Pencil className="h-3.5 w-3.5" /> Compléter mon profil
+        </Button>
+      </Link>
+    </div>
+  );
+}
+
+function TopTrackCard({ track }: { track: DbTrack }) {
+  return (
+    <div className="relative rounded-2xl border border-border bg-gradient-to-br from-accent/15 via-card/40 to-primary/15 backdrop-blur-xl p-5 overflow-hidden">
+      <div className="flex items-center gap-2 mb-3">
+        <Trophy className="h-4 w-4 text-accent" />
+        <h3 className="font-display text-lg font-bold tracking-tight">Top morceau</h3>
+        <Badge variant="outline" className="ml-auto text-[10px] bg-accent/10 border-accent/30 text-accent gap-1">
+          <Download className="h-3 w-3" /> {(track.downloads ?? 0).toLocaleString()} dl
+        </Badge>
+      </div>
+      <div className="flex gap-4 items-center">
+        <img src={resolveCover(track)} alt={track.title} className="h-20 w-20 rounded-xl object-cover ring-2 ring-border shrink-0 shadow-lg" />
+        <div className="min-w-0 flex-1">
+          <Link to={`/tracks/${track.id}`} className="font-display text-xl font-black tracking-tight truncate hover:text-primary block">
+            {track.title}
+          </Link>
+          <p className="text-sm text-muted-foreground truncate">{track.artist}</p>
+          <div className="flex flex-wrap gap-1.5 mt-2">
+            {track.bpm && <Badge variant="outline" className="text-[10px]">{track.bpm} BPM</Badge>}
+            {track.musical_key && <Badge variant="outline" className="text-[10px]">{track.musical_key}</Badge>}
+            {track.genre && <Badge variant="outline" className="text-[10px] truncate max-w-[120px]">{track.genre}</Badge>}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
