@@ -253,10 +253,10 @@ export default function DjDashboard() {
 
 function StatCard({ icon: Icon, label, value, accent, iconColor }: any) {
   return (
-    <div className={`relative overflow-hidden bg-gradient-to-br ${accent} border border-border rounded-xl p-4`}>
+    <div className={`relative overflow-hidden bg-gradient-to-br ${accent} border border-border rounded-2xl p-4 backdrop-blur-xl`}>
       <Icon className={`h-5 w-5 ${iconColor} mb-3`} />
-      <p className="text-2xl font-display font-bold leading-none">{value}</p>
-      <p className="text-xs text-muted-foreground mt-1">{label}</p>
+      <p className="text-3xl font-display font-black leading-none tracking-tight">{value}</p>
+      <p className="text-[11px] uppercase tracking-wider text-muted-foreground mt-1.5 font-semibold">{label}</p>
     </div>
   );
 }
