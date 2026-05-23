@@ -108,6 +108,8 @@ const App = () => (
               <Route path="/stems" element={<Stems />} />
               <Route path="/shorts" element={<Shorts />} />
               <Route path="/admin/shorts" element={<AdminShorts />} />
+              <Route path="/playlists" element={<Playlists />} />
+              <Route path="/admin/playlists" element={<AdminPlaylists />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
             <PageTransition />
