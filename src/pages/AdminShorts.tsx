@@ -230,7 +230,7 @@ export default function AdminShorts() {
                 </div>
               </div>
             </div>
-          ))}
+          );})}
         </div>
       )}
     </AdminLayout>
