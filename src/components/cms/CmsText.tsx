@@ -13,6 +13,8 @@ interface CmsTextProps {
   className?: string;
   multiline?: boolean;
   maxLength?: number;
+  /** Empêche toute modification de la taille du texte (pages sensibles). */
+  lockSize?: boolean;
   children: string;
 }
 
