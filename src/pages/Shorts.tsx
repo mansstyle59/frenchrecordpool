@@ -229,6 +229,10 @@ export default function Shorts() {
         )}
         {filtered.map((s, i) => {
           const isActive = i === activeIdx;
+          const provider: ShortProvider = s.provider || "youtube";
+          const sid = s.source_id || s.youtube_id;
+          const thumb = shortThumbnail(provider, sid, s.thumbnail_url);
+          const ProviderIcon = provider === "instagram" ? Instagram : Youtube;
           return (
             <div
               key={s.id}
@@ -237,37 +241,51 @@ export default function Shorts() {
               style={{ height: "100svh" }}
             >
               {/* Ambient blurred backdrop */}
-              <img
-                src={s.thumbnail_url || youtubeThumb(s.youtube_id)}
-                alt=""
-                aria-hidden
-                className="absolute inset-0 w-full h-full object-cover opacity-40"
-                style={{ filter: "blur(40px) saturate(140%)" }}
-              />
+              {thumb ? (
+                <img
+                  src={thumb}
+                  alt=""
+                  aria-hidden
+                  className="absolute inset-0 w-full h-full object-cover opacity-40"
+                  style={{ filter: "blur(40px) saturate(140%)" }}
+                />
+              ) : (
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/40 via-black to-accent/40" aria-hidden />
+              )}
               <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/70" />
+
+              {/* Provider badge */}
+              <div className="absolute top-16 left-4 z-20 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/10 backdrop-blur border border-white/15 text-[10px] font-bold uppercase tracking-wider">
+                <ProviderIcon className="h-3 w-3" /> {provider === "instagram" ? "Reel" : "Short"}
+              </div>
 
               {/* 9:16 stage — full screen on mobile, centered phone-frame on md+ */}
               <div
                 className="relative mx-auto h-full w-full md:h-[min(92svh,900px)] md:w-auto md:aspect-[9/16] md:rounded-3xl md:overflow-hidden md:shadow-[0_30px_80px_-20px_rgba(0,0,0,0.8)] md:ring-1 md:ring-white/10"
                 style={{ maxWidth: "100vw" }}
               >
-                {isActive ? (
+                {isActive && sid ? (
                   <iframe
-                    ref={iframeRef}
-                    src={youtubeEmbedUrl(s.youtube_id, { autoplay: true, mute: muted, loop: true })}
+                    ref={provider === "youtube" ? iframeRef : undefined}
+                    src={shortEmbedUrl(provider, sid, { autoplay: true, mute: muted, loop: true })}
                     title={s.title}
-                    allow="autoplay; encrypted-media; picture-in-picture"
+                    allow="autoplay; encrypted-media; picture-in-picture; clipboard-write"
                     allowFullScreen
-                    className="absolute inset-0 w-full h-full border-0"
+                    scrolling="no"
+                    className="absolute inset-0 w-full h-full border-0 bg-black"
                   />
-                ) : (
+                ) : thumb ? (
                   <img
-                    src={s.thumbnail_url || youtubeThumb(s.youtube_id)}
+                    src={thumb}
                     alt={s.title}
                     loading="lazy"
                     decoding="async"
                     className="absolute inset-0 w-full h-full object-cover"
                   />
+                ) : (
+                  <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary/40 to-accent/40">
+                    <ProviderIcon className="h-12 w-12 text-white/70" />
+                  </div>
                 )}
 
                 {/* Bottom overlay info */}
