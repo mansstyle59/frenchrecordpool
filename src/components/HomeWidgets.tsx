@@ -53,6 +53,10 @@ export interface Widget {
   position: number;
   config: Record<string, any> & { common?: WidgetCommon };
   is_active: boolean;
+  audience?: string | null;
+  devices?: string | null;
+  starts_at?: string | null;
+  ends_at?: string | null;
 }
 
 interface Props {
@@ -60,8 +64,32 @@ interface Props {
   preview?: boolean;
 }
 
+/** Decide whether the current viewer matches the widget's targeting rules. */
+function matchesTargeting(
+  w: Widget,
+  ctx: { isMobile: boolean; isLogged: boolean; hasSub: boolean; preview: boolean }
+): boolean {
+  if (ctx.preview) return true;
+  // Date window
+  const now = Date.now();
+  if (w.starts_at && new Date(w.starts_at).getTime() > now) return false;
+  if (w.ends_at && new Date(w.ends_at).getTime() < now) return false;
+  // Device
+  const dev = w.devices || "all";
+  if (dev === "mobile" && !ctx.isMobile) return false;
+  if (dev === "desktop" && ctx.isMobile) return false;
+  // Audience
+  const aud = w.audience || "all";
+  if (aud === "anon" && ctx.isLogged) return false;
+  if (aud === "registered" && !ctx.isLogged) return false;
+  if (aud === "subscribed" && !ctx.hasSub) return false;
+  return true;
+}
+
 export default function HomeWidgets({ widgets: propWidgets, preview = false }: Props) {
   const [widgets, setWidgets] = useState<Widget[]>(propWidgets ?? []);
+  const { user, hasActiveSubscription } = useAuth();
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     if (propWidgets) { setWidgets(propWidgets); return; }
@@ -75,11 +103,24 @@ export default function HomeWidgets({ widgets: propWidgets, preview = false }: P
     return () => { cancelled = true; };
   }, [propWidgets]);
 
-  if (widgets.length === 0) return null;
+  const visible = useMemo(
+    () =>
+      widgets.filter((w) =>
+        matchesTargeting(w, {
+          isMobile,
+          isLogged: !!user,
+          hasSub: hasActiveSubscription,
+          preview,
+        })
+      ),
+    [widgets, isMobile, user, hasActiveSubscription, preview]
+  );
+
+  if (visible.length === 0) return null;
 
   return (
     <div className={preview ? "space-y-4" : "space-y-4 md:space-y-6"}>
-      {widgets.map((w) => (
+      {visible.map((w) => (
         <WidgetWrapper key={w.id} widget={w} preview={preview} />
       ))}
     </div>
