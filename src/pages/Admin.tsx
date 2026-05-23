@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import {
-  Users, Download, Music, Heart, TrendingUp, CreditCard, Upload, ArrowRight, Palette, ScrollText, Clapperboard, ListMusic,
+  Users, Download, Music, Heart, TrendingUp, CreditCard, Upload, ArrowRight, Palette, Inbox,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTracks } from "@/hooks/useTracks";
@@ -8,15 +8,18 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import AdminLayout from "@/components/admin/AdminLayout";
+import { ADMIN_NAV } from "@/components/admin/adminNav";
 import { resolveCover } from "@/lib/trackCover";
 import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid,
 } from "recharts";
 
-const adminLinks = [
-  { to: "/admin/tracks", label: "Gérer les tracks", desc: "Ajout, édition et upload en masse", icon: Music },
-  { to: "/admin/shorts", label: "Shorts DJ", desc: "Vidéos courtes YouTube (mobile)", icon: Clapperboard },
-  { to: "/admin/playlists", label: "Playlists", desc: "Spotify, Deezer, SoundCloud, internes", icon: ListMusic },
+// Quick links by group (excluding the Dashboard entry itself).
+const quickGroups = ADMIN_NAV
+  .filter((g) => g.label !== "Pilotage")
+  .map((g) => ({ label: g.label, items: g.items }));
+
+const _legacy = [
   { to: "/admin/users", label: "Gérer les utilisateurs", desc: "Comptes DJ et rôles", icon: Users },
   { to: "/admin/subscriptions", label: "Abonnements", desc: "Plans et statuts Stripe", icon: CreditCard },
   { to: "/admin/branding", label: "Branding Studio", desc: "Couleurs, logos, typographie", icon: Palette },
