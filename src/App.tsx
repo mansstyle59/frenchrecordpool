@@ -27,6 +27,7 @@ import AdminTracks from "./pages/AdminTracks";
 import AdminUsers from "./pages/AdminUsers";
 import AdminSubscriptions from "./pages/AdminSubscriptions";
 import AdminBranding from "./pages/AdminBranding";
+import AdminPersonalization from "./pages/AdminPersonalization";
 import AdminScreenshotStudio from "./pages/AdminScreenshotStudio";
 import AdminPopups from "./pages/AdminPopups";
 import AdminHomeWidgets from "./pages/AdminHomeWidgets";
