@@ -4,7 +4,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Save, RotateCcw, Upload, Palette, Type, Image as ImageIcon, Layout, Eye,
   Loader2, Sun, Moon, Monitor, Tablet, Smartphone, Sparkles, Check, Copy,
-  Trash2, ExternalLink, Wand2, ShieldCheck, AlertTriangle,
+  Trash2, ExternalLink, Wand2, ShieldCheck, AlertTriangle, Shuffle, Columns2,
+  Home as HomeIcon, Music, CreditCard, LogIn,
 } from "lucide-react";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { Button } from "@/components/ui/button";
@@ -17,6 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBranding, applyBrandingToDom, type Branding } from "@/contexts/BrandingContext";
 import { hexToHsl, hslToHex } from "@/lib/colorUtils";
+import { harmonize, deriveDark, HARMONY_LABELS, type Harmony } from "@/lib/paletteGenerator";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { useTheme } from "next-themes";
@@ -127,6 +129,14 @@ const PRESETS: Preset[] = [
 
 const TOPBAR_HEIGHT = 56;
 
+type PreviewPage = "home" | "tracks" | "pricing" | "login";
+const PREVIEW_PAGES: Array<{ v: PreviewPage; label: string; icon: any; path: string }> = [
+  { v: "home", label: "Accueil", icon: HomeIcon, path: "/" },
+  { v: "tracks", label: "Tracks", icon: Music, path: "/tracks" },
+  { v: "pricing", label: "Tarifs", icon: CreditCard, path: "/pricing" },
+  { v: "login", label: "Connexion", icon: LogIn, path: "/login" },
+];
+
 /* --------------------------- HELPERS --------------------------- */
 function loadGoogleFont(family: string) {
   if (!family || typeof document === "undefined") return;
@@ -163,6 +173,10 @@ export default function AdminBranding() {
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [uploadingFav, setUploadingFav] = useState(false);
   const [device, setDevice] = useState<"desktop" | "tablet" | "mobile">("desktop");
+  const [previewPage, setPreviewPage] = useState<PreviewPage>("home");
+  const [compareModes, setCompareModes] = useState(false);
+  const [genHarmony, setGenHarmony] = useState<Harmony>("complementary");
+  const [genDeriveDark, setGenDeriveDark] = useState(true);
   const initialRef = useRef<Branding | null>(null);
 
   useEffect(() => {
@@ -196,6 +210,25 @@ export default function AdminBranding() {
     update(p.patch);
     toast({ title: `Palette « ${p.name} » appliquée`, description: "Visible en direct dans l'aperçu →" });
   };
+
+  const generateFromBase = (baseHex: string) => {
+    if (!draft) return;
+    const baseHsl = hexToHsl(baseHex);
+    const { primary, accent } = harmonize(baseHsl, genHarmony);
+    const patch: Partial<Branding> = { light_primary: primary, light_accent: accent };
+    if (genDeriveDark) {
+      patch.dark_primary = deriveDark("primary", primary);
+      patch.dark_accent = deriveDark("accent", accent);
+    }
+    update(patch);
+    toast({ title: "Palette générée ✨", description: `${HARMONY_LABELS[genHarmony]} depuis ${baseHex.toUpperCase()}` });
+  };
+
+  const randomize = () => {
+    const hex = "#" + Math.floor(Math.random() * 0xffffff).toString(16).padStart(6, "0");
+    generateFromBase(hex);
+  };
+
 
   const reset = () => {
     if (!initialRef.current) return;
@@ -330,6 +363,18 @@ export default function AdminBranding() {
               })}
             </div>
           </motion.section>
+
+          {/* PALETTE GENERATOR */}
+          <PaletteGenerator
+            baseHex={hslToHex(draft.light_primary)}
+            harmony={genHarmony}
+            deriveDark={genDeriveDark}
+            onHarmony={setGenHarmony}
+            onDeriveDark={setGenDeriveDark}
+            onGenerate={generateFromBase}
+            onRandomize={randomize}
+          />
+
 
           {/* TABS */}
           <Tabs defaultValue="identity" className="rounded-xl border border-border bg-white/5 backdrop-blur-md overflow-hidden shadow-sm">
@@ -481,59 +526,109 @@ export default function AdminBranding() {
 
         {/* ===================== PREVIEW ===================== */}
         <div className="space-y-4">
-          {/* Device toolbar */}
-          <div className="flex items-center justify-between">
+          {/* Preview toolbar */}
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               <Eye className="h-4 w-4 text-emerald-400" /> Aperçu en direct
             </div>
-            <div className="flex items-center gap-1 bg-white/5 border border-border rounded-md p-1">
-              {([
-                { v: "desktop", icon: Monitor, label: "Desktop" },
-                { v: "tablet", icon: Tablet, label: "Tablet" },
-                { v: "mobile", icon: Smartphone, label: "Mobile" },
-              ] as const).map((d) => (
-                <button
-                  key={d.v}
-                  onClick={() => setDevice(d.v)}
-                  className={cn(
-                    "h-6 w-7 rounded flex items-center justify-center transition-all",
-                    device === d.v ? "bg-white/10 text-foreground" : "text-muted-foreground hover:text-foreground"
-                  )}
-                  title={d.label}
-                >
-                  <d.icon className="h-3.5 w-3.5" />
-                </button>
-              ))}
+            <div className="flex items-center gap-2">
+              {/* Page selector */}
+              <div className="flex items-center gap-1 bg-white/5 border border-border rounded-md p-1">
+                {PREVIEW_PAGES.map((p) => (
+                  <button
+                    key={p.v}
+                    onClick={() => setPreviewPage(p.v)}
+                    className={cn(
+                      "h-6 px-2 rounded flex items-center gap-1 text-[10px] font-medium transition-all",
+                      previewPage === p.v ? "bg-white/10 text-foreground" : "text-muted-foreground hover:text-foreground"
+                    )}
+                    title={p.label}
+                  >
+                    <p.icon className="h-3 w-3" />
+                    <span className="hidden sm:inline">{p.label}</span>
+                  </button>
+                ))}
+              </div>
+              {/* Compare modes */}
+              <button
+                onClick={() => setCompareModes((v) => !v)}
+                className={cn(
+                  "h-8 px-2 rounded-md border flex items-center gap-1.5 text-[10px] font-medium transition-all",
+                  compareModes
+                    ? "border-primary bg-primary/10 text-primary"
+                    : "border-border bg-white/5 text-muted-foreground hover:text-foreground"
+                )}
+                title="Comparer clair / sombre"
+              >
+                <Columns2 className="h-3.5 w-3.5" />
+                {compareModes ? "Comparaison ON" : "Comparer"}
+              </button>
+              {/* Device toolbar */}
+              <div className={cn("flex items-center gap-1 bg-white/5 border border-border rounded-md p-1", compareModes && "opacity-50 pointer-events-none")}>
+                {([
+                  { v: "desktop", icon: Monitor, label: "Desktop" },
+                  { v: "tablet", icon: Tablet, label: "Tablet" },
+                  { v: "mobile", icon: Smartphone, label: "Mobile" },
+                ] as const).map((d) => (
+                  <button
+                    key={d.v}
+                    onClick={() => setDevice(d.v)}
+                    className={cn(
+                      "h-6 w-7 rounded flex items-center justify-center transition-all",
+                      device === d.v ? "bg-white/10 text-foreground" : "text-muted-foreground hover:text-foreground"
+                    )}
+                    title={d.label}
+                  >
+                    <d.icon className="h-3.5 w-3.5" />
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 
-          <motion.div
-            layout
-            className="mx-auto rounded-3xl border border-border bg-card overflow-hidden shadow-2xl"
-            style={{
-              width: device === "desktop" ? "100%" : device === "tablet" ? 768 : 390,
-              maxWidth: "100%",
-              transition: "width 0.4s cubic-bezier(.2,.7,.2,1)",
-            }}
-          >
-            {/* Browser chrome */}
-            <div className="flex items-center gap-2 px-4 h-9 bg-secondary/60 border-b border-border">
-              <div className="flex gap-1.5">
-                <span className="h-2.5 w-2.5 rounded-full bg-red-400/70" />
-                <span className="h-2.5 w-2.5 rounded-full bg-yellow-400/70" />
-                <span className="h-2.5 w-2.5 rounded-full bg-green-400/70" />
-              </div>
-              <div className="flex-1 mx-3 h-5 rounded bg-background/70 border border-border flex items-center px-2 text-[10px] text-muted-foreground truncate">
-                frenchrecordpool.com /
-              </div>
+          {compareModes ? (
+            <div className="grid md:grid-cols-2 gap-4">
+              {(["light", "dark"] as const).map((m) => (
+                <div key={m} className="rounded-2xl border border-border bg-card overflow-hidden shadow-xl">
+                  <div className="flex items-center gap-2 px-3 h-8 bg-secondary/60 border-b border-border">
+                    {m === "light" ? <Sun className="h-3 w-3 text-amber-500" /> : <Moon className="h-3 w-3 text-indigo-300" />}
+                    <span className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground">{m === "light" ? "Mode clair" : "Mode sombre"}</span>
+                    <span className="ml-auto text-[10px] text-muted-foreground truncate">{PREVIEW_PAGES.find(p => p.v === previewPage)?.path}</span>
+                  </div>
+                  <SitePreview draft={draft} device="mobile" page={previewPage} mode={m} />
+                </div>
+              ))}
             </div>
+          ) : (
+            <motion.div
+              layout
+              className="mx-auto rounded-3xl border border-border bg-card overflow-hidden shadow-2xl"
+              style={{
+                width: device === "desktop" ? "100%" : device === "tablet" ? 768 : 390,
+                maxWidth: "100%",
+                transition: "width 0.4s cubic-bezier(.2,.7,.2,1)",
+              }}
+            >
+              {/* Browser chrome */}
+              <div className="flex items-center gap-2 px-4 h-9 bg-secondary/60 border-b border-border">
+                <div className="flex gap-1.5">
+                  <span className="h-2.5 w-2.5 rounded-full bg-red-400/70" />
+                  <span className="h-2.5 w-2.5 rounded-full bg-yellow-400/70" />
+                  <span className="h-2.5 w-2.5 rounded-full bg-green-400/70" />
+                </div>
+                <div className="flex-1 mx-3 h-5 rounded bg-background/70 border border-border flex items-center px-2 text-[10px] text-muted-foreground truncate">
+                  frenchrecordpool.com{PREVIEW_PAGES.find(p => p.v === previewPage)?.path}
+                </div>
+              </div>
 
-            <SitePreview draft={draft} device={device} />
-          </motion.div>
+              <SitePreview draft={draft} device={device} page={previewPage} />
+            </motion.div>
+          )}
 
           <ContrastReport draft={draft} />
         </div>
       </div>
+
 
       {/* ===================== STICKY SAVE BAR ===================== */}
       <AnimatePresence>
@@ -731,89 +826,313 @@ function ContrastReport({ draft }: { draft: Branding }) {
   );
 }
 
-function SitePreview({ draft, device }: { draft: Branding; device: "desktop" | "tablet" | "mobile" }) {
+function SitePreview({
+  draft, device, page = "home", mode = "light",
+}: {
+  draft: Branding;
+  device: "desktop" | "tablet" | "mobile";
+  page?: PreviewPage;
+  mode?: "light" | "dark";
+}) {
   const compact = device === "mobile";
+  // Tokens for the requested mode (so compare view shows true light + dark)
+  const tk = {
+    primary: mode === "light" ? draft.light_primary : draft.dark_primary,
+    accent: mode === "light" ? draft.light_accent : draft.dark_accent,
+    bg: mode === "light" ? draft.light_background : draft.dark_background,
+    fg: mode === "light" ? draft.light_foreground : draft.dark_foreground,
+    card: mode === "light" ? draft.light_card : draft.dark_card,
+    muted: mode === "light" ? draft.light_muted : draft.dark_muted,
+    border: mode === "light" ? draft.light_border : draft.dark_border,
+  };
+  const sub = (alpha = 0.65) => `hsl(${tk.fg} / ${alpha})`;
+
   return (
-    <div className="p-6 sm:p-8 space-y-6">
-      {/* Nav */}
+    <div
+      className="p-6 sm:p-8 space-y-6"
+      style={{
+        background: `hsl(${tk.bg})`,
+        color: `hsl(${tk.fg})`,
+      }}
+    >
+      {/* Nav (commun) */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           {draft.logo_url
             ? <img src={draft.logo_url} alt="" className="h-8 w-8 rounded-md object-contain" />
-            : <div className="h-8 w-8 rounded-md bg-gradient-to-br from-primary to-accent" />}
+            : <div className="h-8 w-8 rounded-md" style={{ background: `linear-gradient(135deg, hsl(${tk.primary}), hsl(${tk.accent}))` }} />}
           <span style={{ fontFamily: `"${draft.font_display}"` }} className="font-bold text-base">{draft.site_name}</span>
         </div>
         {!compact && (
-          <nav className="flex items-center gap-4 text-xs text-muted-foreground">
+          <nav className="flex items-center gap-4 text-xs" style={{ color: sub() }}>
             <span>Tracks</span><span>Remixers</span><span>Genres</span><span>Top</span>
           </nav>
         )}
-        <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90 h-8 text-xs">Connexion</Button>
+        <button
+          className="h-8 px-3 rounded-md text-xs font-semibold"
+          style={{ background: `hsl(${tk.primary})`, color: "white", borderRadius: draft.radius }}
+        >
+          Connexion
+        </button>
       </div>
 
-      {/* Hero */}
-      <div
-        className="rounded-2xl p-6 sm:p-10 text-center relative overflow-hidden"
-        style={{
-          background: `linear-gradient(135deg, hsl(${draft.light_primary}), hsl(${draft.light_accent}))`,
-        }}
-      >
-        <div className="absolute inset-0 opacity-20 mix-blend-overlay" style={{
-          backgroundImage: "radial-gradient(circle at 30% 20%, white 1px, transparent 1px)",
-          backgroundSize: "16px 16px",
-        }} />
-        <div className="relative">
-          <span style={{ fontFamily: `"${draft.font_body}"` }} className="inline-block text-[10px] uppercase tracking-widest text-white/80 mb-2">
-            {draft.tagline}
-          </span>
-          <h2 style={{ fontFamily: `"${draft.font_display}"` }} className={cn("font-bold text-white leading-tight mb-3", compact ? "text-2xl" : "text-4xl")}>
-            {draft.hero_title}
-          </h2>
-          <p style={{ fontFamily: `"${draft.font_body}"` }} className="text-white/90 text-sm max-w-md mx-auto mb-4">
-            {draft.hero_subtitle}
-          </p>
-          <div className="flex gap-2 justify-center">
-            <button className="px-4 h-9 rounded-md bg-white text-sm font-semibold" style={{ color: `hsl(${draft.light_primary})`, borderRadius: draft.radius }}>
-              Découvrir
-            </button>
-            <button className="px-4 h-9 rounded-md border border-white/40 text-white text-sm" style={{ borderRadius: draft.radius }}>
-              En savoir +
+      {page === "home" && (
+        <>
+          <div
+            className="rounded-2xl p-6 sm:p-10 text-center relative overflow-hidden"
+            style={{
+              background: `linear-gradient(135deg, hsl(${tk.primary}), hsl(${tk.accent}))`,
+              borderRadius: draft.radius,
+            }}
+          >
+            <div className="absolute inset-0 opacity-20 mix-blend-overlay" style={{
+              backgroundImage: "radial-gradient(circle at 30% 20%, white 1px, transparent 1px)",
+              backgroundSize: "16px 16px",
+            }} />
+            <div className="relative">
+              <span style={{ fontFamily: `"${draft.font_body}"` }} className="inline-block text-[10px] uppercase tracking-widest text-white/80 mb-2">
+                {draft.tagline}
+              </span>
+              <h2 style={{ fontFamily: `"${draft.font_display}"` }} className={cn("font-bold text-white leading-tight mb-3", compact ? "text-2xl" : "text-4xl")}>
+                {draft.hero_title}
+              </h2>
+              <p style={{ fontFamily: `"${draft.font_body}"` }} className="text-white/90 text-sm max-w-md mx-auto mb-4">
+                {draft.hero_subtitle}
+              </p>
+              <div className="flex gap-2 justify-center">
+                <button className="px-4 h-9 text-sm font-semibold bg-white" style={{ color: `hsl(${tk.primary})`, borderRadius: draft.radius }}>
+                  Découvrir
+                </button>
+                <button className="px-4 h-9 border border-white/40 text-white text-sm" style={{ borderRadius: draft.radius }}>
+                  En savoir +
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div className={cn("grid gap-3", compact ? "grid-cols-2" : "grid-cols-3")}>
+            {[
+              { l: "Tracks", v: "1 247", c: tk.primary },
+              { l: "Remixers", v: "328", c: tk.accent },
+              { l: "DJs", v: "5 612", c: tk.fg },
+            ].slice(0, compact ? 2 : 3).map((s) => (
+              <div key={s.l} className="p-4 border" style={{ background: `hsl(${tk.card})`, borderColor: `hsl(${tk.border})`, borderRadius: draft.radius }}>
+                <p className="text-[10px] uppercase tracking-wide" style={{ color: sub() }}>{s.l}</p>
+                <p style={{ fontFamily: `"${draft.font_display}"`, color: `hsl(${s.c})` }} className="text-2xl font-bold mt-0.5">{s.v}</p>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+
+      {page === "tracks" && (
+        <div className="space-y-2">
+          <h2 style={{ fontFamily: `"${draft.font_display}"` }} className="text-xl font-bold">Nouveautés</h2>
+          {[
+            { t: "Midnight Drive", a: "DJ Lumière", g: "House", b: "124", tag: "NEW" },
+            { t: "Pulse Reactor", a: "Nova Cartel", g: "Tech", b: "128", tag: "HOT" },
+            { t: "Sunset Boulevard", a: "Mira Wave", g: "Disco", b: "118", tag: "" },
+            { t: "Acidic Dream", a: "Kollektiv 9", g: "Techno", b: "132", tag: "" },
+          ].slice(0, compact ? 3 : 4).map((it) => (
+            <div key={it.t} className="border p-3 flex items-center gap-3" style={{ background: `hsl(${tk.card})`, borderColor: `hsl(${tk.border})`, borderRadius: draft.radius }}>
+              <div className="h-11 w-11 shrink-0" style={{
+                background: `linear-gradient(135deg, hsl(${tk.primary}), hsl(${tk.accent}))`,
+                borderRadius: draft.radius,
+              }} />
+              <div className="flex-1 min-w-0">
+                <p style={{ fontFamily: `"${draft.font_display}"` }} className="text-sm font-semibold truncate">{it.t}</p>
+                <p style={{ fontFamily: `"${draft.font_body}"`, color: sub() }} className="text-[11px] truncate">{it.a} · {it.g} · {it.b} BPM</p>
+              </div>
+              {it.tag && (
+                <span className="text-[10px] px-2 py-0.5" style={{
+                  border: `1px solid hsl(${tk.primary} / 0.4)`, color: `hsl(${tk.primary})`,
+                  background: `hsl(${tk.primary} / 0.1)`, borderRadius: draft.radius,
+                }}>{it.tag}</span>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {page === "pricing" && (
+        <div className="space-y-4">
+          <div className="text-center space-y-1">
+            <h2 style={{ fontFamily: `"${draft.font_display}"` }} className="text-2xl font-bold">Choisis ton abonnement</h2>
+            <p className="text-xs" style={{ color: sub() }}>Téléchargements illimités · Annule quand tu veux</p>
+          </div>
+          <div className={cn("grid gap-3", compact ? "grid-cols-1" : "grid-cols-2")}>
+            {[
+              { name: "Basic", price: "9", feat: ["Catalogue complet", "MP3 320 kbps"], hi: false },
+              { name: "Premium", price: "19", feat: ["Tout Basic", "WAV / AIFF", "Accès anticipé"], hi: true },
+            ].map((pl) => (
+              <div
+                key={pl.name}
+                className="p-4 border relative"
+                style={{
+                  background: pl.hi ? `linear-gradient(135deg, hsl(${tk.primary}), hsl(${tk.accent}))` : `hsl(${tk.card})`,
+                  borderColor: pl.hi ? "transparent" : `hsl(${tk.border})`,
+                  color: pl.hi ? "white" : `hsl(${tk.fg})`,
+                  borderRadius: draft.radius,
+                }}
+              >
+                <p style={{ fontFamily: `"${draft.font_display}"` }} className="font-bold text-lg">{pl.name}</p>
+                <p className="my-2"><span className="text-3xl font-bold">{pl.price}€</span><span className="text-xs opacity-70">/mois</span></p>
+                <ul className="space-y-1 text-[11px] opacity-90">
+                  {pl.feat.map((f) => <li key={f}>· {f}</li>)}
+                </ul>
+                <button
+                  className="mt-3 w-full h-8 text-xs font-semibold"
+                  style={{
+                    background: pl.hi ? "white" : `hsl(${tk.primary})`,
+                    color: pl.hi ? `hsl(${tk.primary})` : "white",
+                    borderRadius: draft.radius,
+                  }}
+                >
+                  S'abonner
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {page === "login" && (
+        <div className="max-w-sm mx-auto py-4 space-y-4">
+          <div className="text-center">
+            <div className="mx-auto h-12 w-12 mb-3" style={{
+              background: `linear-gradient(135deg, hsl(${tk.primary}), hsl(${tk.accent}))`,
+              borderRadius: draft.radius,
+            }} />
+            <h2 style={{ fontFamily: `"${draft.font_display}"` }} className="text-xl font-bold">Connexion</h2>
+            <p className="text-xs mt-1" style={{ color: sub() }}>Accède à ton compte {draft.site_name}</p>
+          </div>
+          <div className="space-y-2">
+            {["Email", "Mot de passe"].map((l) => (
+              <div key={l}>
+                <p className="text-[10px] uppercase tracking-wide mb-1" style={{ color: sub() }}>{l}</p>
+                <div className="h-9 border px-3 flex items-center text-xs" style={{
+                  background: `hsl(${tk.card})`, borderColor: `hsl(${tk.border})`, borderRadius: draft.radius, color: sub(0.5),
+                }}>···</div>
+              </div>
+            ))}
+            <button className="w-full h-9 mt-2 text-xs font-semibold text-white" style={{
+              background: `linear-gradient(135deg, hsl(${tk.primary}), hsl(${tk.accent}))`,
+              borderRadius: draft.radius,
+            }}>
+              Se connecter
             </button>
           </div>
         </div>
-      </div>
-
-      {/* Stats */}
-      <div className={cn("grid gap-3", compact ? "grid-cols-2" : "grid-cols-3")}>
-        {[
-          { l: "Tracks", v: "1 247", c: "light_primary" },
-          { l: "Remixers", v: "328", c: "light_accent" },
-          { l: "DJs", v: "5 612", c: "light_foreground" },
-        ].slice(0, compact ? 2 : 3).map((s) => (
-          <div key={s.l} className="rounded-xl p-4 border border-border bg-secondary/40" style={{ borderRadius: draft.radius }}>
-            <p className="text-[10px] uppercase tracking-wide text-muted-foreground">{s.l}</p>
-            <p style={{ fontFamily: `"${draft.font_display}"`, color: `hsl(${(draft as any)[s.c]})` }} className="text-2xl font-bold mt-0.5">{s.v}</p>
-          </div>
-        ))}
-      </div>
-
-      {/* Track card row */}
-      <div className="rounded-xl border border-border bg-secondary/40 p-3 flex items-center gap-3" style={{ borderRadius: draft.radius }}>
-        <div className="h-12 w-12 rounded-md shrink-0" style={{
-          background: `linear-gradient(135deg, hsl(${draft.light_primary}), hsl(${draft.light_accent}))`,
-          borderRadius: draft.radius,
-        }} />
-        <div className="flex-1 min-w-0">
-          <p style={{ fontFamily: `"${draft.font_display}"` }} className="text-sm font-semibold truncate">Midnight Drive</p>
-          <p style={{ fontFamily: `"${draft.font_body}"` }} className="text-[11px] text-muted-foreground truncate">DJ Lumière · House · 124 BPM</p>
-        </div>
-        <span className="text-[10px] px-2 py-0.5 rounded-full border border-primary/30 text-primary bg-primary/10">NEW</span>
-      </div>
+      )}
 
       {/* Footer */}
-      <p style={{ fontFamily: `"${draft.font_body}"` }} className="text-center text-[11px] text-muted-foreground pt-2 border-t border-border">
-        {draft.footer_text}
+      <p style={{ fontFamily: `"${draft.font_body}"`, color: sub() }} className="text-center text-[11px] pt-2" >
+        <span className="block pt-2 border-t" style={{ borderColor: `hsl(${tk.border})` }}>{draft.footer_text}</span>
       </p>
     </div>
   );
 }
+
+/* --------------------------- PALETTE GENERATOR --------------------------- */
+function PaletteGenerator({
+  baseHex, harmony, deriveDark, onHarmony, onDeriveDark, onGenerate, onRandomize,
+}: {
+  baseHex: string;
+  harmony: Harmony;
+  deriveDark: boolean;
+  onHarmony: (h: Harmony) => void;
+  onDeriveDark: (v: boolean) => void;
+  onGenerate: (hex: string) => void;
+  onRandomize: () => void;
+}) {
+  const [hex, setHex] = useState(baseHex);
+  useEffect(() => { setHex(baseHex); }, [baseHex]);
+
+  const preview = useMemo(() => {
+    try {
+      const { primary, accent } = harmonize(hexToHsl(hex), harmony);
+      return { primary: hslToHex(primary), accent: hslToHex(accent) };
+    } catch { return { primary: hex, accent: hex }; }
+  }, [hex, harmony]);
+
+  const harmonies: Harmony[] = ["complementary", "analogous", "triadic", "split", "monochrome"];
+
+  return (
+    <motion.section
+      initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+      className="rounded-xl border border-border bg-white/5 backdrop-blur-md p-4 space-y-3"
+    >
+      <div className="flex items-center justify-between">
+        <h2 className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          <Wand2 className="h-4 w-4 text-primary" /> Générateur de palette
+        </h2>
+        <button
+          onClick={onRandomize}
+          className="h-6 px-2 rounded-md border border-border hover:border-primary/40 text-[10px] inline-flex items-center gap-1 text-muted-foreground hover:text-foreground"
+          title="Couleur aléatoire"
+        >
+          <Shuffle className="h-3 w-3" /> Aléatoire
+        </button>
+      </div>
+
+      <div className="flex items-center gap-3">
+        <label className="relative shrink-0">
+          <input
+            type="color"
+            value={hex}
+            onChange={(e) => setHex(e.target.value)}
+            className="h-12 w-12 rounded-lg border border-border cursor-pointer bg-transparent"
+          />
+        </label>
+        <Input
+          value={hex}
+          onChange={(e) => setHex(e.target.value)}
+          className="h-9 font-mono text-xs bg-black/20 dark:bg-black/40 border-border"
+          placeholder="#1f4ed8"
+        />
+        <div className="flex h-9 rounded-md overflow-hidden ring-1 ring-border shrink-0">
+          <div className="w-6" style={{ background: preview.primary }} title="Primaire" />
+          <div className="w-6" style={{ background: preview.accent }} title="Accent" />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-5 gap-1.5">
+        {harmonies.map((h) => (
+          <button
+            key={h}
+            onClick={() => onHarmony(h)}
+            className={cn(
+              "text-[10px] py-1.5 px-1 rounded-md border transition-all",
+              harmony === h
+                ? "border-primary bg-primary/10 text-primary font-semibold"
+                : "border-border bg-white/5 text-muted-foreground hover:text-foreground"
+            )}
+            title={HARMONY_LABELS[h]}
+          >
+            {HARMONY_LABELS[h].split("-")[0]}
+          </button>
+        ))}
+      </div>
+
+      <div className="flex items-center justify-between gap-2">
+        <label className="flex items-center gap-2 text-[10px] text-muted-foreground cursor-pointer select-none">
+          <input
+            type="checkbox"
+            checked={deriveDark}
+            onChange={(e) => onDeriveDark(e.target.checked)}
+            className="h-3 w-3 accent-primary"
+          />
+          Dériver le mode sombre
+        </label>
+        <Button
+          size="sm"
+          onClick={() => onGenerate(hex)}
+          className="h-8 bg-gradient-to-r from-primary to-accent text-primary-foreground hover:opacity-90"
+        >
+          <Sparkles className="h-3 w-3 mr-1" /> Appliquer
+        </Button>
+      </div>
+    </motion.section>
+  );
+}
+
