@@ -188,9 +188,9 @@ export default function DjDashboard() {
 
       {/* ───── Two columns: recent submissions + notifications ───── */}
       <div className="grid lg:grid-cols-2 gap-4">
-        <div className="bg-card border border-border rounded-xl p-5">
+        <div className="rounded-2xl border border-border bg-card/40 backdrop-blur-xl p-5">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-display font-semibold flex items-center gap-2">
+            <h3 className="font-display text-lg font-bold tracking-tight flex items-center gap-2">
               <Music className="h-4 w-4 text-primary" /> Mes derniers morceaux
             </h3>
             <Link to="/dj/tracks" className="text-xs text-muted-foreground hover:text-primary">Tout voir</Link>
@@ -223,8 +223,8 @@ export default function DjDashboard() {
           )}
         </div>
 
-        <div className="bg-card border border-border rounded-xl p-5">
-          <h3 className="font-display font-semibold flex items-center gap-2 mb-4">
+        <div className="rounded-2xl border border-border bg-card/40 backdrop-blur-xl p-5">
+          <h3 className="font-display text-lg font-bold tracking-tight flex items-center gap-2 mb-4">
             <Bell className="h-4 w-4 text-accent" /> Notifications récentes
           </h3>
           {notifications.length === 0 ? (
