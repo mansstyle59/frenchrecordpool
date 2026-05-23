@@ -165,6 +165,10 @@ export default function AdminBranding() {
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [uploadingFav, setUploadingFav] = useState(false);
   const [device, setDevice] = useState<"desktop" | "tablet" | "mobile">("desktop");
+  const [previewPage, setPreviewPage] = useState<PreviewPage>("home");
+  const [compareModes, setCompareModes] = useState(false);
+  const [genHarmony, setGenHarmony] = useState<Harmony>("complementary");
+  const [genDeriveDark, setGenDeriveDark] = useState(true);
   const initialRef = useRef<Branding | null>(null);
 
   useEffect(() => {
