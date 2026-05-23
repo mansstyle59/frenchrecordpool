@@ -4,7 +4,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Save, RotateCcw, Upload, Palette, Type, Image as ImageIcon, Layout, Eye,
   Loader2, Sun, Moon, Monitor, Tablet, Smartphone, Sparkles, Check, Copy,
-  Trash2, ExternalLink, Wand2, ShieldCheck, AlertTriangle,
+  Trash2, ExternalLink, Wand2, ShieldCheck, AlertTriangle, Shuffle, Columns2,
+  Home as HomeIcon, Music, CreditCard, LogIn,
 } from "lucide-react";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { Button } from "@/components/ui/button";
@@ -17,6 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBranding, applyBrandingToDom, type Branding } from "@/contexts/BrandingContext";
 import { hexToHsl, hslToHex } from "@/lib/colorUtils";
+import { harmonize, deriveDark, HARMONY_LABELS, type Harmony } from "@/lib/paletteGenerator";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { useTheme } from "next-themes";
