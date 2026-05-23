@@ -387,7 +387,7 @@ export default function MiniPlayer() {
           </Popover>
 
           {/* Close player */}
-          <Button variant="ghost" size="icon" className="shrink-0 h-8 w-8 text-muted-foreground hover:text-destructive" onClick={clear} title="Fermer le lecteur">
+          <Button variant="ghost" size="icon-sm" className="text-muted-foreground hover:text-destructive" onClick={clear} title="Fermer le lecteur">
             <X className="h-3.5 w-3.5" />
           </Button>
           </div>
