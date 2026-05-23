@@ -1,9 +1,6 @@
 import { ReactNode, useEffect } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
-import {
-  Disc3, LayoutDashboard, Music, Users, CreditCard, Palette, ScrollText,
-  ArrowLeft, ExternalLink, Layers, Ticket, Mic2, Inbox, Camera, MessageSquare, Blocks,
-} from "lucide-react";
+import { Disc3, ExternalLink, ChevronRight } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import NotificationBell from "@/components/NotificationBell";
@@ -13,27 +10,10 @@ import {
   SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarProvider, SidebarTrigger,
   SidebarFooter, SidebarHeader,
 } from "@/components/ui/sidebar";
+import { ADMIN_NAV, findAdminItem, findAdminGroup } from "./adminNav";
+import AdminCommandPalette from "./AdminCommandPalette";
 
-const items = [
-  { to: "/admin", label: "Dashboard", icon: LayoutDashboard, end: true },
-  { to: "/admin/tracks", label: "Tracks", icon: Music },
-  { to: "/admin/queue", label: "File de modération", icon: Inbox },
-  { to: "/admin/users", label: "Utilisateurs", icon: Users },
-  { to: "/admin/artists", label: "DJs / Remixers", icon: Mic2 },
-  { to: "/admin/plans", label: "Plans", icon: Layers },
-  { to: "/admin/subscriptions", label: "Abonnements", icon: CreditCard },
-  { to: "/admin/promo-codes", label: "Codes promo", icon: Ticket },
-  { to: "/admin/branding", label: "Branding", icon: Palette },
-  { to: "/admin/screenshot-studio", label: "Screenshot Studio", icon: Camera },
-  { to: "/admin/popups", label: "Popup Studio", icon: MessageSquare },
-  { to: "/admin/widgets", label: "Widgets Home", icon: Blocks },
-  { to: "/admin/support", label: "Support", icon: MessageSquare },
-  { to: "/admin/audit", label: "Journal", icon: ScrollText },
-];
-
-
-function AdminSidebar() {
-  const { pathname } = useLocation();
+function useAdminBadges() {
   const { data: supportUnread = 0 } = useQuery({
     queryKey: ["admin-support-unread-count"],
     queryFn: async () => {
@@ -45,6 +25,33 @@ function AdminSidebar() {
     },
     refetchInterval: 15000,
   });
+  const { data: pendingQueue = 0 } = useQuery({
+    queryKey: ["admin-queue-pending-count"],
+    queryFn: async () => {
+      const { count } = await supabase
+        .from("tracks")
+        .select("id", { count: "exact", head: true })
+        .eq("status", "pending");
+      return count ?? 0;
+    },
+    refetchInterval: 30000,
+  });
+  return { supportUnread, pendingQueue };
+}
+
+function Badge({ value }: { value: number }) {
+  if (!value) return null;
+  return (
+    <span className="ml-auto inline-flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold group-data-[collapsible=icon]:hidden">
+      {value > 99 ? "99+" : value}
+    </span>
+  );
+}
+
+function AdminSidebar() {
+  const { pathname } = useLocation();
+  const { supportUnread, pendingQueue } = useAdminBadges();
+
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader>
@@ -56,32 +63,32 @@ function AdminSidebar() {
         </Link>
       </SidebarHeader>
       <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel>Pilotage</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {items.map((item) => {
-                const active = item.end ? pathname === item.to : pathname.startsWith(item.to);
-                const badge = item.to === "/admin/support" && supportUnread > 0 ? supportUnread : 0;
-                return (
-                  <SidebarMenuItem key={item.to}>
-                    <SidebarMenuButton asChild isActive={active} tooltip={item.label}>
-                      <NavLink to={item.to} end={item.end} className="flex items-center gap-2">
-                        <item.icon className="h-4 w-4" />
-                        <span className="flex-1">{item.label}</span>
-                        {badge > 0 && (
-                          <span className="ml-auto inline-flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold group-data-[collapsible=icon]:hidden">
-                            {badge > 99 ? "99+" : badge}
-                          </span>
-                        )}
-                      </NavLink>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {ADMIN_NAV.map((group) => (
+          <SidebarGroup key={group.label}>
+            <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {group.items.map((item) => {
+                  const active = item.end ? pathname === item.to : pathname === item.to || pathname.startsWith(item.to + "/");
+                  const badge =
+                    item.to === "/admin/support" ? supportUnread :
+                    item.to === "/admin/queue" ? pendingQueue : 0;
+                  return (
+                    <SidebarMenuItem key={item.to}>
+                      <SidebarMenuButton asChild isActive={active} tooltip={item.label}>
+                        <NavLink to={item.to} end={item.end} className="flex items-center gap-2">
+                          <item.icon className="h-4 w-4" />
+                          <span className="flex-1 truncate">{item.label}</span>
+                          <Badge value={badge} />
+                        </NavLink>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ))}
       </SidebarContent>
 
       <SidebarFooter>
@@ -100,12 +107,34 @@ function AdminSidebar() {
   );
 }
 
+function Breadcrumbs() {
+  const { pathname } = useLocation();
+  const item = findAdminItem(pathname);
+  const group = findAdminGroup(item);
+  return (
+    <nav aria-label="Fil d'ariane" className="flex items-center gap-1.5 text-xs text-muted-foreground min-w-0">
+      <Link to="/admin" className="hover:text-foreground">Admin</Link>
+      {group && group.label !== "Pilotage" && (
+        <>
+          <ChevronRight className="h-3 w-3 shrink-0" />
+          <span className="truncate">{group.label}</span>
+        </>
+      )}
+      {item && item.to !== "/admin" && (
+        <>
+          <ChevronRight className="h-3 w-3 shrink-0" />
+          <span className="text-foreground font-medium truncate">{item.label}</span>
+        </>
+      )}
+    </nav>
+  );
+}
+
 interface AdminLayoutProps {
   title: string;
   subtitle?: string;
   actions?: ReactNode;
   children: ReactNode;
-  /** When true, content takes full width without container constraint */
   wide?: boolean;
 }
 
@@ -133,10 +162,12 @@ export default function AdminLayout({ title, subtitle, actions, children, wide }
         <div className="flex-1 flex flex-col min-w-0">
           <header className="h-14 border-b border-border glass sticky top-0 z-30 flex items-center gap-3 px-4">
             <SidebarTrigger />
-            <Link to="/admin" className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1">
-              <ArrowLeft className="h-3 w-3" /> Admin
-            </Link>
-            <div className="ml-auto flex items-center gap-2">{actions}</div>
+            <Breadcrumbs />
+            <div className="ml-auto flex items-center gap-2">
+              <AdminCommandPalette />
+              <NotificationBell />
+              {actions}
+            </div>
           </header>
 
           <main className={wide ? "flex-1 px-4 lg:px-6 py-6 space-y-6" : "flex-1 container py-6 space-y-6"}>
