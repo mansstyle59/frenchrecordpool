@@ -481,6 +481,11 @@ export default function AdminTracks() {
             </div>
           </div>
         )}
+        <ShortGeneratorDialog
+          track={shortTrack as any}
+          open={!!shortTrack}
+          onOpenChange={(o) => { if (!o) setShortTrack(null); }}
+        />
     </AdminLayout>
   );
 }
