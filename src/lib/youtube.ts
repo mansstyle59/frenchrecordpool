@@ -39,6 +39,7 @@ export function youtubeEmbedUrl(id: string, opts: { autoplay?: boolean; mute?: b
     autoplay: opts.autoplay ? "1" : "0",
     mute: opts.mute ? "1" : "0",
     controls: "1",
+    enablejsapi: "1",
   });
   if (opts.loop) {
     params.set("loop", "1");
