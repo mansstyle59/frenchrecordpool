@@ -129,6 +129,14 @@ const PRESETS: Preset[] = [
 
 const TOPBAR_HEIGHT = 56;
 
+type PreviewPage = "home" | "tracks" | "pricing" | "login";
+const PREVIEW_PAGES: Array<{ v: PreviewPage; label: string; icon: any; path: string }> = [
+  { v: "home", label: "Accueil", icon: HomeIcon, path: "/" },
+  { v: "tracks", label: "Tracks", icon: Music, path: "/tracks" },
+  { v: "pricing", label: "Tarifs", icon: CreditCard, path: "/pricing" },
+  { v: "login", label: "Connexion", icon: LogIn, path: "/login" },
+];
+
 /* --------------------------- HELPERS --------------------------- */
 function loadGoogleFont(family: string) {
   if (!family || typeof document === "undefined") return;
