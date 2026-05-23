@@ -1,19 +1,22 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Heart, Music, ArrowLeft, Volume2, VolumeX, Tag as TagIcon, Disc3, ChevronUp, ChevronDown } from "lucide-react";
+import { Heart, Music, ArrowLeft, Volume2, VolumeX, Tag as TagIcon, Disc3, ChevronUp, ChevronDown, Instagram, Youtube } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { youtubeEmbedUrl, youtubeThumb } from "@/lib/youtube";
+import { shortEmbedUrl, shortThumbnail, type ShortProvider } from "@/lib/shorts";
 
 type Short = {
   id: string;
   title: string;
   description: string | null;
-  youtube_id: string;
-  youtube_url: string;
+  provider: ShortProvider;
+  source_id: string | null;
+  source_url: string | null;
+  youtube_id: string | null;
+  youtube_url: string | null;
   thumbnail_url: string | null;
   tags: string[];
   artist_id: string | null;
@@ -26,7 +29,7 @@ export default function Shorts() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("dj_shorts")
-        .select("id,title,description,youtube_id,youtube_url,thumbnail_url,tags,artist_id,track_id")
+        .select("id,title,description,provider,source_id,source_url,youtube_id,youtube_url,thumbnail_url,tags,artist_id,track_id")
         .eq("is_active", true)
         .order("position", { ascending: true })
         .order("created_at", { ascending: false });
