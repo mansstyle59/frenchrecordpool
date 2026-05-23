@@ -136,7 +136,7 @@ export default function Remixers() {
           >
             {filtered.map((r) => (
               <motion.div key={r.id} variants={{ hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0 } }}>
-                <Link to={`/remixers/${r.slug}`} className="group block text-center">
+                <Link to={`/artists/${r.slug}`} className="group block text-center">
                   <div className="relative mx-auto w-36 h-36 sm:w-40 sm:h-40 rounded-full overflow-hidden bg-gradient-to-br from-accent/80 to-primary/80 ring-2 ring-border group-hover:ring-primary group-hover:shadow-2xl group-hover:shadow-primary/30 transition-all">
                     {r.photo_url ? (
                       <img src={r.photo_url} alt={r.name} loading="lazy" className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-all duration-500" />
