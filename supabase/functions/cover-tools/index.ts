@@ -1,5 +1,7 @@
 // Cover tools: search (iTunes + Deezer), youtube/soundcloud thumbnails,
 // AI generation via Lovable AI Gateway, and proxy fetch (URL -> base64).
+import { createClient } from "npm:@supabase/supabase-js@2";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -11,6 +13,45 @@ const json = (body: unknown, status = 200) =>
     status,
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
+
+const ALLOWED_FETCH_HOSTS = [
+  "i.ytimg.com",
+  "img.youtube.com",
+  "i1.sndcdn.com",
+  "i2.sndcdn.com",
+  "cdns-images.dzcdn.net",
+  "e-cdns-images.dzcdn.net",
+  "is1-ssl.mzstatic.com",
+  "is2-ssl.mzstatic.com",
+  "is3-ssl.mzstatic.com",
+  "is4-ssl.mzstatic.com",
+  "is5-ssl.mzstatic.com",
+  "mzstatic.com",
+];
+
+function isAllowedFetchUrl(raw: string): boolean {
+  try {
+    const u = new URL(raw);
+    if (u.protocol !== "https:" && u.protocol !== "http:") return false;
+    const host = u.hostname.toLowerCase();
+    // Block private/loopback/metadata
+    if (
+      host === "localhost" ||
+      host.endsWith(".local") ||
+      host === "169.254.169.254" ||
+      host === "metadata.google.internal" ||
+      /^127\./.test(host) ||
+      /^10\./.test(host) ||
+      /^192\.168\./.test(host) ||
+      /^172\.(1[6-9]|2\d|3[01])\./.test(host) ||
+      /^0\./.test(host)
+    ) return false;
+    return ALLOWED_FETCH_HOSTS.some((h) => host === h || host.endsWith("." + h));
+  } catch {
+    return false;
+  }
+}
+
 
 const upscaleItunes = (u: string) =>
   u.replace(/\/\d+x\d+bb\.(jpg|png)/i, "/600x600bb.$1");
@@ -125,6 +166,24 @@ async function generateAiCover(prompt: string) {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   try {
+    // --- Auth check ---
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return json({ error: "Non authentifié" }, 401);
+    }
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_ANON_KEY")!,
+      { global: { headers: { Authorization: authHeader } } },
+    );
+    const { data: claimsData, error: authErr } = await supabase.auth.getClaims(
+      authHeader.replace("Bearer ", ""),
+    );
+    if (authErr || !claimsData?.claims?.sub) {
+      return json({ error: "Non authentifié" }, 401);
+    }
+    const userId = claimsData.claims.sub as string;
+
     const { action, query, url, prompt } = await req.json();
 
     if (action === "search") {
@@ -185,7 +244,6 @@ Deno.serve(async (req) => {
       if (!url) return json({ error: "url manquant" }, 400);
       const id = extractYouTubeId(url);
       if (!id) return json({ error: "ID YouTube introuvable" }, 400);
-      // Try maxres → fallback hq
       const candidates = [
         `https://i.ytimg.com/vi/${id}/maxresdefault.jpg`,
         `https://i.ytimg.com/vi/${id}/sddefault.jpg`,
@@ -202,7 +260,6 @@ Deno.serve(async (req) => {
       if (!url) return json({ error: "url manquant" }, 400);
       const meta = await fetchSoundCloudOEmbed(url);
       if (!meta) return json({ error: "SoundCloud indisponible" }, 404);
-      // Backward-compat: also expose `url` for legacy thumbnail callers
       return json({ ...meta, url: meta.thumbnail });
     }
 
@@ -215,12 +272,21 @@ Deno.serve(async (req) => {
 
     if (action === "generate") {
       if (!prompt) return json({ error: "prompt manquant" }, 400);
+      // Restrict AI generation to admins to avoid quota abuse
+      const { data: isAdmin } = await supabase.rpc("has_role", {
+        _user_id: userId,
+        _role: "admin",
+      });
+      if (!isAdmin) return json({ error: "Réservé aux administrateurs" }, 403);
       const dataUrl = await generateAiCover(prompt);
       return json({ dataUrl });
     }
 
     if (action === "fetch") {
       if (!url) return json({ error: "url manquant" }, 400);
+      if (!isAllowedFetchUrl(url)) {
+        return json({ error: "URL non autorisée" }, 400);
+      }
       const r = await fetchToBase64(url);
       return json(r);
     }
@@ -228,6 +294,7 @@ Deno.serve(async (req) => {
     return json({ error: "action inconnue" }, 400);
   } catch (err) {
     console.error("cover-tools error:", err);
-    return json({ error: (err as Error).message || "Erreur interne" }, 500);
+    return json({ error: "Erreur interne" }, 500);
   }
 });
+
