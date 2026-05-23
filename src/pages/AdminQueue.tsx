@@ -204,7 +204,7 @@ export default function AdminQueue() {
                 "bg-yellow-500/15 text-yellow-500 border-yellow-500/30"
               }`}>{t.status}</Badge>
               {(t.preview_url || t.audio_url) && (
-                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => togglePlay(t.preview_url ?? t.audio_url)}>
+                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => togglePlay(t.preview_url ?? t.audio_url)} aria-label={audioPlaying === (t.preview_url ?? t.audio_url) ? "Pause" : "Lecture"}>
                   {audioPlaying === (t.preview_url ?? t.audio_url) ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
                 </Button>
               )}

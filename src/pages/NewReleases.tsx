@@ -244,19 +244,19 @@ export default function NewReleases() {
           <div className="flex flex-wrap items-center gap-2 mb-4">
             <span className="text-xs text-muted-foreground">Filtres :</span>
             {search && (
-              <Badge variant="secondary" className="gap-1">"{search}"<button onClick={() => setSearch("")}><X className="h-3 w-3" /></button></Badge>
+              <Badge variant="secondary" className="gap-1">"{search}"<button type="button" onClick={() => setSearch("")} aria-label="Retirer le filtre recherche" className="rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"><X className="h-3 w-3" /></button></Badge>
             )}
             {genre !== "all" && (
-              <Badge variant="secondary" className="gap-1">{genre}<button onClick={() => setGenre("all")}><X className="h-3 w-3" /></button></Badge>
+              <Badge variant="secondary" className="gap-1">{genre}<button type="button" onClick={() => setGenre("all")} aria-label="Retirer le filtre genre" className="rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"><X className="h-3 w-3" /></button></Badge>
             )}
             {version !== "all" && (
-              <Badge variant="secondary" className="gap-1">{version}<button onClick={() => setVersion("all")}><X className="h-3 w-3" /></button></Badge>
+              <Badge variant="secondary" className="gap-1">{version}<button type="button" onClick={() => setVersion("all")} aria-label="Retirer le filtre version" className="rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"><X className="h-3 w-3" /></button></Badge>
             )}
             {musicalKey !== "all" && (
-              <Badge variant="secondary" className="gap-1">Key {musicalKey}<button onClick={() => setMusicalKey("all")}><X className="h-3 w-3" /></button></Badge>
+              <Badge variant="secondary" className="gap-1">Key {musicalKey}<button type="button" onClick={() => setMusicalKey("all")} aria-label="Retirer le filtre tonalité" className="rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"><X className="h-3 w-3" /></button></Badge>
             )}
             {bpmActive && (
-              <Badge variant="secondary" className="gap-1">{bpmRange[0]}–{bpmRange[1]} BPM<button onClick={() => setBpmActive(false)}><X className="h-3 w-3" /></button></Badge>
+              <Badge variant="secondary" className="gap-1">{bpmRange[0]}–{bpmRange[1]} BPM<button type="button" onClick={() => setBpmActive(false)} aria-label="Retirer le filtre BPM" className="rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"><X className="h-3 w-3" /></button></Badge>
             )}
             <Button variant="ghost" size="sm" className="h-6 text-xs" onClick={clearAll}>Tout effacer</Button>
           </div>

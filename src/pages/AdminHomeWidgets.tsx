@@ -557,7 +557,7 @@ function SortableItem({
       </div>
       <Switch checked={widget.is_active} onCheckedChange={onToggle} />
       <Button variant="outline" size="sm" onClick={onEdit}>Modifier</Button>
-      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onRemove}>
+      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onRemove} aria-label="Supprimer le widget">
         <Trash2 className="h-3.5 w-3.5" />
       </Button>
     </div>

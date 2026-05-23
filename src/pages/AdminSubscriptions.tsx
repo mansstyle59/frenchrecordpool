@@ -211,10 +211,10 @@ export default function AdminSubscriptions() {
                     </td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex justify-end gap-1">
-                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setEditing(isEditing ? null : sub.id)}>
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setEditing(isEditing ? null : sub.id)} aria-label="Modifier l'abonnement">
                           <Pencil className="h-3.5 w-3.5" />
                         </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => handleDelete(sub)}>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => handleDelete(sub)} aria-label="Supprimer l'abonnement">
                           <Trash2 className="h-3.5 w-3.5" />
                         </Button>
                       </div>
