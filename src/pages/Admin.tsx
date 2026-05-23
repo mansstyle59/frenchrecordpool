@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import {
-  Users, Download, Music, Heart, TrendingUp, CreditCard, Upload, ArrowRight, Palette, ScrollText, Clapperboard,
+  Users, Download, Music, Heart, TrendingUp, CreditCard, Upload, ArrowRight, Palette, ScrollText, Clapperboard, ListMusic,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTracks } from "@/hooks/useTracks";
