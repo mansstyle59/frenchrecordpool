@@ -11,10 +11,13 @@ import { useFavorites } from "@/hooks/useFavorites";
 import type { DbTrack } from "@/hooks/useTracks";
 import { resolveCover } from "@/lib/trackCover";
 
-/* ─── Shared column template (header + rows MUST match) ─── */
-//          cover  | title/artist | version | BPM | KEY  | GENRE | TIME | actions
-const COLS = "48px minmax(0,1fr) 110px 56px 56px 120px 56px 180px";
-const COL_GAP = "gap-x-4";
+/* ─── Responsive grid template (header + rows MUST match) ─── */
+const GRID_CLS =
+  "grid-cols-[48px_minmax(0,1fr)_auto] " +
+  "md:grid-cols-[48px_minmax(0,1fr)_110px_56px_120px_180px] " +
+  "lg:grid-cols-[48px_minmax(0,1fr)_110px_56px_56px_120px_180px] " +
+  "xl:grid-cols-[48px_minmax(0,1fr)_110px_56px_56px_120px_56px_180px]";
+const COL_GAP = "gap-x-3 sm:gap-x-4";
 
 interface TrackRowProps {
   track: DbTrack;
@@ -25,8 +28,7 @@ interface TrackRowProps {
 export function TrackListHeader() {
   return (
     <div
-      className={`hidden sm:grid items-center ${COL_GAP} px-3 sm:px-5 py-2 border-b border-border/40 bg-muted/30 text-[10px] uppercase tracking-wider font-semibold text-muted-foreground`}
-      style={{ gridTemplateColumns: COLS }}
+      className={`hidden sm:grid items-center ${GRID_CLS} ${COL_GAP} px-3 sm:px-5 py-2 border-b border-border/40 bg-muted/30 text-[10px] uppercase tracking-wider font-semibold text-muted-foreground`}
     >
       <span />
       <span>Titre / Artiste</span>
@@ -159,10 +161,9 @@ export default function TrackRow({ track }: TrackRowProps) {
 
   return (
     <div
-      className={`group grid items-center ${COL_GAP} px-3 sm:px-5 py-2 border-b border-border/30 last:border-0 hover:bg-foreground/[0.04] transition-colors cursor-pointer ${
+      className={`group grid items-center ${GRID_CLS} ${COL_GAP} px-3 sm:px-5 py-2 border-b border-border/30 last:border-0 hover:bg-foreground/[0.04] transition-colors cursor-pointer ${
         isCurrentTrack ? "bg-primary/[0.06]" : ""
       }`}
-      style={{ gridTemplateColumns: COLS }}
       onDoubleClick={handlePlay}
       title="Double-cliquez pour lire"
     >
