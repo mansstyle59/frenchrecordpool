@@ -196,7 +196,7 @@ function HeroWidget({ config, preview }: { config: any; preview: boolean }) {
             </span>
           )}
           {(config.title || config.highlight) && (
-            <h1 className={`font-display font-black tracking-tight ${preview ? "text-3xl" : "text-5xl md:text-7xl"} mb-4`} style={titleStyle(config.typo)}>
+            <h1 className={`font-display font-black tracking-tight ${preview ? "text-3xl" : "text-3xl sm:text-5xl md:text-7xl"} mb-4 break-words`} style={titleStyle(config.typo)}>
               {config.title}
               {config.title && config.highlight && " "}
               {config.highlight && <span className="gradient-text">{config.highlight}</span>}
