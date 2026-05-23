@@ -210,7 +210,7 @@ function HeroWidget({ config, preview }: { config: any; preview: boolean }) {
 
           <div className={`flex flex-wrap gap-3 ${layout === "center" ? "justify-center" : ""}`}>
             {config.cta_primary_label && (
-              <Button asChild size={preview ? "default" : "lg"} variant="hero">
+              <Button asChild size={preview ? "default" : "lg"} variant="default">
                 <Link to={config.cta_primary_url || "/new"}>
                   {config.cta_primary_label} <ArrowRight className="ml-1 h-4 w-4" />
                 </Link>
