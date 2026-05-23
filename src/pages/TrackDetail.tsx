@@ -183,12 +183,25 @@ export default function TrackDetail() {
                 </Button>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button variant="default" size="lg" className="gap-2" onClick={handleDownload}>
-                      <DownloadIcon className="h-4 w-4" /> {isExternalLink ? "Ouvrir" : "Télécharger"}
+                    <Button
+                      variant="default"
+                      size="lg"
+                      className="gap-2 disabled:opacity-70 disabled:cursor-wait"
+                      onClick={handleDownload}
+                      disabled={isDownloading}
+                      aria-busy={isDownloading}
+                    >
+                      {isDownloading ? (
+                        <><Loader2 className="h-4 w-4 animate-spin" /> Traitement…</>
+                      ) : (
+                        <><DownloadIcon className="h-4 w-4" /> {isExternalLink ? "Ouvrir" : "Télécharger"}</>
+                      )}
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>
-                    {isExternalLink ? "Ouvre le lien externe" : "Télécharge le fichier complet (abonnement requis)"}
+                    {isDownloading
+                      ? "Vérification de l'abonnement et préparation du lien…"
+                      : isExternalLink ? "Ouvre le lien externe" : "Télécharge le fichier complet (abonnement requis)"}
                   </TooltipContent>
                 </Tooltip>
                 <Button
