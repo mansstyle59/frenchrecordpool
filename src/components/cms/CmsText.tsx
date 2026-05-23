@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ElementType } from "react";
-import { Pencil, Type, Smartphone, Tablet, Monitor } from "lucide-react";
+import { Pencil, Type, Smartphone, Tablet, Monitor, Lock } from "lucide-react";
 import { useCms, useCmsValue } from "@/contexts/CmsContext";
 import { cn } from "@/lib/utils";
 import {
@@ -13,6 +13,8 @@ interface CmsTextProps {
   className?: string;
   multiline?: boolean;
   maxLength?: number;
+  /** Empêche toute modification de la taille du texte (pages sensibles). */
+  lockSize?: boolean;
   children: string;
 }
 
@@ -75,7 +77,7 @@ function resolveSize(v: SizeValue | null | undefined, bp: Breakpoint): number | 
 }
 
 export default function CmsText({
-  editKey, as: Tag = "span", className, multiline = false, maxLength = 5000, children,
+  editKey, as: Tag = "span", className, multiline = false, maxLength = 5000, lockSize = false, children,
 }: CmsTextProps) {
   const value = useCmsValue<string>(editKey, children);
   const sizeKey = `${editKey}__size`;
@@ -93,7 +95,7 @@ export default function CmsText({
 
   // Build a stable class + scoped <style> with media queries
   const cls = useMemo(() => safeId(editKey), [editKey]);
-  const hasAnySize = !!(sizeVal && (sizeVal.mobile || sizeVal.tablet || sizeVal.desktop || sizeVal.fontSize));
+  const hasAnySize = !lockSize && !!(sizeVal && (sizeVal.mobile || sizeVal.tablet || sizeVal.desktop || sizeVal.fontSize));
 
   const styleTag = hasAnySize ? (
     <style>{[
@@ -170,6 +172,15 @@ export default function CmsText({
         >
           <Pencil className="h-3 w-3" />
         </span>
+        {lockSize ? (
+          <span
+            className="flex items-center gap-1 h-6 px-1.5 rounded-full bg-muted text-muted-foreground border border-border shadow-md text-[10px] font-mono cursor-not-allowed"
+            title="Taille verrouillée sur ce texte"
+          >
+            <Lock className="h-3 w-3" />
+            verrouillé
+          </span>
+        ) : (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button
@@ -265,6 +276,7 @@ export default function CmsText({
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+        )}
       </span>
     </span>
   );
