@@ -1,5 +1,7 @@
 // Cover tools: search (iTunes + Deezer), youtube/soundcloud thumbnails,
 // AI generation via Lovable AI Gateway, and proxy fetch (URL -> base64).
+import { createClient } from "npm:@supabase/supabase-js@2";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -11,6 +13,45 @@ const json = (body: unknown, status = 200) =>
     status,
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
+
+const ALLOWED_FETCH_HOSTS = [
+  "i.ytimg.com",
+  "img.youtube.com",
+  "i1.sndcdn.com",
+  "i2.sndcdn.com",
+  "cdns-images.dzcdn.net",
+  "e-cdns-images.dzcdn.net",
+  "is1-ssl.mzstatic.com",
+  "is2-ssl.mzstatic.com",
+  "is3-ssl.mzstatic.com",
+  "is4-ssl.mzstatic.com",
+  "is5-ssl.mzstatic.com",
+  "mzstatic.com",
+];
+
+function isAllowedFetchUrl(raw: string): boolean {
+  try {
+    const u = new URL(raw);
+    if (u.protocol !== "https:" && u.protocol !== "http:") return false;
+    const host = u.hostname.toLowerCase();
+    // Block private/loopback/metadata
+    if (
+      host === "localhost" ||
+      host.endsWith(".local") ||
+      host === "169.254.169.254" ||
+      host === "metadata.google.internal" ||
+      /^127\./.test(host) ||
+      /^10\./.test(host) ||
+      /^192\.168\./.test(host) ||
+      /^172\.(1[6-9]|2\d|3[01])\./.test(host) ||
+      /^0\./.test(host)
+    ) return false;
+    return ALLOWED_FETCH_HOSTS.some((h) => host === h || host.endsWith("." + h));
+  } catch {
+    return false;
+  }
+}
+
 
 const upscaleItunes = (u: string) =>
   u.replace(/\/\d+x\d+bb\.(jpg|png)/i, "/600x600bb.$1");
