@@ -50,6 +50,8 @@ import NewReleases from "./pages/NewReleases";
 import Stems from "./pages/Stems";
 import Shorts from "./pages/Shorts";
 import AdminShorts from "./pages/AdminShorts";
+import Playlists from "./pages/Playlists";
+import AdminPlaylists from "./pages/AdminPlaylists";
 import NotFound from "./pages/NotFound";
 
 
