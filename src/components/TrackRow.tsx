@@ -234,13 +234,10 @@ export default function TrackRow({ track }: TrackRowProps) {
         >
           {track.title}
         </Link>
-        <Link
-          to={`/artists/${encodeURIComponent(track.artist)}`}
-          onDoubleClick={(e) => e.stopPropagation()}
+        <ArtistCredit
+          name={track.artist}
           className="text-xs text-muted-foreground hover:text-foreground transition-colors truncate block"
-        >
-          {track.artist}
-        </Link>
+        />
       </div>
 
       {/* Version (badge) */}
