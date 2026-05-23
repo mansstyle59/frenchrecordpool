@@ -206,12 +206,13 @@ export default function NewReleases() {
         {/* ── Genre tabs (DJCity-style underlined pills) ── */}
         {genres.length > 0 && (
           <div className="flex gap-1 overflow-x-auto pb-2 mb-5 -mx-2 px-2 border-b border-border/40 scrollbar-thin">
-            <Tab active={genre === "all"} onClick={() => { setGenre("all"); setVisible(PAGE_SIZE); }}>
+            <Tab active={genre === "all"} onClick={() => setGenre("all")}>
               Tous
             </Tab>
             {genres.map((g) => (
-              <Tab key={g} active={genre === g} onClick={() => { setGenre(g); setVisible(PAGE_SIZE); }}>
+              <Tab key={g} active={genre === g} onClick={() => setGenre(g)}>
                 {g}
+              </Tab>
               </Tab>
             ))}
           </div>
