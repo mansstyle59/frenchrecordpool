@@ -526,59 +526,109 @@ export default function AdminBranding() {
 
         {/* ===================== PREVIEW ===================== */}
         <div className="space-y-4">
-          {/* Device toolbar */}
-          <div className="flex items-center justify-between">
+          {/* Preview toolbar */}
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               <Eye className="h-4 w-4 text-emerald-400" /> Aperçu en direct
             </div>
-            <div className="flex items-center gap-1 bg-white/5 border border-border rounded-md p-1">
-              {([
-                { v: "desktop", icon: Monitor, label: "Desktop" },
-                { v: "tablet", icon: Tablet, label: "Tablet" },
-                { v: "mobile", icon: Smartphone, label: "Mobile" },
-              ] as const).map((d) => (
-                <button
-                  key={d.v}
-                  onClick={() => setDevice(d.v)}
-                  className={cn(
-                    "h-6 w-7 rounded flex items-center justify-center transition-all",
-                    device === d.v ? "bg-white/10 text-foreground" : "text-muted-foreground hover:text-foreground"
-                  )}
-                  title={d.label}
-                >
-                  <d.icon className="h-3.5 w-3.5" />
-                </button>
-              ))}
+            <div className="flex items-center gap-2">
+              {/* Page selector */}
+              <div className="flex items-center gap-1 bg-white/5 border border-border rounded-md p-1">
+                {PREVIEW_PAGES.map((p) => (
+                  <button
+                    key={p.v}
+                    onClick={() => setPreviewPage(p.v)}
+                    className={cn(
+                      "h-6 px-2 rounded flex items-center gap-1 text-[10px] font-medium transition-all",
+                      previewPage === p.v ? "bg-white/10 text-foreground" : "text-muted-foreground hover:text-foreground"
+                    )}
+                    title={p.label}
+                  >
+                    <p.icon className="h-3 w-3" />
+                    <span className="hidden sm:inline">{p.label}</span>
+                  </button>
+                ))}
+              </div>
+              {/* Compare modes */}
+              <button
+                onClick={() => setCompareModes((v) => !v)}
+                className={cn(
+                  "h-8 px-2 rounded-md border flex items-center gap-1.5 text-[10px] font-medium transition-all",
+                  compareModes
+                    ? "border-primary bg-primary/10 text-primary"
+                    : "border-border bg-white/5 text-muted-foreground hover:text-foreground"
+                )}
+                title="Comparer clair / sombre"
+              >
+                <Columns2 className="h-3.5 w-3.5" />
+                {compareModes ? "Comparaison ON" : "Comparer"}
+              </button>
+              {/* Device toolbar */}
+              <div className={cn("flex items-center gap-1 bg-white/5 border border-border rounded-md p-1", compareModes && "opacity-50 pointer-events-none")}>
+                {([
+                  { v: "desktop", icon: Monitor, label: "Desktop" },
+                  { v: "tablet", icon: Tablet, label: "Tablet" },
+                  { v: "mobile", icon: Smartphone, label: "Mobile" },
+                ] as const).map((d) => (
+                  <button
+                    key={d.v}
+                    onClick={() => setDevice(d.v)}
+                    className={cn(
+                      "h-6 w-7 rounded flex items-center justify-center transition-all",
+                      device === d.v ? "bg-white/10 text-foreground" : "text-muted-foreground hover:text-foreground"
+                    )}
+                    title={d.label}
+                  >
+                    <d.icon className="h-3.5 w-3.5" />
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 
-          <motion.div
-            layout
-            className="mx-auto rounded-3xl border border-border bg-card overflow-hidden shadow-2xl"
-            style={{
-              width: device === "desktop" ? "100%" : device === "tablet" ? 768 : 390,
-              maxWidth: "100%",
-              transition: "width 0.4s cubic-bezier(.2,.7,.2,1)",
-            }}
-          >
-            {/* Browser chrome */}
-            <div className="flex items-center gap-2 px-4 h-9 bg-secondary/60 border-b border-border">
-              <div className="flex gap-1.5">
-                <span className="h-2.5 w-2.5 rounded-full bg-red-400/70" />
-                <span className="h-2.5 w-2.5 rounded-full bg-yellow-400/70" />
-                <span className="h-2.5 w-2.5 rounded-full bg-green-400/70" />
-              </div>
-              <div className="flex-1 mx-3 h-5 rounded bg-background/70 border border-border flex items-center px-2 text-[10px] text-muted-foreground truncate">
-                frenchrecordpool.com /
-              </div>
+          {compareModes ? (
+            <div className="grid md:grid-cols-2 gap-4">
+              {(["light", "dark"] as const).map((m) => (
+                <div key={m} className="rounded-2xl border border-border bg-card overflow-hidden shadow-xl">
+                  <div className="flex items-center gap-2 px-3 h-8 bg-secondary/60 border-b border-border">
+                    {m === "light" ? <Sun className="h-3 w-3 text-amber-500" /> : <Moon className="h-3 w-3 text-indigo-300" />}
+                    <span className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground">{m === "light" ? "Mode clair" : "Mode sombre"}</span>
+                    <span className="ml-auto text-[10px] text-muted-foreground truncate">{PREVIEW_PAGES.find(p => p.v === previewPage)?.path}</span>
+                  </div>
+                  <SitePreview draft={draft} device="mobile" page={previewPage} mode={m} />
+                </div>
+              ))}
             </div>
+          ) : (
+            <motion.div
+              layout
+              className="mx-auto rounded-3xl border border-border bg-card overflow-hidden shadow-2xl"
+              style={{
+                width: device === "desktop" ? "100%" : device === "tablet" ? 768 : 390,
+                maxWidth: "100%",
+                transition: "width 0.4s cubic-bezier(.2,.7,.2,1)",
+              }}
+            >
+              {/* Browser chrome */}
+              <div className="flex items-center gap-2 px-4 h-9 bg-secondary/60 border-b border-border">
+                <div className="flex gap-1.5">
+                  <span className="h-2.5 w-2.5 rounded-full bg-red-400/70" />
+                  <span className="h-2.5 w-2.5 rounded-full bg-yellow-400/70" />
+                  <span className="h-2.5 w-2.5 rounded-full bg-green-400/70" />
+                </div>
+                <div className="flex-1 mx-3 h-5 rounded bg-background/70 border border-border flex items-center px-2 text-[10px] text-muted-foreground truncate">
+                  frenchrecordpool.com{PREVIEW_PAGES.find(p => p.v === previewPage)?.path}
+                </div>
+              </div>
 
-            <SitePreview draft={draft} device={device} />
-          </motion.div>
+              <SitePreview draft={draft} device={device} page={previewPage} />
+            </motion.div>
+          )}
 
           <ContrastReport draft={draft} />
         </div>
       </div>
+
 
       {/* ===================== STICKY SAVE BAR ===================== */}
       <AnimatePresence>
