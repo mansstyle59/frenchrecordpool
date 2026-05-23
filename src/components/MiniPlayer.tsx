@@ -242,18 +242,19 @@ export default function MiniPlayer() {
             </div>
 
             {/* Transport */}
-            <Button variant="ghost" size="icon" className="shrink-0 h-8 w-8 hidden sm:inline-flex rounded-full hover:bg-foreground/10" onClick={prev} title="Précédent">
+            <Button variant="ghost" size="icon-sm" className="hidden sm:inline-flex" onClick={prev} title="Précédent">
               <SkipBack className="h-3.5 w-3.5" />
             </Button>
             <Button
+              variant={isFull ? "accent" : "default"}
               size="icon"
-              className={`shrink-0 h-10 w-10 rounded-full shadow-lg ${isFull ? "bg-gradient-to-br from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-white shadow-emerald-500/30" : "bg-gradient-to-br from-primary to-accent hover:opacity-90 text-primary-foreground shadow-primary/30"}`}
+              className="shadow-lg"
               onClick={toggle}
               title={isPlaying ? "Pause (Espace)" : "Lecture (Espace)"}
             >
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4 fill-current ml-0.5" />}
             </Button>
-            <Button variant="ghost" size="icon" className="shrink-0 h-8 w-8 hidden sm:inline-flex rounded-full hover:bg-foreground/10" onClick={next} title="Suivant">
+            <Button variant="ghost" size="icon-sm" className="hidden sm:inline-flex" onClick={next} title="Suivant">
               <SkipForward className="h-3.5 w-3.5" />
             </Button>
 
