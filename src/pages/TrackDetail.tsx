@@ -2,7 +2,7 @@ import { useParams, Link } from "react-router-dom";
 import { useMemo, useState } from "react";
 import {
   Play, Pause, Heart, Download, ExternalLink, ArrowLeft, Clock, Music, Tag, Disc3,
-  Share2, QrCode, Copy, Calendar, Headphones, FileAudio, Mic2, Users,
+  Share2, QrCode, Copy, Calendar, Headphones, FileAudio, Mic2, Users, Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
