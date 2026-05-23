@@ -1,7 +1,7 @@
 import {
   LayoutDashboard, Music, Inbox, Clapperboard, ListMusic, Mic2,
   Users, MessageSquare, CreditCard, Layers, Ticket,
-  Palette, Camera, Blocks, MessageCircle, ScrollText, type LucideIcon,
+  Palette, Camera, Blocks, MessageCircle, ScrollText, Sparkles, type LucideIcon,
 } from "lucide-react";
 
 export type AdminNavItem = {
