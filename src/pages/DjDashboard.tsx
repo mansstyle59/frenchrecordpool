@@ -158,9 +158,9 @@ export default function DjDashboard() {
       {/* ───── Compact stats ───── */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
         <StatCard icon={Music} label="Total" value={stats.total} accent="from-primary/20 to-primary/5" iconColor="text-primary" />
-        <StatCard icon={Clock} label="En attente" value={stats.pending} accent="from-yellow-500/20 to-yellow-500/5" iconColor="text-yellow-500" />
-        <StatCard icon={CheckCircle2} label="Approuvés" value={stats.approved} accent="from-emerald-500/20 to-emerald-500/5" iconColor="text-emerald-500" />
-        <StatCard icon={XCircle} label="Refusés" value={stats.rejected} accent="from-destructive/20 to-destructive/5" iconColor="text-destructive" />
+        <StatCard icon={Clock} label="En attente" value={stats.pending} accent="from-accent/10 to-accent/5" iconColor="text-accent" />
+        <StatCard icon={CheckCircle2} label="Approuvés" value={stats.approved} accent="from-primary/15 to-primary/5" iconColor="text-primary" />
+        <StatCard icon={XCircle} label="Refusés" value={stats.rejected} accent="from-destructive/15 to-destructive/5" iconColor="text-destructive" />
         <StatCard icon={Download} label="Téléchargements" value={stats.downloads} accent="from-accent/20 to-accent/5" iconColor="text-accent" />
       </div>
 
