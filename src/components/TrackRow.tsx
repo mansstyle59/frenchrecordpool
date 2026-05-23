@@ -320,16 +320,24 @@ export default function TrackRow({ track }: TrackRowProps) {
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
+              className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10 disabled:opacity-60 disabled:cursor-wait"
               onClick={handleDownload}
               onDoubleClick={(e) => e.stopPropagation()}
-              aria-label="Télécharger"
+              disabled={isDownloading}
+              aria-busy={isDownloading}
+              aria-label={isDownloading ? "Téléchargement en cours" : "Télécharger"}
             >
-              <DownloadIcon className="h-4 w-4" />
+              {isDownloading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <DownloadIcon className="h-4 w-4" />
+              )}
             </Button>
           </TooltipTrigger>
           <TooltipContent>
-            {isExternalLink ? "Ouvrir le lien externe" : "Télécharger le fichier"}
+            {isDownloading
+              ? "Traitement en cours…"
+              : isExternalLink ? "Ouvrir le lien externe" : "Télécharger le fichier"}
           </TooltipContent>
         </Tooltip>
       </div>
