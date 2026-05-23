@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Heart, Music, ArrowLeft, Volume2, VolumeX, Tag as TagIcon, Disc3 } from "lucide-react";
+import { Heart, Music, ArrowLeft, Volume2, VolumeX, Tag as TagIcon, Disc3, ChevronUp, ChevronDown } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -50,23 +50,52 @@ export default function Shorts() {
   // Track which item is most visible to autoplay
   const [activeIdx, setActiveIdx] = useState(0);
   const [muted, setMuted] = useState(true);
+  const scrollRef = useRef<HTMLDivElement | null>(null);
   const itemsRef = useRef<(HTMLDivElement | null)[]>([]);
+  const iframeRef = useRef<HTMLIFrameElement | null>(null);
 
+  // Observe the scroll container so the active short is the most-visible one inside it
   useEffect(() => {
+    if (!scrollRef.current) return;
     const obs = new IntersectionObserver(
       (entries) => {
+        let best: { idx: number; ratio: number } | null = null;
         entries.forEach((e) => {
-          if (e.isIntersecting && e.intersectionRatio > 0.6) {
-            const idx = itemsRef.current.findIndex((el) => el === e.target);
-            if (idx >= 0) setActiveIdx(idx);
-          }
+          const idx = itemsRef.current.findIndex((el) => el === e.target);
+          if (idx < 0) return;
+          if (!best || e.intersectionRatio > best.ratio) best = { idx, ratio: e.intersectionRatio };
         });
+        if (best && best.ratio > 0.55) setActiveIdx(best.idx);
       },
-      { threshold: [0, 0.6, 1] }
+      { root: scrollRef.current, threshold: [0.25, 0.55, 0.75, 1] }
     );
     itemsRef.current.forEach((el) => el && obs.observe(el));
     return () => obs.disconnect();
   }, [filtered.length]);
+
+  // Reset to top when filter changes
+  useEffect(() => {
+    setActiveIdx(0);
+    scrollRef.current?.scrollTo({ top: 0, behavior: "auto" });
+  }, [tagFilter]);
+
+  // Toggle mute on the active iframe without reloading it
+  const postYT = useCallback((func: "mute" | "unMute" | "playVideo" | "pauseVideo") => {
+    const win = iframeRef.current?.contentWindow;
+    if (!win) return;
+    win.postMessage(JSON.stringify({ event: "command", func, args: [] }), "*");
+  }, []);
+
+  useEffect(() => {
+    // small delay so the iframe is ready after src change
+    const t = setTimeout(() => postYT(muted ? "mute" : "unMute"), 150);
+    return () => clearTimeout(t);
+  }, [muted, activeIdx, postYT]);
+
+  const scrollToIdx = (idx: number) => {
+    const el = itemsRef.current[idx];
+    el?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
 
   // Lookup related artist/track for the active short
   const active = filtered[activeIdx];
@@ -96,10 +125,13 @@ export default function Shorts() {
   });
 
   return (
-    <div className="fixed inset-0 z-50 bg-black text-white overflow-hidden">
+    <div
+      className="fixed inset-0 z-50 bg-black text-white overflow-hidden"
+      style={{ height: "100svh" }}
+    >
       {/* Top bar */}
-      <div className="absolute top-0 inset-x-0 z-30 safe-top">
-        <div className="flex items-center justify-between gap-2 px-3 pt-3 pb-2 bg-gradient-to-b from-black/70 to-transparent">
+      <div className="absolute top-0 inset-x-0 z-30 safe-top pointer-events-none">
+        <div className="flex items-center justify-between gap-2 px-3 pt-3 pb-2 bg-gradient-to-b from-black/70 to-transparent pointer-events-auto">
           <Link to="/">
             <Button variant="ghost" size="icon" className="text-white hover:bg-white/10" aria-label="Retour">
               <ArrowLeft className="h-5 w-5" />
@@ -120,7 +152,7 @@ export default function Shorts() {
         </div>
 
         {allTags.length > 0 && (
-          <div className="px-3 pb-2 overflow-x-auto scrollbar-none">
+          <div className="px-3 pb-2 overflow-x-auto scrollbar-none pointer-events-auto">
             <div className="flex gap-2 w-max">
               <button
                 type="button"
@@ -148,10 +180,39 @@ export default function Shorts() {
         )}
       </div>
 
+      {/* Side controls (desktop/tablet) */}
+      <div className="hidden md:flex absolute right-4 top-1/2 -translate-y-1/2 z-30 flex-col gap-2">
+        <Button
+          variant="secondary"
+          size="icon"
+          className="rounded-full bg-white/10 hover:bg-white/20 backdrop-blur text-white"
+          onClick={() => scrollToIdx(Math.max(0, activeIdx - 1))}
+          disabled={activeIdx === 0}
+          aria-label="Précédent"
+        >
+          <ChevronUp className="h-5 w-5" />
+        </Button>
+        <Button
+          variant="secondary"
+          size="icon"
+          className="rounded-full bg-white/10 hover:bg-white/20 backdrop-blur text-white"
+          onClick={() => scrollToIdx(Math.min(filtered.length - 1, activeIdx + 1))}
+          disabled={activeIdx >= filtered.length - 1}
+          aria-label="Suivant"
+        >
+          <ChevronDown className="h-5 w-5" />
+        </Button>
+      </div>
+
       {/* Vertical snap feed */}
       <div
-        className="h-full w-full overflow-y-auto snap-y snap-mandatory overscroll-contain"
-        style={{ scrollbarWidth: "none" }}
+        ref={scrollRef}
+        className="h-full w-full overflow-y-auto snap-y snap-mandatory overscroll-contain scrollbar-none"
+        style={{
+          scrollbarWidth: "none",
+          WebkitOverflowScrolling: "touch",
+          touchAction: "pan-y",
+        }}
       >
         {isLoading && (
           <div className="h-full flex items-center justify-center text-white/70 text-sm">Chargement…</div>
@@ -163,106 +224,128 @@ export default function Shorts() {
             <p className="text-sm text-white/60 mt-1">L'admin doit en ajouter via /admin/shorts.</p>
           </div>
         )}
-        {filtered.map((s, i) => (
-          <div
-            key={s.id}
-            ref={(el) => (itemsRef.current[i] = el)}
-            className="relative h-[100dvh] w-full snap-start snap-always flex items-center justify-center bg-black"
-          >
-            {/* Backdrop blur image */}
-            <img
-              src={s.thumbnail_url || youtubeThumb(s.youtube_id)}
-              alt=""
-              aria-hidden
-              className="absolute inset-0 w-full h-full object-cover opacity-40"
-              style={{ filter: "blur(28px) saturate(140%)" }}
-            />
+        {filtered.map((s, i) => {
+          const isActive = i === activeIdx;
+          return (
+            <div
+              key={s.id}
+              ref={(el) => (itemsRef.current[i] = el)}
+              className="relative w-full snap-start snap-always flex items-center justify-center bg-black"
+              style={{ height: "100svh" }}
+            >
+              {/* Ambient blurred backdrop */}
+              <img
+                src={s.thumbnail_url || youtubeThumb(s.youtube_id)}
+                alt=""
+                aria-hidden
+                className="absolute inset-0 w-full h-full object-cover opacity-40"
+                style={{ filter: "blur(40px) saturate(140%)" }}
+              />
+              <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/70" />
 
-            {/* Video frame (9:16-ish) */}
-            <div className="relative w-full h-full max-w-md mx-auto">
-              {i === activeIdx ? (
-                <iframe
-                  key={`${s.id}-${muted ? "m" : "s"}`}
-                  src={youtubeEmbedUrl(s.youtube_id, { autoplay: true, mute: muted, loop: true })}
-                  title={s.title}
-                  allow="autoplay; encrypted-media; picture-in-picture"
-                  allowFullScreen
-                  className="absolute inset-0 w-full h-full border-0"
-                />
-              ) : (
-                <img
-                  src={s.thumbnail_url || youtubeThumb(s.youtube_id)}
-                  alt={s.title}
-                  className="absolute inset-0 w-full h-full object-cover"
-                />
-              )}
-
-              {/* Bottom overlay info */}
-              <motion.div
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: i === activeIdx ? 1 : 0, y: i === activeIdx ? 0 : 16 }}
-                transition={{ duration: 0.35 }}
-                className="absolute inset-x-0 bottom-0 z-20 px-4 pb-6 pt-16 bg-gradient-to-t from-black via-black/70 to-transparent pointer-events-none"
+              {/* 9:16 stage — full screen on mobile, centered phone-frame on md+ */}
+              <div
+                className="relative mx-auto h-full w-full md:h-[min(92svh,900px)] md:w-auto md:aspect-[9/16] md:rounded-3xl md:overflow-hidden md:shadow-[0_30px_80px_-20px_rgba(0,0,0,0.8)] md:ring-1 md:ring-white/10"
+                style={{ maxWidth: "100vw" }}
               >
-                <div className="pointer-events-auto max-w-md mx-auto">
-                  <h2 className="font-display text-lg font-black leading-tight line-clamp-2">{s.title}</h2>
-                  {s.description && (
-                    <p className="text-sm text-white/80 mt-1 line-clamp-2">{s.description}</p>
-                  )}
-                  {s.tags?.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5 mt-2">
-                      {s.tags.slice(0, 4).map((t) => (
-                        <Badge
-                          key={t}
-                          variant="outline"
-                          className="bg-white/10 border-white/20 text-white text-[10px] gap-1"
-                        >
-                          <TagIcon className="h-3 w-3" /> {t}
-                        </Badge>
-                      ))}
-                    </div>
-                  )}
+                {isActive ? (
+                  <iframe
+                    ref={iframeRef}
+                    src={youtubeEmbedUrl(s.youtube_id, { autoplay: true, mute: muted, loop: true })}
+                    title={s.title}
+                    allow="autoplay; encrypted-media; picture-in-picture"
+                    allowFullScreen
+                    className="absolute inset-0 w-full h-full border-0"
+                  />
+                ) : (
+                  <img
+                    src={s.thumbnail_url || youtubeThumb(s.youtube_id)}
+                    alt={s.title}
+                    loading="lazy"
+                    decoding="async"
+                    className="absolute inset-0 w-full h-full object-cover"
+                  />
+                )}
 
-                  {/* Related artist / track CTA */}
-                  {i === activeIdx && (relatedArtist || relatedTrack) && (
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {relatedArtist && (
-                        <Link
-                          to={
-                            relatedArtist.kind === "remixer"
-                              ? `/remixers/${relatedArtist.slug}`
-                              : `/artists/${relatedArtist.slug}`
-                          }
-                        >
-                          <Button size="sm" variant="secondary" className="gap-2">
-                            {relatedArtist.photo_url ? (
-                              <img
-                                src={relatedArtist.photo_url}
-                                alt=""
-                                className="h-5 w-5 rounded-full object-cover"
-                              />
-                            ) : (
-                              <Heart className="h-3.5 w-3.5" />
-                            )}
-                            {relatedArtist.name}
-                          </Button>
-                        </Link>
-                      )}
-                      {relatedTrack && (
-                        <Link to={`/tracks/${relatedTrack.id}`}>
-                          <Button size="sm" className="gap-2">
-                            <Music className="h-3.5 w-3.5" />
-                            <span className="truncate max-w-[160px]">{relatedTrack.title}</span>
-                          </Button>
-                        </Link>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </motion.div>
+                {/* Bottom overlay info */}
+                <motion.div
+                  initial={false}
+                  animate={{ opacity: isActive ? 1 : 0, y: isActive ? 0 : 16 }}
+                  transition={{ duration: 0.35 }}
+                  className="absolute inset-x-0 bottom-0 z-20 px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-16 bg-gradient-to-t from-black via-black/70 to-transparent pointer-events-none"
+                >
+                  <div className="pointer-events-auto mx-auto max-w-md">
+                    <h2 className="font-display text-lg md:text-xl font-black leading-tight line-clamp-2">{s.title}</h2>
+                    {s.description && (
+                      <p className="text-sm text-white/80 mt-1 line-clamp-2">{s.description}</p>
+                    )}
+                    {s.tags?.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5 mt-2">
+                        {s.tags.slice(0, 4).map((t) => (
+                          <Badge
+                            key={t}
+                            variant="outline"
+                            className="bg-white/10 border-white/20 text-white text-[10px] gap-1"
+                          >
+                            <TagIcon className="h-3 w-3" /> {t}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Related artist / track CTA */}
+                    {isActive && (relatedArtist || relatedTrack) && (
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {relatedArtist && (
+                          <Link
+                            to={
+                              relatedArtist.kind === "remixer"
+                                ? `/remixers/${relatedArtist.slug}`
+                                : `/artists/${relatedArtist.slug}`
+                            }
+                          >
+                            <Button size="sm" variant="secondary" className="gap-2">
+                              {relatedArtist.photo_url ? (
+                                <img
+                                  src={relatedArtist.photo_url}
+                                  alt=""
+                                  className="h-5 w-5 rounded-full object-cover"
+                                />
+                              ) : (
+                                <Heart className="h-3.5 w-3.5" />
+                              )}
+                              {relatedArtist.name}
+                            </Button>
+                          </Link>
+                        )}
+                        {relatedTrack && (
+                          <Link to={`/tracks/${relatedTrack.id}`}>
+                            <Button size="sm" className="gap-2">
+                              <Music className="h-3.5 w-3.5" />
+                              <span className="truncate max-w-[160px]">{relatedTrack.title}</span>
+                            </Button>
+                          </Link>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </motion.div>
+              </div>
+
+              {/* Progress dots (desktop) */}
+              <div className="hidden md:flex absolute left-4 top-1/2 -translate-y-1/2 z-30 flex-col gap-1.5">
+                {filtered.slice(0, 20).map((_, idx) => (
+                  <span
+                    key={idx}
+                    className={`block w-1 rounded-full transition-all ${
+                      idx === activeIdx ? "h-6 bg-white" : "h-1.5 bg-white/30"
+                    }`}
+                  />
+                ))}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
