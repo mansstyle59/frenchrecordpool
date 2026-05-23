@@ -238,9 +238,8 @@ export default function TrackRow({ track }: TrackRowProps) {
             </div>
           )}
         </div>
-        )}
         {!isFullPlayback && !isActive && (
-          <span className="pointer-events-none absolute bottom-0.5 left-0.5 right-0.5 text-center text-[8px] font-bold uppercase tracking-wider text-white/90 bg-black/40 rounded-sm opacity-0 group-hover:opacity-100 transition-opacity">
+          <span className="pointer-events-none absolute bottom-0.5 left-0.5 right-0.5 z-20 text-center text-[8px] font-bold uppercase tracking-wider text-white/90 bg-black/40 rounded-sm opacity-0 group-hover:opacity-100 transition-opacity">
             Extrait
           </span>
         )}
