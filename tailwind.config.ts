@@ -37,8 +37,8 @@ export default {
     },
     extend: {
       fontFamily: {
-        display: ['"Space Grotesk"', "system-ui", "sans-serif"],
-        body: ['"DM Sans"', "system-ui", "sans-serif"],
+        display: ['"Bebas Neue"', '"Barlow Condensed"', "Impact", "system-ui", "sans-serif"],
+        body: ['"Barlow"', "system-ui", "-apple-system", "Segoe UI", "sans-serif"],
       },
       colors: {
         border: "hsl(var(--border))",
