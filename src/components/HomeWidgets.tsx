@@ -203,7 +203,7 @@ function HeroWidget({ config, preview }: { config: any; preview: boolean }) {
             </h1>
           )}
           {config.subtitle && (
-            <p className={`text-muted-foreground ${layout === "center" ? "mx-auto" : ""} ${preview ? "text-sm max-w-xl" : "text-lg md:text-xl max-w-2xl"} mb-8`} style={bodyStyle(config.typo)}>
+            <p className={`text-muted-foreground ${layout === "center" ? "mx-auto" : ""} ${preview ? "text-sm max-w-xl" : "text-base sm:text-lg md:text-xl max-w-2xl"} mb-6 md:mb-8`} style={bodyStyle(config.typo)}>
               {config.subtitle}
             </p>
           )}
