@@ -50,12 +50,12 @@ export default function Playlists() {
     });
   }, [items, source, tag, q]);
 
+  useEffect(() => {
+    document.title = "Playlists DJ — French Record Pool";
+  }, []);
+
   return (
     <Layout>
-      <Helmet>
-        <title>Playlists DJ — French Record Pool</title>
-        <meta name="description" content="Découvre nos playlists DJ Spotify, Deezer, SoundCloud et playlists internes du catalogue." />
-      </Helmet>
 
       <div className="container mx-auto px-4 py-8 md:py-12">
         <header className="mb-8">
