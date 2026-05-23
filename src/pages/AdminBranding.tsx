@@ -211,6 +211,25 @@ export default function AdminBranding() {
     toast({ title: `Palette « ${p.name} » appliquée`, description: "Visible en direct dans l'aperçu →" });
   };
 
+  const generateFromBase = (baseHex: string) => {
+    if (!draft) return;
+    const baseHsl = hexToHsl(baseHex);
+    const { primary, accent } = harmonize(baseHsl, genHarmony);
+    const patch: Partial<Branding> = { light_primary: primary, light_accent: accent };
+    if (genDeriveDark) {
+      patch.dark_primary = deriveDark("primary", primary);
+      patch.dark_accent = deriveDark("accent", accent);
+    }
+    update(patch);
+    toast({ title: "Palette générée ✨", description: `${HARMONY_LABELS[genHarmony]} depuis ${baseHex.toUpperCase()}` });
+  };
+
+  const randomize = () => {
+    const hex = "#" + Math.floor(Math.random() * 0xffffff).toString(16).padStart(6, "0");
+    generateFromBase(hex);
+  };
+
+
   const reset = () => {
     if (!initialRef.current) return;
     setDraft(initialRef.current);
