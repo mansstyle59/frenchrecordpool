@@ -1,5 +1,6 @@
-import { useState, useMemo } from "react";
-import { Search, SlidersHorizontal, X, ArrowUpDown, Disc3, Calendar } from "lucide-react";
+import { useState, useMemo, useEffect, useRef, useCallback } from "react";
+import { useSearchParams } from "react-router-dom";
+import { Search, SlidersHorizontal, X, ArrowUpDown, Disc3, Calendar, Loader2 } from "lucide-react";
 import Layout from "@/components/Layout";
 import TrackRow, { TrackListHeader } from "@/components/TrackRow";
 import { Input } from "@/components/ui/input";
@@ -14,7 +15,8 @@ import TrackGroupRow from "@/components/TrackGroupRow";
 
 type SortOption = "newest" | "popular" | "az" | "bpm";
 
-const PAGE_SIZE = 60;
+const PAGE_SIZE = 40;
+
 
 /* ── Group track-groups by release day (DJCity-style date sections) ── */
 function groupByDay(groups: TrackGroup[]): { day: string; label: string; items: TrackGroup[] }[] {
@@ -43,14 +45,54 @@ function groupByDay(groups: TrackGroup[]): { day: string; label: string; items: 
 
 export default function NewReleases() {
   const { data: tracks = [], isLoading } = useTracks();
-  const [search, setSearch] = useState("");
-  const [genre, setGenre] = useState<string>("all");
-  const [version, setVersion] = useState<string>("all");
-  const [musicalKey, setMusicalKey] = useState<string>("all");
-  const [bpmRange, setBpmRange] = useState<[number, number]>([60, 200]);
-  const [bpmActive, setBpmActive] = useState(false);
-  const [sort, setSort] = useState<SortOption>("newest");
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // ── URL-persistent filter state ──────────────────────────────────────
+  const search = searchParams.get("q") ?? "";
+  const genre = searchParams.get("genre") ?? "all";
+  const version = searchParams.get("version") ?? "all";
+  const musicalKey = searchParams.get("key") ?? "all";
+  const sort = (searchParams.get("sort") ?? "newest") as SortOption;
+  const bpmMin = Number(searchParams.get("bpmMin") ?? 60);
+  const bpmMax = Number(searchParams.get("bpmMax") ?? 200);
+  const bpmActive = searchParams.has("bpmMin") || searchParams.has("bpmMax");
+  const bpmRange: [number, number] = [bpmMin, bpmMax];
+
+  const update = useCallback(
+    (patch: Record<string, string | null>) => {
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          for (const [k, v] of Object.entries(patch)) {
+            if (v === null || v === "" || v === "all") next.delete(k);
+            else next.set(k, v);
+          }
+          return next;
+        },
+        { replace: true },
+      );
+    },
+    [setSearchParams],
+  );
+
+  const setSearch = (v: string) => update({ q: v || null });
+  const setGenre = (v: string) => update({ genre: v });
+  const setVersion = (v: string) => update({ version: v });
+  const setMusicalKey = (v: string) => update({ key: v });
+  const setSort = (v: SortOption) => update({ sort: v === "newest" ? null : v });
+  const setBpmRange = (r: [number, number]) =>
+    update({ bpmMin: String(r[0]), bpmMax: String(r[1]) });
+  const setBpmActive = (on: boolean) => {
+    if (!on) update({ bpmMin: null, bpmMax: null });
+    else update({ bpmMin: String(bpmRange[0]), bpmMax: String(bpmRange[1]) });
+  };
+
   const [visible, setVisible] = useState(PAGE_SIZE);
+
+  // Reset visible window when filters change
+  useEffect(() => {
+    setVisible(PAGE_SIZE);
+  }, [search, genre, version, musicalKey, sort, bpmMin, bpmMax, bpmActive]);
 
   const genres = useMemo(
     () => Array.from(new Set(tracks.map((t) => t.genre).filter(Boolean) as string[])).sort(),
@@ -91,11 +133,29 @@ export default function NewReleases() {
 
   const visibleTracks = filtered.slice(0, visible);
   const groupedVisible = useMemo(() => groupTracks(visibleTracks), [visibleTracks]);
-  // Only show day-sections when sorted by newest; otherwise show a single section
   const daySections = useMemo(
     () => (sort === "newest" ? groupByDay(groupedVisible) : [{ day: "all", label: "", items: groupedVisible }]),
     [groupedVisible, sort],
   );
+
+  // ── Infinite scroll ────────────────────────────────────────────────
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const hasMore = visible < filtered.length;
+  useEffect(() => {
+    if (!hasMore) return;
+    const el = sentinelRef.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          setVisible((v) => Math.min(v + PAGE_SIZE, filtered.length));
+        }
+      },
+      { rootMargin: "600px 0px" },
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [hasMore, filtered.length]);
 
   const activeFiltersCount =
     (genre !== "all" ? 1 : 0) +
@@ -105,9 +165,9 @@ export default function NewReleases() {
     (search ? 1 : 0);
 
   const clearAll = () => {
-    setSearch(""); setGenre("all"); setVersion("all"); setMusicalKey("all");
-    setBpmActive(false); setBpmRange([60, 200]); setVisible(PAGE_SIZE);
+    setSearchParams({}, { replace: true });
   };
+
 
   return (
     <Layout>
@@ -146,11 +206,11 @@ export default function NewReleases() {
         {/* ── Genre tabs (DJCity-style underlined pills) ── */}
         {genres.length > 0 && (
           <div className="flex gap-1 overflow-x-auto pb-2 mb-5 -mx-2 px-2 border-b border-border/40 scrollbar-thin">
-            <Tab active={genre === "all"} onClick={() => { setGenre("all"); setVisible(PAGE_SIZE); }}>
+            <Tab active={genre === "all"} onClick={() => setGenre("all")}>
               Tous
             </Tab>
             {genres.map((g) => (
-              <Tab key={g} active={genre === g} onClick={() => { setGenre(g); setVisible(PAGE_SIZE); }}>
+              <Tab key={g} active={genre === g} onClick={() => setGenre(g)}>
                 {g}
               </Tab>
             ))}
@@ -165,12 +225,12 @@ export default function NewReleases() {
               <Input
                 placeholder="Rechercher titre, remixeur, genre..."
                 value={search}
-                onChange={(e) => { setSearch(e.target.value); setVisible(PAGE_SIZE); }}
+                onChange={(e) => setSearch(e.target.value)}
                 className="pl-10 h-11 bg-secondary/60 border-border/60"
               />
             </div>
 
-            <Select value={version} onValueChange={(v) => { setVersion(v); setVisible(PAGE_SIZE); }}>
+            <Select value={version} onValueChange={(v) => setVersion(v)}>
               <SelectTrigger className="h-11 w-full lg:w-40 bg-secondary/60 border-border/60"><SelectValue placeholder="Version" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Toutes versions</SelectItem>
@@ -178,7 +238,7 @@ export default function NewReleases() {
               </SelectContent>
             </Select>
 
-            <Select value={musicalKey} onValueChange={(v) => { setMusicalKey(v); setVisible(PAGE_SIZE); }}>
+            <Select value={musicalKey} onValueChange={(v) => setMusicalKey(v)}>
               <SelectTrigger className="h-11 w-full lg:w-32 bg-secondary/60 border-border/60"><SelectValue placeholder="Tonalité" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Toutes tonalités</SelectItem>
@@ -293,17 +353,21 @@ export default function NewReleases() {
               ))}
             </div>
 
-            {visible < filtered.length && (
-              <div className="flex justify-center mt-8">
-                <Button variant="outline" size="lg" onClick={() => setVisible((v) => v + PAGE_SIZE)}>
-                  Charger plus ({filtered.length - visible} restant{filtered.length - visible > 1 ? "s" : ""})
-                </Button>
+            {/* Infinite-scroll sentinel */}
+            {hasMore && (
+              <div ref={sentinelRef} className="flex justify-center mt-8 py-6 text-muted-foreground">
+                <Loader2 className="h-5 w-5 animate-spin" />
+                <span className="ml-2 text-xs font-mono uppercase tracking-wider">
+                  Chargement… {visibleTracks.length} / {filtered.length}
+                </span>
               </div>
             )}
 
-            <p className="text-xs text-muted-foreground mt-4 font-mono text-center">
-              Affichage {visibleTracks.length} / {filtered.length} titre{filtered.length > 1 ? "s" : ""}
-            </p>
+            {!hasMore && (
+              <p className="text-xs text-muted-foreground mt-6 font-mono text-center">
+                {filtered.length} titre{filtered.length > 1 ? "s" : ""} — fin de la liste
+              </p>
+            )}
           </>
         )}
       </div>

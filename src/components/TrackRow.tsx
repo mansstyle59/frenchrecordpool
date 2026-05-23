@@ -183,44 +183,63 @@ export default function TrackRow({ track }: TrackRowProps) {
       onDoubleClick={handlePlay}
       title="Double-cliquez pour lire"
     >
-      {/* Cover + play overlay */}
+      {/* Cover + vinyl + play overlay */}
       <div
-        className="relative h-12 w-12 shrink-0 rounded-md overflow-hidden bg-secondary/50 ring-1 ring-border/40"
+        className="relative h-12 w-12 shrink-0"
         onMouseEnter={startPreview}
         onMouseLeave={stopPreview}
       >
-        <img
-          src={resolveCover(track)}
-          alt={track.title}
-          className={`h-full w-full object-cover transition-transform duration-500 ${previewing || isActive ? "scale-110" : "group-hover:scale-105"}`}
-          loading="lazy"
+        {/* Vinyl record peeking from behind the cover */}
+        <div
+          aria-hidden
+          className={[
+            "absolute top-0 left-0 h-12 w-12 rounded-full pointer-events-none",
+            "bg-[radial-gradient(circle_at_center,hsl(var(--primary))_0_5%,#0a0a0a_5%_8%,#1a1a1a_8%_40%,#0a0a0a_40%_42%,#1a1a1a_42%_70%,#0a0a0a_70%_72%,#1a1a1a_72%_100%)]",
+            "shadow-[0_4px_12px_rgba(0,0,0,0.4)] ring-1 ring-black/40",
+            "transition-all duration-500 ease-out",
+            isActive
+              ? "translate-x-5 opacity-100 [animation:spin_3s_linear_infinite]"
+              : previewing
+                ? "translate-x-5 opacity-100"
+                : "translate-x-0 opacity-0 group-hover:translate-x-5 group-hover:opacity-100",
+          ].join(" ")}
         />
-        <button
-          onClick={handlePlay}
-          onDoubleClick={(e) => e.stopPropagation()}
-          className={`absolute inset-0 flex items-center justify-center bg-gradient-to-t from-black/80 via-black/50 to-black/30 transition-opacity ${isActive ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}
-          aria-label={isFullPlayback ? "Lire le titre complet" : "Lire l'extrait"}
-          title={isFullPlayback ? "Lire le titre complet" : "Lire l'extrait (30s)"}
-        >
-          {isActive ? (
-            <span className="flex gap-0.5 items-end">
-              <span className="w-0.5 h-3 bg-primary animate-pulse" />
-              <span className="w-0.5 h-2 bg-primary animate-pulse [animation-delay:120ms]" />
-              <span className="w-0.5 h-4 bg-primary animate-pulse [animation-delay:240ms]" />
-            </span>
-          ) : isFullPlayback ? (
-            <Play className="h-4 w-4 fill-white text-white drop-shadow" />
-          ) : (
-            <Lock className="h-3.5 w-3.5 text-white/95 drop-shadow" />
+
+        {/* Album cover (sits in front of the vinyl) */}
+        <div className="relative h-12 w-12 rounded-md overflow-hidden bg-secondary/50 ring-1 ring-border/40 z-10">
+          <img
+            src={resolveCover(track)}
+            alt={track.title}
+            className={`h-full w-full object-cover transition-transform duration-500 ${previewing || isActive ? "scale-110" : "group-hover:scale-105"}`}
+            loading="lazy"
+          />
+          <button
+            onClick={handlePlay}
+            onDoubleClick={(e) => e.stopPropagation()}
+            className={`absolute inset-0 flex items-center justify-center bg-gradient-to-t from-black/80 via-black/50 to-black/30 transition-opacity ${isActive ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}
+            aria-label={isFullPlayback ? "Lire le titre complet" : "Lire l'extrait"}
+            title={isFullPlayback ? "Lire le titre complet" : "Lire l'extrait (30s)"}
+          >
+            {isActive ? (
+              <span className="flex gap-0.5 items-end">
+                <span className="w-0.5 h-3 bg-primary animate-pulse" />
+                <span className="w-0.5 h-2 bg-primary animate-pulse [animation-delay:120ms]" />
+                <span className="w-0.5 h-4 bg-primary animate-pulse [animation-delay:240ms]" />
+              </span>
+            ) : isFullPlayback ? (
+              <Play className="h-4 w-4 fill-white text-white drop-shadow" />
+            ) : (
+              <Lock className="h-3.5 w-3.5 text-white/95 drop-shadow" />
+            )}
+          </button>
+          {previewing && !isActive && (
+            <div className="absolute top-0.5 right-0.5 p-0.5 rounded bg-primary/90 z-20">
+              <Headphones className="h-2.5 w-2.5 text-primary-foreground" />
+            </div>
           )}
-        </button>
-        {previewing && !isActive && (
-          <div className="absolute top-0.5 right-0.5 p-0.5 rounded bg-primary/90">
-            <Headphones className="h-2.5 w-2.5 text-primary-foreground" />
-          </div>
-        )}
+        </div>
         {!isFullPlayback && !isActive && (
-          <span className="pointer-events-none absolute bottom-0.5 left-0.5 right-0.5 text-center text-[8px] font-bold uppercase tracking-wider text-white/90 bg-black/40 rounded-sm opacity-0 group-hover:opacity-100 transition-opacity">
+          <span className="pointer-events-none absolute bottom-0.5 left-0.5 right-0.5 z-20 text-center text-[8px] font-bold uppercase tracking-wider text-white/90 bg-black/40 rounded-sm opacity-0 group-hover:opacity-100 transition-opacity">
             Extrait
           </span>
         )}
