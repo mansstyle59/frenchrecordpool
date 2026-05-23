@@ -44,6 +44,7 @@ import TopDownloadsPeriod from "@/components/widgets/TopDownloadsPeriod";
 import TrendingArtists from "@/components/widgets/TrendingArtists";
 import FeaturedGenres from "@/components/widgets/FeaturedGenres";
 import WelcomeBanner from "@/components/widgets/WelcomeBanner";
+import PlaylistsCarousel from "@/components/widgets/PlaylistsCarousel";
 import { useAuth } from "@/contexts/AuthContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 
