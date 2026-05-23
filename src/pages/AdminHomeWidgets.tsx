@@ -729,6 +729,11 @@ function Editor({ widget, onCancel, onSave, saving }: { widget: Widget; onCancel
 
         <SpacingEditor value={w.config.common ?? {}} onChange={setCommon} />
 
+        <TargetingEditor
+          value={{ audience: w.audience, devices: w.devices, starts_at: w.starts_at, ends_at: w.ends_at }}
+          onChange={(patch) => setW((s) => ({ ...s, ...patch }))}
+        />
+
         <div className="flex items-center gap-2 pt-2 border-t border-border">
           <Switch checked={w.is_active} onCheckedChange={(v) => setW((s) => ({ ...s, is_active: v }))} />
           <span className="text-sm">Actif</span>
