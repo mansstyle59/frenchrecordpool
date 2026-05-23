@@ -72,14 +72,22 @@ export default function AdminShorts() {
 
   const save = useMutation({
     mutationFn: async (d: Draft) => {
-      const ytId = extractYouTubeId(d.youtube_url || "");
-      if (!ytId) throw new Error("URL YouTube invalide");
+      const url = (d.source_url || d.youtube_url || "").trim();
+      const provider = (d.provider as ShortProvider) || detectProvider(url);
+      if (!provider) throw new Error("Plateforme non reconnue (URL YouTube ou Instagram requise)");
+      const sid = extractShortId(url, provider);
+      if (!sid) throw new Error(`URL ${providerLabel(provider)} invalide`);
+      const thumb = d.thumbnail_url || shortThumbnail(provider, sid) || null;
       const payload: any = {
         title: d.title || "Sans titre",
         description: d.description || null,
-        youtube_url: d.youtube_url,
-        youtube_id: ytId,
-        thumbnail_url: d.thumbnail_url || youtubeThumb(ytId),
+        provider,
+        source_url: url,
+        source_id: sid,
+        // back-compat columns
+        youtube_url: provider === "youtube" ? url : null,
+        youtube_id: provider === "youtube" ? sid : null,
+        thumbnail_url: thumb,
         tags: d.tags ?? [],
         artist_id: d.artist_id || null,
         track_id: d.track_id || null,
