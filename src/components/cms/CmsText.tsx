@@ -172,6 +172,15 @@ export default function CmsText({
         >
           <Pencil className="h-3 w-3" />
         </span>
+        {lockSize ? (
+          <span
+            className="flex items-center gap-1 h-6 px-1.5 rounded-full bg-muted text-muted-foreground border border-border shadow-md text-[10px] font-mono cursor-not-allowed"
+            title="Taille verrouillée sur ce texte"
+          >
+            <Lock className="h-3 w-3" />
+            verrouillé
+          </span>
+        ) : (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button
