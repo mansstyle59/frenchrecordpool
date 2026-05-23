@@ -169,7 +169,7 @@ function WidgetRenderer({ widget, preview }: { widget: Widget; preview: boolean 
 /* ─── HERO ─── */
 function HeroWidget({ config, preview }: { config: any; preview: boolean }) {
   const layout = config.layout || "center";
-  const height = config.height === "compact" ? "py-12" : config.height === "full" ? "py-32 md:py-48" : "py-20 md:py-32";
+  const height = config.height === "compact" ? "py-8 md:py-12" : config.height === "full" ? "py-20 md:py-48" : "py-12 md:py-32";
   const overlay = config.overlay_opacity ?? 75;
   return (
     <div className="relative overflow-hidden rounded-none">
