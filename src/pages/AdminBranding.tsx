@@ -364,6 +364,18 @@ export default function AdminBranding() {
             </div>
           </motion.section>
 
+          {/* PALETTE GENERATOR */}
+          <PaletteGenerator
+            baseHex={hslToHex(draft.light_primary)}
+            harmony={genHarmony}
+            deriveDark={genDeriveDark}
+            onHarmony={setGenHarmony}
+            onDeriveDark={setGenDeriveDark}
+            onGenerate={generateFromBase}
+            onRandomize={randomize}
+          />
+
+
           {/* TABS */}
           <Tabs defaultValue="identity" className="rounded-xl border border-border bg-white/5 backdrop-blur-md overflow-hidden shadow-sm">
             <TabsList className="grid grid-cols-4 w-full bg-black/20 dark:bg-black/30 rounded-none h-auto p-0 border-b border-border">
