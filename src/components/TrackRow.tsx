@@ -28,8 +28,7 @@ interface TrackRowProps {
 export function TrackListHeader() {
   return (
     <div
-      className={`hidden sm:grid items-center ${COL_GAP} px-3 sm:px-5 py-2 border-b border-border/40 bg-muted/30 text-[10px] uppercase tracking-wider font-semibold text-muted-foreground`}
-      style={{ gridTemplateColumns: COLS }}
+      className={`hidden sm:grid items-center ${GRID_CLS} ${COL_GAP} px-3 sm:px-5 py-2 border-b border-border/40 bg-muted/30 text-[10px] uppercase tracking-wider font-semibold text-muted-foreground`}
     >
       <span />
       <span>Titre / Artiste</span>
