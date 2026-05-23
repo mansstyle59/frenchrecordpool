@@ -2,8 +2,9 @@ import { useState, useMemo, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   Plus, Pencil, Trash2, UploadCloud,
-  Search, Heart, Eye, ChevronLeft, ChevronRight, X,
+  Search, Heart, Eye, ChevronLeft, ChevronRight, X, Film,
 } from "lucide-react";
+import { ShortGeneratorDialog } from "@/components/admin/ShortGeneratorDialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -39,6 +40,7 @@ export default function AdminTracks() {
   const [bulkOpen, setBulkOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [editingTrack, setEditingTrack] = useState<DbTrack | null>(null);
+  const [shortTrack, setShortTrack] = useState<DbTrack | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
   // Filtres
@@ -448,6 +450,9 @@ export default function AdminTracks() {
                         <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(track)} title="Éditer">
                           <Pencil className="h-3 w-3" />
                         </Button>
+                        <Button variant="ghost" size="icon" className="h-7 w-7 text-primary" onClick={() => setShortTrack(track)} title="Générer un Short">
+                          <Film className="h-3 w-3" />
+                        </Button>
                         <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => handleDelete(track.id)} title="Supprimer">
                           <Trash2 className="h-3 w-3" />
                         </Button>
@@ -476,6 +481,11 @@ export default function AdminTracks() {
             </div>
           </div>
         )}
+        <ShortGeneratorDialog
+          track={shortTrack as any}
+          open={!!shortTrack}
+          onOpenChange={(o) => { if (!o) setShortTrack(null); }}
+        />
     </AdminLayout>
   );
 }
