@@ -247,9 +247,9 @@ export default function AdminArtists() {
                     <Switch checked={a.featured} onCheckedChange={() => toggleFeatured(a)} aria-label="Mettre en avant" />
                   </div>
                   <div className="flex flex-wrap gap-1">
-                    <Badge variant={a.kind === "artist" ? "outline" : "default"} className="text-[10px] capitalize">
-                      {a.kind === "artist" ? "DJ" : a.kind === "both" ? "DJ + Remixer" : "Remixer"}
-                    </Badge>
+                    {normalizeRoles(a.roles, a.kind).map((r) => (
+                      <Badge key={r} variant="outline" className={`text-[10px] uppercase tracking-wider ${roleClassName(r)}`}>{roleLabel(r)}</Badge>
+                    ))}
                     {a.genre && <Badge variant="secondary" className="text-[10px]">{a.genre}</Badge>}
                     {a.country && <Badge variant="outline" className="text-[10px]">{a.country}</Badge>}
                     <Badge variant="outline" className="text-[10px]">{count} track{count !== 1 ? "s" : ""}</Badge>
