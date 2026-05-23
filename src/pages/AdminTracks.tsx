@@ -450,6 +450,9 @@ export default function AdminTracks() {
                         <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(track)} title="Éditer">
                           <Pencil className="h-3 w-3" />
                         </Button>
+                        <Button variant="ghost" size="icon" className="h-7 w-7 text-primary" onClick={() => setShortTrack(track)} title="Générer un Short">
+                          <Film className="h-3 w-3" />
+                        </Button>
                         <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => handleDelete(track.id)} title="Supprimer">
                           <Trash2 className="h-3 w-3" />
                         </Button>
