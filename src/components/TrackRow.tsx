@@ -1,4 +1,4 @@
-import { Play, Heart, Download, ExternalLink, Headphones, Clock, Music2, Lock, Crown } from "lucide-react";
+import { Play, Heart, Download, ExternalLink, Headphones, Clock, Music2, Lock, Crown, Loader2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -157,7 +157,16 @@ export default function TrackRow({ track }: TrackRowProps) {
     });
   };
 
-  const handleDownload = () => downloadTrack(track.id, user, hasActiveSubscription);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const handleDownload = async () => {
+    if (isDownloading) return;
+    setIsDownloading(true);
+    try {
+      await downloadTrack(track.id, user, hasActiveSubscription);
+    } finally {
+      setIsDownloading(false);
+    }
+  };
   const resolvedUrl = (track as any).download_url || track.audio_url;
   const isExternalLink = resolvedUrl && !resolvedUrl.includes("/object/public/track-audio/");
   const DownloadIcon = isExternalLink ? ExternalLink : Download;
@@ -311,16 +320,24 @@ export default function TrackRow({ track }: TrackRowProps) {
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
+              className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10 disabled:opacity-60 disabled:cursor-wait"
               onClick={handleDownload}
               onDoubleClick={(e) => e.stopPropagation()}
-              aria-label="Télécharger"
+              disabled={isDownloading}
+              aria-busy={isDownloading}
+              aria-label={isDownloading ? "Téléchargement en cours" : "Télécharger"}
             >
-              <DownloadIcon className="h-4 w-4" />
+              {isDownloading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <DownloadIcon className="h-4 w-4" />
+              )}
             </Button>
           </TooltipTrigger>
           <TooltipContent>
-            {isExternalLink ? "Ouvrir le lien externe" : "Télécharger le fichier"}
+            {isDownloading
+              ? "Traitement en cours…"
+              : isExternalLink ? "Ouvrir le lien externe" : "Télécharger le fichier"}
           </TooltipContent>
         </Tooltip>
       </div>

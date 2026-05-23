@@ -2,7 +2,7 @@ import { useParams, Link } from "react-router-dom";
 import { useMemo, useState } from "react";
 import {
   Play, Pause, Heart, Download, ExternalLink, ArrowLeft, Clock, Music, Tag, Disc3,
-  Share2, QrCode, Copy, Calendar, Headphones, FileAudio, Mic2, Users,
+  Share2, QrCode, Copy, Calendar, Headphones, FileAudio, Mic2, Users, Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -83,7 +83,16 @@ export default function TrackDetail() {
     });
   };
 
-  const handleDownload = () => downloadTrack(track.id, user, hasActiveSubscription);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const handleDownload = async () => {
+    if (isDownloading) return;
+    setIsDownloading(true);
+    try {
+      await downloadTrack(track.id, user, hasActiveSubscription);
+    } finally {
+      setIsDownloading(false);
+    }
+  };
 
   const handleCopyLink = async () => {
     try {
@@ -174,12 +183,25 @@ export default function TrackDetail() {
                 </Button>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button variant="default" size="lg" className="gap-2" onClick={handleDownload}>
-                      <DownloadIcon className="h-4 w-4" /> {isExternalLink ? "Ouvrir" : "Télécharger"}
+                    <Button
+                      variant="default"
+                      size="lg"
+                      className="gap-2 disabled:opacity-70 disabled:cursor-wait"
+                      onClick={handleDownload}
+                      disabled={isDownloading}
+                      aria-busy={isDownloading}
+                    >
+                      {isDownloading ? (
+                        <><Loader2 className="h-4 w-4 animate-spin" /> Traitement…</>
+                      ) : (
+                        <><DownloadIcon className="h-4 w-4" /> {isExternalLink ? "Ouvrir" : "Télécharger"}</>
+                      )}
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>
-                    {isExternalLink ? "Ouvre le lien externe" : "Télécharge le fichier complet (abonnement requis)"}
+                    {isDownloading
+                      ? "Vérification de l'abonnement et préparation du lien…"
+                      : isExternalLink ? "Ouvre le lien externe" : "Télécharge le fichier complet (abonnement requis)"}
                   </TooltipContent>
                 </Tooltip>
                 <Button
