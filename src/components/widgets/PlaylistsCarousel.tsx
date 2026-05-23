@@ -16,7 +16,7 @@ interface Config {
   typo?: any;
 }
 
-export default function PlaylistsCarousel({ config }: { config: Config }) {
+export default function PlaylistsCarousel({ config }: { config: any }) {
   const [items, setItems] = useState<PlaylistCardData[]>([]);
   const [loading, setLoading] = useState(true);
 
