@@ -53,6 +53,7 @@ export const ADMIN_NAV: AdminNavGroup[] = [
   {
     label: "Personnalisation",
     items: [
+      { to: "/admin/personnalisation", label: "Vue d'ensemble", icon: Sparkles, desc: "Hub thème, widgets, popups", keywords: "personnalisation hub overview apercu" },
       { to: "/admin/branding", label: "Branding", icon: Palette, desc: "Couleurs, logos, typo", keywords: "theme design couleurs" },
       { to: "/admin/widgets", label: "Widgets Home", icon: Blocks, desc: "Sections de l'accueil", keywords: "homepage modules" },
       { to: "/admin/popups", label: "Popups", icon: MessageCircle, desc: "Messages contextuels", keywords: "modal annonce" },
