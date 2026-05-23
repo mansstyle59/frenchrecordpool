@@ -135,10 +135,13 @@ export default function AdminArtists() {
       if (url) photoUrl = url;
     }
     const slug = (form.slug || slugify(form.name));
+    const roles = (form.roles && form.roles.length) ? form.roles : (["dj"] as ArtistRole[]);
     const payload: any = {
       name: form.name.trim(),
       slug,
-      kind: form.kind || "remixer",
+      kind: roles.includes("remixer") && !roles.includes("dj") ? "remixer"
+            : roles.includes("remixer") && roles.includes("dj") ? "both" : "artist",
+      roles,
       photo_url: photoUrl,
       bio: form.bio || null,
       country: form.country || null,
