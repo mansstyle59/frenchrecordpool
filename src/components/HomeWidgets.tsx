@@ -169,7 +169,7 @@ function WidgetRenderer({ widget, preview }: { widget: Widget; preview: boolean 
 /* ─── HERO ─── */
 function HeroWidget({ config, preview }: { config: any; preview: boolean }) {
   const layout = config.layout || "center";
-  const height = config.height === "compact" ? "py-12" : config.height === "full" ? "py-32 md:py-48" : "py-20 md:py-32";
+  const height = config.height === "compact" ? "py-8 md:py-12" : config.height === "full" ? "py-20 md:py-48" : "py-12 md:py-32";
   const overlay = config.overlay_opacity ?? 75;
   return (
     <div className="relative overflow-hidden rounded-none">
@@ -196,14 +196,14 @@ function HeroWidget({ config, preview }: { config: any; preview: boolean }) {
             </span>
           )}
           {(config.title || config.highlight) && (
-            <h1 className={`font-display font-black tracking-tight ${preview ? "text-3xl" : "text-5xl md:text-7xl"} mb-4`} style={titleStyle(config.typo)}>
+            <h1 className={`font-display font-black tracking-tight ${preview ? "text-3xl" : "text-3xl sm:text-5xl md:text-7xl"} mb-4 break-words`} style={titleStyle(config.typo)}>
               {config.title}
               {config.title && config.highlight && " "}
               {config.highlight && <span className="gradient-text">{config.highlight}</span>}
             </h1>
           )}
           {config.subtitle && (
-            <p className={`text-muted-foreground ${layout === "center" ? "mx-auto" : ""} ${preview ? "text-sm max-w-xl" : "text-lg md:text-xl max-w-2xl"} mb-8`} style={bodyStyle(config.typo)}>
+            <p className={`text-muted-foreground ${layout === "center" ? "mx-auto" : ""} ${preview ? "text-sm max-w-xl" : "text-base sm:text-lg md:text-xl max-w-2xl"} mb-6 md:mb-8`} style={bodyStyle(config.typo)}>
               {config.subtitle}
             </p>
           )}
