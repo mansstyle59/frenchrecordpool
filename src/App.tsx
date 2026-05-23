@@ -42,6 +42,7 @@ import DjDashboard from "./pages/DjDashboard";
 import DjTracks from "./pages/DjTracks";
 import DjUpload from "./pages/DjUpload";
 import DjEdit from "./pages/DjEdit";
+import DjProfile from "./pages/DjProfile";
 import Pricing from "./pages/Pricing";
 import ArtistDetail from "./pages/ArtistDetail";
 import Remixers from "./pages/Remixers";
