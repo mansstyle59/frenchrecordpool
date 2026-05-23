@@ -225,12 +225,12 @@ export default function NewReleases() {
               <Input
                 placeholder="Rechercher titre, remixeur, genre..."
                 value={search}
-                onChange={(e) => { setSearch(e.target.value); setVisible(PAGE_SIZE); }}
+                onChange={(e) => setSearch(e.target.value)}
                 className="pl-10 h-11 bg-secondary/60 border-border/60"
               />
             </div>
 
-            <Select value={version} onValueChange={(v) => { setVersion(v); setVisible(PAGE_SIZE); }}>
+            <Select value={version} onValueChange={(v) => setVersion(v)}>
               <SelectTrigger className="h-11 w-full lg:w-40 bg-secondary/60 border-border/60"><SelectValue placeholder="Version" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Toutes versions</SelectItem>
@@ -238,7 +238,7 @@ export default function NewReleases() {
               </SelectContent>
             </Select>
 
-            <Select value={musicalKey} onValueChange={(v) => { setMusicalKey(v); setVisible(PAGE_SIZE); }}>
+            <Select value={musicalKey} onValueChange={(v) => setMusicalKey(v)}>
               <SelectTrigger className="h-11 w-full lg:w-32 bg-secondary/60 border-border/60"><SelectValue placeholder="Tonalité" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Toutes tonalités</SelectItem>
@@ -353,17 +353,21 @@ export default function NewReleases() {
               ))}
             </div>
 
-            {visible < filtered.length && (
-              <div className="flex justify-center mt-8">
-                <Button variant="outline" size="lg" onClick={() => setVisible((v) => v + PAGE_SIZE)}>
-                  Charger plus ({filtered.length - visible} restant{filtered.length - visible > 1 ? "s" : ""})
-                </Button>
+            {/* Infinite-scroll sentinel */}
+            {hasMore && (
+              <div ref={sentinelRef} className="flex justify-center mt-8 py-6 text-muted-foreground">
+                <Loader2 className="h-5 w-5 animate-spin" />
+                <span className="ml-2 text-xs font-mono uppercase tracking-wider">
+                  Chargement… {visibleTracks.length} / {filtered.length}
+                </span>
               </div>
             )}
 
-            <p className="text-xs text-muted-foreground mt-4 font-mono text-center">
-              Affichage {visibleTracks.length} / {filtered.length} titre{filtered.length > 1 ? "s" : ""}
-            </p>
+            {!hasMore && (
+              <p className="text-xs text-muted-foreground mt-6 font-mono text-center">
+                {filtered.length} titre{filtered.length > 1 ? "s" : ""} — fin de la liste
+              </p>
+            )}
           </>
         )}
       </div>
