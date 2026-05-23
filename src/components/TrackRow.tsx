@@ -161,10 +161,9 @@ export default function TrackRow({ track }: TrackRowProps) {
 
   return (
     <div
-      className={`group grid items-center ${COL_GAP} px-3 sm:px-5 py-2 border-b border-border/30 last:border-0 hover:bg-foreground/[0.04] transition-colors cursor-pointer ${
+      className={`group grid items-center ${GRID_CLS} ${COL_GAP} px-3 sm:px-5 py-2 border-b border-border/30 last:border-0 hover:bg-foreground/[0.04] transition-colors cursor-pointer ${
         isCurrentTrack ? "bg-primary/[0.06]" : ""
       }`}
-      style={{ gridTemplateColumns: COLS }}
       onDoubleClick={handlePlay}
       title="Double-cliquez pour lire"
     >
