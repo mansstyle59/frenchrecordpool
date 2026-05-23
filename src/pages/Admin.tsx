@@ -28,14 +28,14 @@ export default function Admin() {
     queryKey: ["admin-counts"],
     enabled: isAdmin,
     queryFn: async () => {
-      const [p, s, d, f] = await Promise.all([
+      const [p, s, d, f, q] = await Promise.all([
         supabase.from("profiles").select("id", { count: "exact", head: true }),
         supabase.from("subscriptions").select("id", { count: "exact", head: true }).eq("status", "active"),
         supabase.from("downloads").select("id", { count: "exact", head: true }),
         supabase.from("favorites").select("id", { count: "exact", head: true }),
         supabase.from("tracks").select("id", { count: "exact", head: true }).eq("status", "pending"),
       ]);
-      return { users: p.count ?? 0, activeSubs: s.count ?? 0, downloads: d.count ?? 0, favorites: f.count ?? 0, pending: 0 };
+      return { users: p.count ?? 0, activeSubs: s.count ?? 0, downloads: d.count ?? 0, favorites: f.count ?? 0, pending: q.count ?? 0 };
     },
   });
 
