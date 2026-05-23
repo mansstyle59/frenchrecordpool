@@ -213,7 +213,6 @@ export default function NewReleases() {
               <Tab key={g} active={genre === g} onClick={() => setGenre(g)}>
                 {g}
               </Tab>
-              </Tab>
             ))}
           </div>
         )}
