@@ -50,6 +50,8 @@ import NewReleases from "./pages/NewReleases";
 import Stems from "./pages/Stems";
 import Shorts from "./pages/Shorts";
 import AdminShorts from "./pages/AdminShorts";
+import Playlists from "./pages/Playlists";
+import AdminPlaylists from "./pages/AdminPlaylists";
 import NotFound from "./pages/NotFound";
 
 
@@ -106,6 +108,8 @@ const App = () => (
               <Route path="/stems" element={<Stems />} />
               <Route path="/shorts" element={<Shorts />} />
               <Route path="/admin/shorts" element={<AdminShorts />} />
+              <Route path="/playlists" element={<Playlists />} />
+              <Route path="/admin/playlists" element={<AdminPlaylists />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
             <PageTransition />

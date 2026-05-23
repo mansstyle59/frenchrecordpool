@@ -44,6 +44,7 @@ import TopDownloadsPeriod from "@/components/widgets/TopDownloadsPeriod";
 import TrendingArtists from "@/components/widgets/TrendingArtists";
 import FeaturedGenres from "@/components/widgets/FeaturedGenres";
 import WelcomeBanner from "@/components/widgets/WelcomeBanner";
+import PlaylistsCarousel from "@/components/widgets/PlaylistsCarousel";
 import { useAuth } from "@/contexts/AuthContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -189,6 +190,7 @@ function WidgetRenderer({ widget, preview }: { widget: Widget; preview: boolean 
     case "trending_artists": return <TrendingArtists config={widget.config} />;
     case "featured_genres":  return <FeaturedGenres config={widget.config} />;
     case "welcome_banner":   return <WelcomeBanner config={widget.config} />;
+    case "playlists_carousel": return <PlaylistsCarousel config={widget.config} />;
     case "audio_embed":      return <AudioEmbedWidget config={widget.config} />;
     case "newsletter":       return <NewsletterWidget config={widget.config} />;
     case "countdown":        return <CountdownWidget config={widget.config} />;

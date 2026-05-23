@@ -264,6 +264,11 @@ const TYPE_META: Record<string, { label: string; icon: any; desc: string; defaul
       cta_subscribed: "Voir les nouveautés", cta_subscribed_url: "/new",
     },
   },
+  playlists_carousel: {
+    label: "Playlists (carrousel)", icon: ListMusic, group: "Mise en avant",
+    desc: "Carrousel de playlists Spotify/Deezer/SoundCloud/internes",
+    defaults: { title: "Playlists", auto: true, limit: 8, playlist_ids: [], see_all_url: "/playlists" },
+  },
 };
 
 /* ─── Presets : ready-to-use widget recipes ─── */
@@ -1362,6 +1367,30 @@ function TypeFields({ w, setC }: { w: Widget; setC: (k: string, v: any) => void 
               <Input placeholder="CTA URL" value={c.cta_subscribed_url ?? ""} onChange={(e) => setC("cta_subscribed_url", e.target.value)} />
             </div>
           </div>
+        </>
+      );
+    case "playlists_carousel":
+      return (
+        <>
+          <Field label="Titre"><Input value={c.title ?? ""} onChange={(e) => setC("title", e.target.value)} /></Field>
+          <div className="flex items-center gap-2">
+            <Switch checked={c.auto !== false} onCheckedChange={(v) => setC("auto", v)} />
+            <span className="text-sm">Auto (toutes les playlists actives)</span>
+          </div>
+          {c.auto !== false ? (
+            <Field label="Limite"><Input type="number" min={3} max={24} value={c.limit ?? 8} onChange={(e) => setC("limit", parseInt(e.target.value) || 8)} /></Field>
+          ) : (
+            <Field label="IDs des playlists (un par ligne)">
+              <Textarea
+                rows={4}
+                value={(c.playlist_ids ?? []).join("\n")}
+                onChange={(e) => setC("playlist_ids", e.target.value.split("\n").map((s: string) => s.trim()).filter(Boolean))}
+                placeholder="uuid-1&#10;uuid-2"
+              />
+              <p className="text-[11px] text-muted-foreground mt-1">Récupère les IDs depuis /admin/playlists.</p>
+            </Field>
+          )}
+          <Field label="URL « Tout voir »"><Input value={c.see_all_url ?? "/playlists"} onChange={(e) => setC("see_all_url", e.target.value)} /></Field>
         </>
       );
     default:
