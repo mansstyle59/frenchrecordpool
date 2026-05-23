@@ -276,6 +276,7 @@ export default function CmsText({
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+        )}
       </span>
     </span>
   );
