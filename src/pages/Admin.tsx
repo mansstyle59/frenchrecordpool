@@ -16,6 +16,7 @@ import {
 const adminLinks = [
   { to: "/admin/tracks", label: "Gérer les tracks", desc: "Ajout, édition et upload en masse", icon: Music },
   { to: "/admin/shorts", label: "Shorts DJ", desc: "Vidéos courtes YouTube (mobile)", icon: Clapperboard },
+  { to: "/admin/playlists", label: "Playlists", desc: "Spotify, Deezer, SoundCloud, internes", icon: ListMusic },
   { to: "/admin/users", label: "Gérer les utilisateurs", desc: "Comptes DJ et rôles", icon: Users },
   { to: "/admin/subscriptions", label: "Abonnements", desc: "Plans et statuts Stripe", icon: CreditCard },
   { to: "/admin/branding", label: "Branding Studio", desc: "Couleurs, logos, typographie", icon: Palette },
