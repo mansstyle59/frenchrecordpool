@@ -1263,6 +1263,107 @@ function TypeFields({ w, setC }: { w: Widget; setC: (k: string, v: any) => void 
             )} />
         </>
       );
+    case "top_downloads_period":
+      return (
+        <>
+          <Field label="Titre"><Input value={c.title ?? ""} onChange={(e) => setC("title", e.target.value)} /></Field>
+          <div className="grid grid-cols-3 gap-3">
+            <Field label="Période par défaut">
+              <Select value={c.period ?? "7d"} onValueChange={(v) => setC("period", v)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="7d">7 jours</SelectItem>
+                  <SelectItem value="30d">30 jours</SelectItem>
+                  <SelectItem value="all">Tout</SelectItem>
+                </SelectContent>
+              </Select>
+            </Field>
+            <Field label="Limite"><Input type="number" min={3} max={24} value={c.limit ?? 8} onChange={(e) => setC("limit", parseInt(e.target.value) || 8)} /></Field>
+            <Field label="URL « Tout voir »"><Input value={c.see_all_url ?? ""} onChange={(e) => setC("see_all_url", e.target.value)} placeholder="/popular" /></Field>
+          </div>
+        </>
+      );
+    case "trending_artists":
+      return (
+        <>
+          <Field label="Titre"><Input value={c.title ?? ""} onChange={(e) => setC("title", e.target.value)} /></Field>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Période par défaut">
+              <Select value={c.period ?? "7d"} onValueChange={(v) => setC("period", v)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="7d">7 jours</SelectItem>
+                  <SelectItem value="30d">30 jours</SelectItem>
+                  <SelectItem value="all">Tout</SelectItem>
+                </SelectContent>
+              </Select>
+            </Field>
+            <Field label="Limite"><Input type="number" min={3} max={24} value={c.limit ?? 10} onChange={(e) => setC("limit", parseInt(e.target.value) || 10)} /></Field>
+          </div>
+        </>
+      );
+    case "featured_genres":
+      return (
+        <>
+          <Field label="Titre"><Input value={c.title ?? ""} onChange={(e) => setC("title", e.target.value)} /></Field>
+          <div className="flex items-center gap-2">
+            <Switch checked={c.auto !== false} onCheckedChange={(v) => setC("auto", v)} />
+            <span className="text-sm">Auto (top genres par téléchargements)</span>
+          </div>
+          {c.auto !== false ? (
+            <Field label="Limite"><Input type="number" min={3} max={16} value={c.limit ?? 8} onChange={(e) => setC("limit", parseInt(e.target.value) || 8)} /></Field>
+          ) : (
+            <RepeaterField
+              label="Genres (manuel)"
+              items={c.genres ?? []}
+              empty={{ name: "", image_url: "", url: "", accent: "" }}
+              onChange={(v) => setC("genres", v)}
+              render={(it, set) => (
+                <div className="grid grid-cols-2 gap-2">
+                  <Input placeholder="Nom (ex: House)" value={it.name ?? ""} onChange={(e) => set({ ...it, name: e.target.value })} />
+                  <Input placeholder="Lien (optionnel)" value={it.url ?? ""} onChange={(e) => set({ ...it, url: e.target.value })} />
+                  <Input placeholder="Image URL (optionnel)" value={it.image_url ?? ""} onChange={(e) => set({ ...it, image_url: e.target.value })} className="col-span-2" />
+                  <Input placeholder="Accent HSL ex: 220 80% 50%" value={it.accent ?? ""} onChange={(e) => set({ ...it, accent: e.target.value })} className="col-span-2" />
+                </div>
+              )}
+            />
+          )}
+        </>
+      );
+    case "welcome_banner":
+      return (
+        <>
+          <Field label="Image de fond (optionnel)"><Input value={c.bg_url ?? ""} onChange={(e) => setC("bg_url", e.target.value)} placeholder="https://..." /></Field>
+          <div className="rounded-lg border border-border bg-background p-3 space-y-2">
+            <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Visiteur anonyme</p>
+            <Input placeholder="Eyebrow" value={c.eyebrow_anon ?? ""} onChange={(e) => setC("eyebrow_anon", e.target.value)} />
+            <Input placeholder="Titre" value={c.title_anon ?? ""} onChange={(e) => setC("title_anon", e.target.value)} />
+            <Textarea rows={2} placeholder="Texte" value={c.body_anon ?? ""} onChange={(e) => setC("body_anon", e.target.value)} />
+            <div className="grid grid-cols-2 gap-2">
+              <Input placeholder="CTA label" value={c.cta_anon ?? ""} onChange={(e) => setC("cta_anon", e.target.value)} />
+              <Input placeholder="CTA URL" value={c.cta_anon_url ?? ""} onChange={(e) => setC("cta_anon_url", e.target.value)} />
+            </div>
+          </div>
+          <div className="rounded-lg border border-border bg-background p-3 space-y-2">
+            <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Inscrit sans abonnement</p>
+            <Input placeholder="Titre" value={c.title_registered ?? ""} onChange={(e) => setC("title_registered", e.target.value)} />
+            <Textarea rows={2} placeholder="Texte" value={c.body_registered ?? ""} onChange={(e) => setC("body_registered", e.target.value)} />
+            <div className="grid grid-cols-2 gap-2">
+              <Input placeholder="CTA label" value={c.cta_registered ?? ""} onChange={(e) => setC("cta_registered", e.target.value)} />
+              <Input placeholder="CTA URL" value={c.cta_registered_url ?? ""} onChange={(e) => setC("cta_registered_url", e.target.value)} />
+            </div>
+          </div>
+          <div className="rounded-lg border border-border bg-background p-3 space-y-2">
+            <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Abonné actif</p>
+            <Input placeholder="Titre (utilise {name})" value={c.title_subscribed ?? ""} onChange={(e) => setC("title_subscribed", e.target.value)} />
+            <Textarea rows={2} placeholder="Texte" value={c.body_subscribed ?? ""} onChange={(e) => setC("body_subscribed", e.target.value)} />
+            <div className="grid grid-cols-2 gap-2">
+              <Input placeholder="CTA label" value={c.cta_subscribed ?? ""} onChange={(e) => setC("cta_subscribed", e.target.value)} />
+              <Input placeholder="CTA URL" value={c.cta_subscribed_url ?? ""} onChange={(e) => setC("cta_subscribed_url", e.target.value)} />
+            </div>
+          </div>
+        </>
+      );
     default:
       return null;
   }
