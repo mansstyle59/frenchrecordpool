@@ -10,6 +10,7 @@ import { downloadTrack, getFullStreamUrl } from "@/lib/downloadTrack";
 import { useFavorites } from "@/hooks/useFavorites";
 import type { DbTrack } from "@/hooks/useTracks";
 import { resolveCover } from "@/lib/trackCover";
+import ArtistCredit from "@/components/ArtistCredit";
 
 /* ─── Responsive grid template (header + rows MUST match exactly) ───
    Column count per breakpoint:
@@ -234,13 +235,10 @@ export default function TrackRow({ track }: TrackRowProps) {
         >
           {track.title}
         </Link>
-        <Link
-          to={`/artists/${encodeURIComponent(track.artist)}`}
-          onDoubleClick={(e) => e.stopPropagation()}
+        <ArtistCredit
+          name={track.artist}
           className="text-xs text-muted-foreground hover:text-foreground transition-colors truncate block"
-        >
-          {track.artist}
-        </Link>
+        />
       </div>
 
       {/* Version (badge) */}

@@ -13,12 +13,14 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ALL_ROLES, normalizeRoles, roleClassName, roleLabel, type ArtistRole } from "@/lib/artistRoles";
 
 type Artist = {
   id: string;
   name: string;
   slug: string;
   kind: string;
+  roles: string[] | null;
   photo_url: string | null;
   bio: string | null;
   country: string | null;
@@ -31,7 +33,8 @@ type Artist = {
 };
 
 const empty = {
-  name: "", slug: "", kind: "remixer", photo_url: "", bio: "", country: "", genre: "",
+  name: "", slug: "", kind: "artist", roles: ["dj"] as ArtistRole[],
+  photo_url: "", bio: "", country: "", genre: "",
   soundcloud_url: "", instagram_url: "", website_url: "",
   featured: false, sort_order: 0,
 };
@@ -101,7 +104,8 @@ export default function AdminArtists() {
   const openEdit = (a: Artist) => {
     setEditing(a);
     setForm({
-      name: a.name, slug: a.slug, kind: a.kind || "remixer",
+      name: a.name, slug: a.slug, kind: a.kind || "artist",
+      roles: normalizeRoles(a.roles, a.kind),
       photo_url: a.photo_url ?? "", bio: a.bio ?? "",
       country: a.country ?? "", genre: a.genre ?? "",
       soundcloud_url: a.soundcloud_url ?? "",
@@ -131,10 +135,13 @@ export default function AdminArtists() {
       if (url) photoUrl = url;
     }
     const slug = (form.slug || slugify(form.name));
+    const roles = (form.roles && form.roles.length) ? form.roles : (["dj"] as ArtistRole[]);
     const payload: any = {
       name: form.name.trim(),
       slug,
-      kind: form.kind || "remixer",
+      kind: roles.includes("remixer") && !roles.includes("dj") ? "remixer"
+            : roles.includes("remixer") && roles.includes("dj") ? "both" : "artist",
+      roles,
       photo_url: photoUrl,
       bio: form.bio || null,
       country: form.country || null,
@@ -240,9 +247,9 @@ export default function AdminArtists() {
                     <Switch checked={a.featured} onCheckedChange={() => toggleFeatured(a)} aria-label="Mettre en avant" />
                   </div>
                   <div className="flex flex-wrap gap-1">
-                    <Badge variant={a.kind === "artist" ? "outline" : "default"} className="text-[10px] capitalize">
-                      {a.kind === "artist" ? "DJ" : a.kind === "both" ? "DJ + Remixer" : "Remixer"}
-                    </Badge>
+                    {normalizeRoles(a.roles, a.kind).map((r) => (
+                      <Badge key={r} variant="outline" className={`text-[10px] uppercase tracking-wider ${roleClassName(r)}`}>{roleLabel(r)}</Badge>
+                    ))}
                     {a.genre && <Badge variant="secondary" className="text-[10px]">{a.genre}</Badge>}
                     {a.country && <Badge variant="outline" className="text-[10px]">{a.country}</Badge>}
                     <Badge variant="outline" className="text-[10px]">{count} track{count !== 1 ? "s" : ""}</Badge>
@@ -298,17 +305,20 @@ export default function AdminArtists() {
               <Input value={form.slug} onChange={(e) => setForm({ ...form, slug: slugify(e.target.value) })}
                 placeholder="dj-yass" />
             </div>
-            <div className="space-y-2">
-              <Label>Type *</Label>
-              <select
-                value={form.kind}
-                onChange={(e) => setForm({ ...form, kind: e.target.value })}
-                className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm"
-              >
-                <option value="remixer">Remixer (page Remixers)</option>
-                <option value="artist">DJ / Artiste</option>
-                <option value="both">Les deux</option>
-              </select>
+            <div className="space-y-2 col-span-2">
+              <Label>Rôles *</Label>
+              <div className="flex flex-wrap gap-2">
+                {ALL_ROLES.map((r) => {
+                  const on = form.roles.includes(r);
+                  return (
+                    <button key={r} type="button"
+                      onClick={() => setForm((f) => ({ ...f, roles: on ? f.roles.filter((x) => x !== r) : [...f.roles, r] }))}
+                      className={`px-3 h-8 rounded-md text-xs font-bold uppercase tracking-wider border transition-all ${on ? roleClassName(r) + " ring-2 ring-offset-1 ring-offset-background" : "bg-secondary/40 text-muted-foreground border-border/50 hover:text-foreground"}`}>
+                      {roleLabel(r)}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
             <div className="space-y-2">
               <Label>Genre principal</Label>

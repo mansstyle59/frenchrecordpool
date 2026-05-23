@@ -73,10 +73,8 @@ export default function DjDashboard() {
 
   const recent = myTracks.slice(0, 5);
   const displayName = studio?.name || (user?.email?.split("@")[0] ?? "Mon studio");
+  const profileUrl = studio?.slug ? `/artists/${studio.slug}` : null;
   const isRemixerKind = studio?.kind === "remixer" || studio?.kind === "both";
-  const profileUrl = studio?.slug
-    ? (isRemixerKind && studio?.kind !== "both" ? `/remixers/${studio.slug}` : `/artists/${studio.slug}`)
-    : null;
 
   return (
     <DjLayout

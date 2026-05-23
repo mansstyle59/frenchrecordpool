@@ -1,6 +1,6 @@
 import { ReactNode, useEffect } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
-import { Disc3, LayoutDashboard, Music, Upload, ArrowLeft, ExternalLink } from "lucide-react";
+import { Disc3, LayoutDashboard, Music, Upload, ArrowLeft, ExternalLink, UserCircle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
@@ -13,6 +13,7 @@ const items = [
   { to: "/dj", label: "Dashboard", icon: LayoutDashboard, end: true },
   { to: "/dj/tracks", label: "Mes morceaux", icon: Music },
   { to: "/dj/upload", label: "Nouveau morceau", icon: Upload },
+  { to: "/dj/profile", label: "Mon profil artiste", icon: UserCircle },
 ];
 
 function DjSidebar() {

@@ -63,6 +63,7 @@ export type Database = {
           kind: string
           name: string
           photo_url: string | null
+          roles: string[]
           slug: string
           sort_order: number
           soundcloud_url: string | null
@@ -89,6 +90,7 @@ export type Database = {
           kind?: string
           name: string
           photo_url?: string | null
+          roles?: string[]
           slug: string
           sort_order?: number
           soundcloud_url?: string | null
@@ -115,6 +117,7 @@ export type Database = {
           kind?: string
           name?: string
           photo_url?: string | null
+          roles?: string[]
           slug?: string
           sort_order?: number
           soundcloud_url?: string | null
@@ -1142,6 +1145,17 @@ export type Database = {
       admin_upsert_track: {
         Args: { _id?: string; _track: Json }
         Returns: string
+      }
+      artist_stats: {
+        Args: { _artist_id: string }
+        Returns: {
+          avg_bpm: number
+          downloads: number
+          featured: number
+          originals: number
+          remixes: number
+          top_genre: string
+        }[]
       }
       cancel_my_subscription: { Args: never; Returns: undefined }
       cms_publish: { Args: { _keys?: string[] }; Returns: number }

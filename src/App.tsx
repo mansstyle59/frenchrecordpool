@@ -42,6 +42,7 @@ import DjDashboard from "./pages/DjDashboard";
 import DjTracks from "./pages/DjTracks";
 import DjUpload from "./pages/DjUpload";
 import DjEdit from "./pages/DjEdit";
+import DjProfile from "./pages/DjProfile";
 import Pricing from "./pages/Pricing";
 import ArtistDetail from "./pages/ArtistDetail";
 import Remixers from "./pages/Remixers";
@@ -98,11 +99,12 @@ const App = () => (
               <Route path="/dj/tracks" element={<DjTracks />} />
               <Route path="/dj/upload" element={<DjUpload />} />
               <Route path="/dj/edit/:id" element={<DjEdit />} />
+              <Route path="/dj/profile" element={<DjProfile />} />
               <Route path="/pricing" element={<Pricing />} />
-              <Route path="/artists" element={<Navigate to="/remixers" replace />} />
-              <Route path="/artists/:slug" element={<Navigate to="/remixers" replace />} />
+              <Route path="/artists" element={<Remixers />} />
+              <Route path="/artists/:slug" element={<ArtistDetail />} />
               <Route path="/remixers" element={<Remixers />} />
-              <Route path="/remixers/:slug" element={<ArtistDetail kind="remixer" />} />
+              <Route path="/remixers/:slug" element={<ArtistDetail />} />
 
               <Route path="/genres" element={<Navigate to="/new" replace />} />
               <Route path="/top" element={<Navigate to="/new" replace />} />
