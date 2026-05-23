@@ -171,14 +171,22 @@ export default function AdminShorts() {
               <p className="text-sm text-muted-foreground">Aucun short. Clique « Nouveau short » pour commencer.</p>
             </div>
           )}
-          {shorts.map((s) => (
+          {shorts.map((s) => {
+            const thumb = s.thumbnail_url || shortThumbnail(s.provider, s.source_id || s.youtube_id);
+            const ProviderIcon = s.provider === "instagram" ? Instagram : Youtube;
+            return (
             <div key={s.id} className="bg-card border border-border rounded-xl overflow-hidden flex flex-col">
               <div className="relative aspect-[9/16] bg-secondary">
-                <img
-                  src={s.thumbnail_url || youtubeThumb(s.youtube_id)}
-                  alt={s.title}
-                  className="w-full h-full object-cover"
-                />
+                {thumb ? (
+                  <img src={thumb} alt={s.title} className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/30 via-secondary to-accent/30">
+                    <ProviderIcon className="h-10 w-10 text-foreground/40" />
+                  </div>
+                )}
+                <div className="absolute top-2 left-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-background/80 backdrop-blur text-[10px] font-bold uppercase tracking-wider">
+                  <ProviderIcon className="h-3 w-3" /> {s.provider === "instagram" ? "Reel" : "Short"}
+                </div>
                 {!s.is_active && (
                   <div className="absolute inset-0 bg-background/70 backdrop-blur-sm flex items-center justify-center">
                     <span className="text-xs uppercase tracking-widest font-bold text-muted-foreground">Inactif</span>
