@@ -11,10 +11,16 @@ import { useFavorites } from "@/hooks/useFavorites";
 import type { DbTrack } from "@/hooks/useTracks";
 import { resolveCover } from "@/lib/trackCover";
 
-/* ─── Responsive grid template (header + rows MUST match) ─── */
+/* ─── Responsive grid template (header + rows MUST match exactly) ───
+   Column count per breakpoint:
+   - base : cover | title | actions                                  (3)
+   - md   : cover | title | version | bpm | actions                  (5)
+   - lg   : cover | title | version | bpm | key | genre | actions    (7)
+   - xl   : cover | title | version | bpm | key | genre | dur | act  (8)
+*/
 const GRID_CLS =
   "grid-cols-[48px_minmax(0,1fr)_auto] " +
-  "md:grid-cols-[48px_minmax(0,1fr)_110px_56px_120px_180px] " +
+  "md:grid-cols-[48px_minmax(0,1fr)_110px_56px_180px] " +
   "lg:grid-cols-[48px_minmax(0,1fr)_110px_56px_56px_120px_180px] " +
   "xl:grid-cols-[48px_minmax(0,1fr)_110px_56px_56px_120px_56px_180px]";
 const COL_GAP = "gap-x-3 sm:gap-x-4";
