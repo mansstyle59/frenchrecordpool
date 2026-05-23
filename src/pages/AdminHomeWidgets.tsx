@@ -40,6 +40,10 @@ interface Widget {
   position: number;
   config: Record<string, any>;
   is_active: boolean;
+  audience?: string | null;
+  devices?: string | null;
+  starts_at?: string | null;
+  ends_at?: string | null;
 }
 
 const TYPE_META: Record<string, { label: string; icon: any; desc: string; defaults: any; group: string }> = {
