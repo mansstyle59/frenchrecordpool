@@ -40,6 +40,7 @@ export default function AdminTracks() {
   const [bulkOpen, setBulkOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [editingTrack, setEditingTrack] = useState<DbTrack | null>(null);
+  const [shortTrack, setShortTrack] = useState<DbTrack | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
   // Filtres
