@@ -302,32 +302,44 @@ export type Database = {
       }
       home_widgets: {
         Row: {
+          audience: string
           config: Json
           created_at: string
           created_by: string | null
+          devices: string
+          ends_at: string | null
           id: string
           is_active: boolean
           position: number
+          starts_at: string | null
           type: string
           updated_at: string
         }
         Insert: {
+          audience?: string
           config?: Json
           created_at?: string
           created_by?: string | null
+          devices?: string
+          ends_at?: string | null
           id?: string
           is_active?: boolean
           position?: number
+          starts_at?: string | null
           type: string
           updated_at?: string
         }
         Update: {
+          audience?: string
           config?: Json
           created_at?: string
           created_by?: string | null
+          devices?: string
+          ends_at?: string | null
           id?: string
           is_active?: boolean
           position?: number
+          starts_at?: string | null
           type?: string
           updated_at?: string
         }
@@ -1143,6 +1155,64 @@ export type Database = {
         Returns: string
       }
       slugify: { Args: { _v: string }; Returns: string }
+      top_downloads_period: {
+        Args: { _days: number; _limit: number }
+        Returns: {
+          acapella_url: string | null
+          artist: string
+          artist_id: string | null
+          audio_format: string | null
+          audio_url: string | null
+          bpm: number | null
+          cover_url: string | null
+          created_at: string
+          created_by: string | null
+          download_url: string | null
+          downloads: number | null
+          duration: string | null
+          featured_artists: string[] | null
+          file_size_bytes: number | null
+          genre: string
+          id: string
+          instrumental_url: string | null
+          isrc: string | null
+          label: string | null
+          mood: string | null
+          musical_key: string | null
+          preview_url: string | null
+          producer: string | null
+          rejection_reason: string | null
+          release_date: string | null
+          release_year: number | null
+          remixer_ids: string[] | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          subgenre: string | null
+          submitted_by: string | null
+          tags: string[] | null
+          title: string
+          updated_at: string
+          version: string | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "tracks"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      trending_artists: {
+        Args: { _days: number; _limit: number }
+        Returns: {
+          artist_id: string
+          downloads_count: number
+          kind: string
+          name: string
+          photo_url: string
+          slug: string
+        }[]
+      }
     }
     Enums: {
       app_role: "admin" | "client" | "dj"
