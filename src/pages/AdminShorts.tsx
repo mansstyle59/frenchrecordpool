@@ -16,8 +16,11 @@ type ShortRow = {
   id: string;
   title: string;
   description: string | null;
-  youtube_url: string;
-  youtube_id: string;
+  provider: ShortProvider;
+  source_url: string | null;
+  source_id: string | null;
+  youtube_url: string | null;
+  youtube_id: string | null;
   thumbnail_url: string | null;
   tags: string[];
   artist_id: string | null;
