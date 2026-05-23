@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ElementType } from "react";
-import { Pencil, Type, Smartphone, Tablet, Monitor } from "lucide-react";
+import { Pencil, Type, Smartphone, Tablet, Monitor, Lock } from "lucide-react";
 import { useCms, useCmsValue } from "@/contexts/CmsContext";
 import { cn } from "@/lib/utils";
 import {
