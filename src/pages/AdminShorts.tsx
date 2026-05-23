@@ -384,7 +384,7 @@ function ShortEditor({
           </Button>
           <Button
             onClick={() => onSave(d)}
-            disabled={saving || !d.title || !ytId}
+            disabled={saving || !d.title || !sid}
             className="gap-2"
           >
             <Save className="h-4 w-4" /> {saving ? "Enregistrement…" : "Enregistrer"}
@@ -394,12 +394,19 @@ function ShortEditor({
 
       {/* Preview */}
       <div className="bg-card border border-border rounded-xl p-3">
-        <p className="text-xs uppercase tracking-widest font-bold text-muted-foreground mb-2">Aperçu</p>
+        <p className="text-xs uppercase tracking-widest font-bold text-muted-foreground mb-2 flex items-center gap-1.5">
+          <ProviderIcon className="h-3 w-3" /> Aperçu {provider ? `· ${providerLabel(provider)}` : ""}
+        </p>
         <div className="aspect-[9/16] bg-secondary rounded-lg overflow-hidden flex items-center justify-center">
-          {ytId ? (
-            <img src={youtubeThumb(ytId)} alt="" className="w-full h-full object-cover" />
+          {previewThumb ? (
+            <img src={previewThumb} alt="" className="w-full h-full object-cover" />
           ) : (
-            <Video className="h-8 w-8 text-muted-foreground" />
+            <div className="text-center p-3">
+              <Video className="h-8 w-8 text-muted-foreground mx-auto mb-1" />
+              {provider === "instagram" && (
+                <p className="text-[10px] text-muted-foreground">Ajoute une vignette personnalisée (Instagram ne fournit pas de miniature publique).</p>
+              )}
+            </div>
           )}
         </div>
       </div>
