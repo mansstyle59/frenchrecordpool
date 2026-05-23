@@ -2,8 +2,9 @@ import { useState, useMemo, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   Plus, Pencil, Trash2, UploadCloud,
-  Search, Heart, Eye, ChevronLeft, ChevronRight, X,
+  Search, Heart, Eye, ChevronLeft, ChevronRight, X, Film,
 } from "lucide-react";
+import { ShortGeneratorDialog } from "@/components/admin/ShortGeneratorDialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
