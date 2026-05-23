@@ -157,7 +157,16 @@ export default function TrackRow({ track }: TrackRowProps) {
     });
   };
 
-  const handleDownload = () => downloadTrack(track.id, user, hasActiveSubscription);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const handleDownload = async () => {
+    if (isDownloading) return;
+    setIsDownloading(true);
+    try {
+      await downloadTrack(track.id, user, hasActiveSubscription);
+    } finally {
+      setIsDownloading(false);
+    }
+  };
   const resolvedUrl = (track as any).download_url || track.audio_url;
   const isExternalLink = resolvedUrl && !resolvedUrl.includes("/object/public/track-audio/");
   const DownloadIcon = isExternalLink ? ExternalLink : Download;
