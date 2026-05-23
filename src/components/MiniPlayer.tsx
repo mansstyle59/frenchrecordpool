@@ -242,18 +242,19 @@ export default function MiniPlayer() {
             </div>
 
             {/* Transport */}
-            <Button variant="ghost" size="icon" className="shrink-0 h-8 w-8 hidden sm:inline-flex rounded-full hover:bg-foreground/10" onClick={prev} title="Précédent">
+            <Button variant="ghost" size="icon-sm" className="hidden sm:inline-flex" onClick={prev} title="Précédent">
               <SkipBack className="h-3.5 w-3.5" />
             </Button>
             <Button
+              variant={isFull ? "accent" : "default"}
               size="icon"
-              className={`shrink-0 h-10 w-10 rounded-full shadow-lg ${isFull ? "bg-gradient-to-br from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-white shadow-emerald-500/30" : "bg-gradient-to-br from-primary to-accent hover:opacity-90 text-primary-foreground shadow-primary/30"}`}
+              className="shadow-lg"
               onClick={toggle}
               title={isPlaying ? "Pause (Espace)" : "Lecture (Espace)"}
             >
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4 fill-current ml-0.5" />}
             </Button>
-            <Button variant="ghost" size="icon" className="shrink-0 h-8 w-8 hidden sm:inline-flex rounded-full hover:bg-foreground/10" onClick={next} title="Suivant">
+            <Button variant="ghost" size="icon-sm" className="hidden sm:inline-flex" onClick={next} title="Suivant">
               <SkipForward className="h-3.5 w-3.5" />
             </Button>
 
@@ -323,14 +324,9 @@ export default function MiniPlayer() {
 
           {/* Volume + Mute */}
           <div className="hidden lg:flex items-center gap-1.5 w-24 shrink-0">
-            <button
-              type="button"
-              onClick={toggleMute}
-              className="text-muted-foreground hover:text-foreground transition-colors"
-              title={muted ? "Réactiver le son (M)" : "Couper le son (M)"}
-            >
+            <Button variant="ghost" size="icon-sm" onClick={toggleMute} title={muted ? "Réactiver le son (M)" : "Couper le son (M)"}>
               {muted ? <VolumeX className="h-3.5 w-3.5 text-destructive" /> : <Volume2 className="h-3.5 w-3.5" />}
-            </button>
+            </Button>
             <input
               type="range"
               min={0}
@@ -345,10 +341,10 @@ export default function MiniPlayer() {
           {/* Queue */}
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="ghost" size="icon" className="shrink-0 relative h-8 w-8" title="File d'attente">
+              <Button variant="ghost" size="icon-sm" className="relative" title="File d'attente">
                 <ListMusic className="h-3.5 w-3.5" />
                 {queue.length > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 h-3.5 min-w-3.5 px-1 rounded-full bg-primary text-primary-foreground text-[9px] font-bold flex items-center justify-center">
+                  <span className="absolute -top-0.5 -right-1 h-3.5 min-w-3.5 px-1 rounded-full bg-primary text-primary-foreground text-[9px] font-bold flex items-center justify-center">
                     {queue.length}
                   </span>
                 )}
@@ -391,7 +387,7 @@ export default function MiniPlayer() {
           </Popover>
 
           {/* Close player */}
-          <Button variant="ghost" size="icon" className="shrink-0 h-8 w-8 text-muted-foreground hover:text-destructive" onClick={clear} title="Fermer le lecteur">
+          <Button variant="ghost" size="icon-sm" className="text-muted-foreground hover:text-destructive" onClick={clear} title="Fermer le lecteur">
             <X className="h-3.5 w-3.5" />
           </Button>
           </div>
