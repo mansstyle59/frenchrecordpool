@@ -33,8 +33,9 @@ export default function Admin() {
         supabase.from("subscriptions").select("id", { count: "exact", head: true }).eq("status", "active"),
         supabase.from("downloads").select("id", { count: "exact", head: true }),
         supabase.from("favorites").select("id", { count: "exact", head: true }),
+        supabase.from("tracks").select("id", { count: "exact", head: true }).eq("status", "pending"),
       ]);
-      return { users: p.count ?? 0, activeSubs: s.count ?? 0, downloads: d.count ?? 0, favorites: f.count ?? 0 };
+      return { users: p.count ?? 0, activeSubs: s.count ?? 0, downloads: d.count ?? 0, favorites: f.count ?? 0, pending: 0 };
     },
   });
 
