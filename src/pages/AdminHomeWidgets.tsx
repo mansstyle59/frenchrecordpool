@@ -1386,3 +1386,58 @@ function SpacingEditor({ value, onChange }: { value: any; onChange: (k: string, 
   );
 }
 
+/* ─── Targeting editor (audience / device / date window) ─── */
+function TargetingEditor({
+  value,
+  onChange,
+}: {
+  value: { audience?: string | null; devices?: string | null; starts_at?: string | null; ends_at?: string | null };
+  onChange: (patch: Partial<{ audience: string; devices: string; starts_at: string | null; ends_at: string | null }>) => void;
+}) {
+  const toLocalInput = (iso?: string | null) => (iso ? new Date(iso).toISOString().slice(0, 16) : "");
+  return (
+    <details className="group rounded-lg border border-border/60 bg-card/40">
+      <summary className="cursor-pointer list-none flex items-center justify-between px-3 py-2 text-sm font-medium">
+        <span className="flex items-center gap-2">
+          <Users className="h-4 w-4 text-primary" /> Ciblage (audience · device · dates)
+        </span>
+        <span className="text-xs text-muted-foreground group-open:hidden">Régler</span>
+      </summary>
+      <div className="px-3 pb-3 pt-1 grid grid-cols-2 gap-3">
+        <Field label="Audience">
+          <Select value={value.audience ?? "all"} onValueChange={(v) => onChange({ audience: v })}>
+            <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tous</SelectItem>
+              <SelectItem value="anon">Visiteurs anonymes</SelectItem>
+              <SelectItem value="registered">Inscrits (tous)</SelectItem>
+              <SelectItem value="subscribed">Abonnés actifs</SelectItem>
+            </SelectContent>
+          </Select>
+        </Field>
+        <Field label="Appareil">
+          <Select value={value.devices ?? "all"} onValueChange={(v) => onChange({ devices: v })}>
+            <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tous</SelectItem>
+              <SelectItem value="mobile">Mobile uniquement</SelectItem>
+              <SelectItem value="desktop">Desktop uniquement</SelectItem>
+            </SelectContent>
+          </Select>
+        </Field>
+        <Field label="Démarre le (optionnel)">
+          <Input type="datetime-local" value={toLocalInput(value.starts_at)}
+            onChange={(e) => onChange({ starts_at: e.target.value ? new Date(e.target.value).toISOString() : null })}
+            className="h-8 text-xs" />
+        </Field>
+        <Field label="Termine le (optionnel)">
+          <Input type="datetime-local" value={toLocalInput(value.ends_at)}
+            onChange={(e) => onChange({ ends_at: e.target.value ? new Date(e.target.value).toISOString() : null })}
+            className="h-8 text-xs" />
+        </Field>
+      </div>
+    </details>
+  );
+}
+
+
