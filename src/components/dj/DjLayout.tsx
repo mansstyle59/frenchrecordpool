@@ -102,12 +102,18 @@ export default function DjLayout({ title, subtitle, actions, children }: Props) 
             </div>
           </header>
           <main className="flex-1 container py-6 space-y-6">
-            <div className="flex flex-wrap items-end justify-between gap-3">
-              <div>
-                <h1 className="font-display text-2xl md:text-3xl font-bold">{title}</h1>
-                {subtitle && <p className="text-sm text-muted-foreground mt-1">{subtitle}</p>}
+            {title && (
+              <div className="relative overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-primary/10 via-card/40 to-accent/10 backdrop-blur-xl px-5 py-5 sm:px-6 sm:py-6">
+                <div className="absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-primary to-accent" />
+                <div className="flex flex-wrap items-end justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-[10px] uppercase tracking-[0.18em] text-primary font-bold mb-1">Espace DJ</p>
+                    <h1 className="font-display text-3xl md:text-4xl font-black leading-none tracking-tight truncate">{title}</h1>
+                    {subtitle && <p className="text-sm text-muted-foreground mt-2 max-w-2xl">{subtitle}</p>}
+                  </div>
+                </div>
               </div>
-            </div>
+            )}
             {children}
           </main>
         </div>
