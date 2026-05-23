@@ -45,14 +45,54 @@ function groupByDay(groups: TrackGroup[]): { day: string; label: string; items: 
 
 export default function NewReleases() {
   const { data: tracks = [], isLoading } = useTracks();
-  const [search, setSearch] = useState("");
-  const [genre, setGenre] = useState<string>("all");
-  const [version, setVersion] = useState<string>("all");
-  const [musicalKey, setMusicalKey] = useState<string>("all");
-  const [bpmRange, setBpmRange] = useState<[number, number]>([60, 200]);
-  const [bpmActive, setBpmActive] = useState(false);
-  const [sort, setSort] = useState<SortOption>("newest");
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // ── URL-persistent filter state ──────────────────────────────────────
+  const search = searchParams.get("q") ?? "";
+  const genre = searchParams.get("genre") ?? "all";
+  const version = searchParams.get("version") ?? "all";
+  const musicalKey = searchParams.get("key") ?? "all";
+  const sort = (searchParams.get("sort") ?? "newest") as SortOption;
+  const bpmMin = Number(searchParams.get("bpmMin") ?? 60);
+  const bpmMax = Number(searchParams.get("bpmMax") ?? 200);
+  const bpmActive = searchParams.has("bpmMin") || searchParams.has("bpmMax");
+  const bpmRange: [number, number] = [bpmMin, bpmMax];
+
+  const update = useCallback(
+    (patch: Record<string, string | null>) => {
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          for (const [k, v] of Object.entries(patch)) {
+            if (v === null || v === "" || v === "all") next.delete(k);
+            else next.set(k, v);
+          }
+          return next;
+        },
+        { replace: true },
+      );
+    },
+    [setSearchParams],
+  );
+
+  const setSearch = (v: string) => update({ q: v || null });
+  const setGenre = (v: string) => update({ genre: v });
+  const setVersion = (v: string) => update({ version: v });
+  const setMusicalKey = (v: string) => update({ key: v });
+  const setSort = (v: SortOption) => update({ sort: v === "newest" ? null : v });
+  const setBpmRange = (r: [number, number]) =>
+    update({ bpmMin: String(r[0]), bpmMax: String(r[1]) });
+  const setBpmActive = (on: boolean) => {
+    if (!on) update({ bpmMin: null, bpmMax: null });
+    else update({ bpmMin: String(bpmRange[0]), bpmMax: String(bpmRange[1]) });
+  };
+
   const [visible, setVisible] = useState(PAGE_SIZE);
+
+  // Reset visible window when filters change
+  useEffect(() => {
+    setVisible(PAGE_SIZE);
+  }, [search, genre, version, musicalKey, sort, bpmMin, bpmMax, bpmActive]);
 
   const genres = useMemo(
     () => Array.from(new Set(tracks.map((t) => t.genre).filter(Boolean) as string[])).sort(),
@@ -93,11 +133,29 @@ export default function NewReleases() {
 
   const visibleTracks = filtered.slice(0, visible);
   const groupedVisible = useMemo(() => groupTracks(visibleTracks), [visibleTracks]);
-  // Only show day-sections when sorted by newest; otherwise show a single section
   const daySections = useMemo(
     () => (sort === "newest" ? groupByDay(groupedVisible) : [{ day: "all", label: "", items: groupedVisible }]),
     [groupedVisible, sort],
   );
+
+  // ── Infinite scroll ────────────────────────────────────────────────
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const hasMore = visible < filtered.length;
+  useEffect(() => {
+    if (!hasMore) return;
+    const el = sentinelRef.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          setVisible((v) => Math.min(v + PAGE_SIZE, filtered.length));
+        }
+      },
+      { rootMargin: "600px 0px" },
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [hasMore, filtered.length]);
 
   const activeFiltersCount =
     (genre !== "all" ? 1 : 0) +
@@ -107,9 +165,9 @@ export default function NewReleases() {
     (search ? 1 : 0);
 
   const clearAll = () => {
-    setSearch(""); setGenre("all"); setVersion("all"); setMusicalKey("all");
-    setBpmActive(false); setBpmRange([60, 200]); setVisible(PAGE_SIZE);
+    setSearchParams({}, { replace: true });
   };
+
 
   return (
     <Layout>
