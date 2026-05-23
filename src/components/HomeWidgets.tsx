@@ -185,6 +185,10 @@ function WidgetRenderer({ widget, preview }: { widget: Widget; preview: boolean 
     case "rich_text":        return <RichTextWidget config={widget.config} />;
     case "video_embed":      return <VideoEmbedWidget config={widget.config} />;
     case "dj_shorts":        return <DjShortsWidget config={widget.config} />;
+    case "top_downloads_period": return <TopDownloadsPeriod config={widget.config} />;
+    case "trending_artists": return <TrendingArtists config={widget.config} />;
+    case "featured_genres":  return <FeaturedGenres config={widget.config} />;
+    case "welcome_banner":   return <WelcomeBanner config={widget.config} />;
     case "audio_embed":      return <AudioEmbedWidget config={widget.config} />;
     case "newsletter":       return <NewsletterWidget config={widget.config} />;
     case "countdown":        return <CountdownWidget config={widget.config} />;
