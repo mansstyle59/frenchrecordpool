@@ -34,6 +34,7 @@ export default function TrackDetail() {
   const { user, hasActiveSubscription } = useAuth();
   const { isFavorite, toggleFavorite } = useFavorites();
   const [qrOpen, setQrOpen] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   const isCurrent = currentTrack?.id === track?.id;
   const playbackSrc = useMemo(() => {
