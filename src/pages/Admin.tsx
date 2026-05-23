@@ -91,9 +91,10 @@ export default function Admin() {
 
   const stats = [
     { label: "Tracks", value: tracks.length, icon: Music, accent: "from-primary/20 to-primary/5", iconColor: "text-primary" },
+    { label: "En attente", value: counts?.pending ?? 0, icon: Inbox, accent: "from-destructive/20 to-destructive/5", iconColor: "text-destructive" },
     { label: "Téléchargements", value: counts?.downloads ?? totalDownloads, icon: Download, accent: "from-accent/20 to-accent/5", iconColor: "text-accent" },
     { label: "Utilisateurs", value: counts?.users ?? "-", icon: Users, accent: "from-primary/20 to-primary/5", iconColor: "text-primary" },
-    { label: "Abonnements actifs", value: counts?.activeSubs ?? "-", icon: CreditCard, accent: "from-accent/20 to-accent/5", iconColor: "text-accent" },
+    { label: "Abonnements", value: counts?.activeSubs ?? "-", icon: CreditCard, accent: "from-accent/20 to-accent/5", iconColor: "text-accent" },
     { label: "Favoris", value: counts?.favorites ?? 0, icon: Heart, accent: "from-primary/20 to-primary/5", iconColor: "text-primary" },
   ];
 
