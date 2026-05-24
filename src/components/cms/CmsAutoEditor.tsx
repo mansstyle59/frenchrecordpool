@@ -265,7 +265,7 @@ export default function CmsAutoEditor() {
           e.removeEventListener("blur", onTextBlur);
         }
       });
-      document.querySelectorAll<HTMLElement>(".cms-auto-img-btn, .cms-auto-link-btn").forEach((b) => b.remove());
+      document.querySelectorAll<HTMLElement>(".cms-auto-img-btn, .cms-auto-link-btn, .cms-auto-vis-btn").forEach((b) => b.remove());
     };
   }, []);
 
