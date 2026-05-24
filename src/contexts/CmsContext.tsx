@@ -292,6 +292,7 @@ export function CmsProvider({ children }: { children: ReactNode }) {
       values, drafts, published, types, loaded,
       editMode: editMode && realIsAdmin,
       previewDrafts, saving,
+      autoPublish, setAutoPublish,
       setEditMode, setPreviewDrafts,
       pendingCount,
       saveDraft, publishAll, publishKey, revertDraft,
