@@ -159,7 +159,7 @@ export default function Remixers() {
         {/* Role filters */}
         <div className="flex flex-wrap items-center gap-2 mb-4">
           <span className="text-[11px] uppercase tracking-widest text-muted-foreground font-bold mr-1">Filtrer :</span>
-          {ROLE_FILTERS.map((r) => {
+          {(isArtistsPage ? ARTIST_FILTERS : DJ_FILTERS).map((r) => {
             const active = activeRoles.has(r.key);
             return (
               <button
