@@ -20,6 +20,7 @@ import { Progress } from "@/components/ui/progress";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
 import { resolveCover } from "@/lib/trackCover";
+import { normalizeRoles } from "@/lib/artistRoles";
 import type { DbTrack } from "@/hooks/useTracks";
 
 const STATUS_LABEL: Record<string, { label: string; color: string }> = {
@@ -100,7 +101,8 @@ export default function DjDashboard() {
   const recent = myTracks.slice(0, 5);
   const displayName = studio?.name || (user?.email?.split("@")[0] ?? "Mon studio");
   const profileUrl = studio?.slug ? `/artists/${studio.slug}` : null;
-  const isRemixerKind = studio?.kind === "remixer" || studio?.kind === "both";
+  const studioRoles = normalizeRoles(studio?.roles, studio?.kind);
+  const isRemixerKind = studioRoles.includes("remixer");
 
   return (
     <DjLayout
@@ -150,9 +152,9 @@ export default function DjDashboard() {
               <div className="flex flex-wrap items-center gap-2 mt-3">
                 <Badge variant="outline" className="gap-1.5 text-xs"><Disc3 className="h-3 w-3" /> {stats.total} titre{stats.total > 1 ? "s" : ""}</Badge>
                 <Badge variant="outline" className="gap-1.5 text-xs"><Download className="h-3 w-3" /> {stats.downloads.toLocaleString()} dl</Badge>
-                {studio?.kind === "both" && (
-                  <Badge variant="outline" className="gap-1 text-xs bg-primary/10 text-primary border-primary/30">DJ + Remixer</Badge>
-                )}
+                {studioRoles.map((r) => (
+                  <Badge key={r} variant="outline" className="gap-1 text-xs bg-primary/10 text-primary border-primary/30">{r === "dj" ? "DJ" : r}</Badge>
+                ))}
                 <SocialLinks artist={studio} />
               </div>
             </div>
