@@ -143,36 +143,36 @@ function PublicSidebar({ onNavigate }: { onNavigate?: () => void }) {
             {realIsAdmin && (
               <SidebarMenuItem>
                 <SidebarMenuButton
-                  tooltip={viewAsUser ? "Quitter aperçu" : "Voir comme user"}
+                  tooltip={viewAsUser ? "Repasser en admin" : "Aperçu utilisateur"}
                   onClick={() => setViewAsUser(!viewAsUser)}
                 >
                   {viewAsUser ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  <span>{viewAsUser ? "Quitter aperçu" : "Voir comme user"}</span>
+                  <span>{viewAsUser ? "Repasser en admin" : "Aperçu utilisateur"}</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             )}
             <SidebarMenuItem>
-              <SidebarMenuButton tooltip="Déconnexion" onClick={handleSignOut}>
+              <SidebarMenuButton tooltip="Se déconnecter" onClick={handleSignOut}>
                 <LogOut className="h-4 w-4" />
-                <span>Déconnexion</span>
+                <span><CmsText editKey="nav.signout">Se déconnecter</CmsText></span>
               </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>
         ) : (
           <SidebarMenu>
             <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="Connexion">
+              <SidebarMenuButton asChild tooltip="Se connecter">
                 <Link to="/login" onClick={onNavigate} className="flex items-center gap-2">
                   <LogIn className="h-4 w-4" />
-                  <span>Connexion</span>
+                  <span><CmsText editKey="nav.signin">Se connecter</CmsText></span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="S'inscrire" className="text-primary">
+              <SidebarMenuButton asChild tooltip="Créer un compte" className="text-primary">
                 <Link to="/signup" onClick={onNavigate} className="flex items-center gap-2">
                   <UsersIcon className="h-4 w-4" />
-                  <span>S'inscrire</span>
+                  <span><CmsText editKey="nav.signup">Créer un compte</CmsText></span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
