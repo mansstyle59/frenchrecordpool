@@ -321,8 +321,8 @@ export default function AdminHomeWidgets() {
   }, [widgets]);
 
   const list: Widget[] = draft ?? widgets;
-  const isDirty = draft !== null && JSON.stringify(draft.map(w => ({ id: w.id, position: w.position, is_active: w.is_active })))
-    !== JSON.stringify(widgets.map(w => ({ id: w.id, position: w.position, is_active: w.is_active })));
+  const snap = (arr: Widget[]) => JSON.stringify(arr.map(w => ({ id: w.id, position: w.position, is_active: w.is_active, col_span: (w.config as any)?.col_span ?? 2 })));
+  const isDirty = draft !== null && snap(draft) !== snap(widgets);
 
   const upsert = useMutation({
     mutationFn: async (w: Widget) => {
