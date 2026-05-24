@@ -1174,6 +1174,33 @@ export type Database = {
         Args: { _key: string; _type: string; _value: Json }
         Returns: undefined
       }
+      dj_charts_weekly: {
+        Args: { _limit?: number }
+        Returns: {
+          artist: string
+          audio_url: string
+          bpm: number
+          cover_url: string
+          created_at: string
+          current_count: number
+          current_rank: number
+          download_url: string
+          downloads: number
+          duration: string
+          genre: string
+          id: string
+          label: string
+          musical_key: string
+          preview_url: string
+          previous_count: number
+          previous_rank: number
+          release_date: string
+          status: string
+          tags: string[]
+          title: string
+          version: string
+        }[]
+      }
       dj_submit_track: { Args: { _track: Json }; Returns: string }
       dj_submit_track_revision: {
         Args: { _payload: Json; _track_id: string }
@@ -1278,6 +1305,30 @@ export type Database = {
           isOneToOne: false
           isSetofReturn: true
         }
+      }
+      top_favorited_tracks: {
+        Args: { _limit?: number }
+        Returns: {
+          artist: string
+          audio_url: string
+          bpm: number
+          cover_url: string
+          created_at: string
+          download_url: string
+          downloads: number
+          duration: string
+          favorites_count: number
+          genre: string
+          id: string
+          label: string
+          musical_key: string
+          preview_url: string
+          release_date: string
+          status: string
+          tags: string[]
+          title: string
+          version: string
+        }[]
       }
       trending_artists: {
         Args: { _days: number; _limit: number }
