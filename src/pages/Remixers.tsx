@@ -41,14 +41,15 @@ export default function Remixers() {
         .select("id, name, slug, photo_url, kind, roles")
         .order("name", { ascending: true });
 
-      if (!isArtistsPage) {
-        query = (query as any).contains("roles", ["remixer"]);
-      }
-
       const { data } = await query;
+      const targetRoles = isArtistsPage ? ARTIST_ROLES : DJ_ROLES;
+      const filteredByRole = (data ?? []).filter((d: any) => {
+        const r = normalizeRoles(d.roles, d.kind);
+        return r.some((role) => targetRoles.includes(role));
+      });
 
-      // Count tracks per artist (remixes for remixers, originals for all)
-      const ids = (data ?? []).map((d) => d.id);
+      // Count tracks per artist (remixes for DJ page, originals for Artistes page)
+      const ids = filteredByRole.map((d: any) => d.id);
       let counts: Record<string, number> = {};
       if (ids.length > 0) {
         const { data: trackData } = await supabase
@@ -66,7 +67,7 @@ export default function Remixers() {
         });
       }
 
-      return (data ?? []).map((d: any) => ({
+      return filteredByRole.map((d: any) => ({
         ...d,
         trackCount: counts[d.id] ?? 0,
         normalizedRoles: normalizeRoles(d.roles, d.kind),
