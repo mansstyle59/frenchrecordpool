@@ -1,5 +1,6 @@
 import { useParams, Link } from "react-router-dom";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Play, Pause, Heart, Download, ExternalLink, ArrowLeft, Clock, Music, Tag, Disc3,
   Share2, QrCode, Copy, Calendar, Headphones, FileAudio, Mic2, Users, Loader2,
