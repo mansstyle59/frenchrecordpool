@@ -555,9 +555,9 @@ function TopArtistsWidget({ config }: { config: any }) {
 function ArtistCarouselWidget({ config }: { config: any }) {
   const [list, setList] = useState<any[]>([]);
   useEffect(() => {
-    let q = supabase.from("artists").select("id, name, slug, photo_url, kind");
+    let q = supabase.from("artists").select("id, name, slug, photo_url, roles");
     if (config.featured_only) q = q.eq("featured", true);
-    if (config.kind === "remixer" || config.kind === "artist") q = q.eq("kind", config.kind);
+    if (config.kind === "remixer" || config.kind === "artist") q = (q as any).contains("roles", [config.kind === "artist" ? "dj" : config.kind]);
     q.order("sort_order", { ascending: true })
      .limit(config.limit || 8)
      .then(({ data }) => data && setList(data));
@@ -576,7 +576,7 @@ function ArtistCarouselWidget({ config }: { config: any }) {
         {list.map((dj) => (
           <Link
             key={dj.id}
-            to={`/remixers/${dj.slug}`}
+            to={`/artists/${dj.slug}`}
             className="group relative aspect-square rounded-2xl overflow-hidden border border-border hover:border-primary/60 transition-all hover:scale-[1.03]"
           >
             {dj.photo_url ? (
