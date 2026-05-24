@@ -153,6 +153,26 @@
     background-clip: text;
   }
 
+  /* ============================================================
+     Échelle typographique sémantique fluide
+     Usage: <h2 class="t-h2">…</h2> ou <p class="t-lead">…</p>
+     ============================================================ */
+  .t-display  { font-family: theme('fontFamily.display'); font-size: clamp(3rem, 2rem + 5vw, 7rem); line-height: 0.9;  letter-spacing: 0.005em; text-wrap: balance; }
+  .t-h1       { font-family: theme('fontFamily.display'); font-size: clamp(2.125rem, 1.4rem + 3.6vw, 4.5rem); line-height: 0.95; letter-spacing: 0.005em; text-wrap: balance; }
+  .t-h2       { font-family: theme('fontFamily.display'); font-size: clamp(1.625rem, 1.15rem + 2.4vw, 2.75rem); line-height: 1; text-wrap: balance; }
+  .t-h3       { font-family: theme('fontFamily.display'); font-size: clamp(1.25rem, 1rem + 1.25vw, 1.875rem); line-height: 1.05; }
+  .t-h4       { font-family: theme('fontFamily.display'); font-size: clamp(1.125rem, 0.95rem + 0.9vw, 1.5rem); line-height: 1.15; }
+  .t-eyebrow  { font-family: theme('fontFamily.body'); font-size: clamp(0.625rem, 0.55rem + 0.25vw, 0.75rem); line-height: 1; letter-spacing: 0.3em; text-transform: uppercase; font-weight: 600; }
+  .t-lead     { font-family: theme('fontFamily.body'); font-size: clamp(1rem, 0.92rem + 0.5vw, 1.25rem); line-height: 1.5; text-wrap: pretty; }
+  .t-body     { font-family: theme('fontFamily.body'); font-size: clamp(0.9375rem, 0.9rem + 0.15vw, 1rem); line-height: 1.6; text-wrap: pretty; }
+  .t-body-sm  { font-family: theme('fontFamily.body'); font-size: clamp(0.8125rem, 0.78rem + 0.15vw, 0.875rem); line-height: 1.55; }
+  .t-caption  { font-family: theme('fontFamily.body'); font-size: clamp(0.6875rem, 0.66rem + 0.1vw, 0.75rem); line-height: 1.4; color: hsl(var(--muted-foreground)); }
+  .t-mono     { font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace; font-size: clamp(0.6875rem, 0.66rem + 0.1vw, 0.75rem); letter-spacing: 0.02em; }
+
+  /* Espacement vertical cohérent entre blocs de texte */
+  .prose-stack > * + * { margin-top: clamp(0.75rem, 0.5rem + 0.8vw, 1.25rem); }
+  .prose-stack-tight > * + * { margin-top: clamp(0.5rem, 0.35rem + 0.5vw, 0.875rem); }
+
   .glass {
     @apply bg-card/80 backdrop-blur-xl border-b border-border/50;
   }
