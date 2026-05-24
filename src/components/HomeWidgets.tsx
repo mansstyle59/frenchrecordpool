@@ -125,11 +125,36 @@ export default function HomeWidgets({ widgets: propWidgets, preview = false }: P
 
   if (visible.length === 0) return null;
 
+  // Group consecutive half-width widgets into 2-col rows.
+  type Row = { kind: "full"; w: Widget } | { kind: "pair"; items: Widget[] };
+  const rows: Row[] = [];
+  for (const w of visible) {
+    const span: 1 | 2 = ((w.config as any)?.col_span === 1 ? 1 : 2);
+    if (span === 1) {
+      const last = rows[rows.length - 1];
+      if (last && last.kind === "pair" && last.items.length < 2) {
+        last.items.push(w);
+      } else {
+        rows.push({ kind: "pair", items: [w] });
+      }
+    } else {
+      rows.push({ kind: "full", w });
+    }
+  }
+
   return (
     <div className={preview ? "space-y-4" : "space-y-4 md:space-y-6"}>
-      {visible.map((w) => (
-        <WidgetWrapper key={w.id} widget={w} preview={preview} />
-      ))}
+      {rows.map((row, i) =>
+        row.kind === "full" ? (
+          <WidgetWrapper key={row.w.id} widget={row.w} preview={preview} />
+        ) : (
+          <div key={`pair-${i}`} className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+            {row.items.map((w) => (
+              <WidgetWrapper key={w.id} widget={w} preview={preview} />
+            ))}
+          </div>
+        )
+      )}
     </div>
   );
 }
