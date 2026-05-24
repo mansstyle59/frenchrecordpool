@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Pencil, Eye, EyeOff, Send, Undo2, Redo2, History, X, Loader2, Check } from "lucide-react";
+import { Pencil, Eye, EyeOff, Send, Undo2, Redo2, History, X, Loader2, Check, Zap, ZapOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useCms } from "@/contexts/CmsContext";
@@ -18,6 +18,7 @@ export default function CmsEditBar() {
     editMode, setEditMode, previewDrafts, setPreviewDrafts,
     pendingCount, drafts, publishAll, revertDraft,
     undo, redo, canUndo, canRedo, saving,
+    autoPublish, setAutoPublish,
   } = useCms();
   const [historyOpen, setHistoryOpen] = useState(false);
   const [versions, setVersions] = useState<any[]>([]);
