@@ -225,7 +225,6 @@ export default function CmsAutoEditor() {
               badge = document.createElement("button");
               badge.type = "button";
               badge.className = "cms-auto-vis-btn";
-              badge.type = "button";
               if (getComputedStyle(sec).position === "static") sec.style.position = "relative";
               sec.appendChild(badge);
               badge.addEventListener("click", (ev) => {
