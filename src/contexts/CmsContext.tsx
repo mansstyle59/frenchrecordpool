@@ -141,9 +141,9 @@ export function CmsProvider({ children }: { children: ReactNode }) {
     return () => { cancelled = true; };
   }, [realIsAdmin]);
 
-  // Realtime sync for admins
+  // Realtime sync — pour TOUS les visiteurs (admins ET clients).
+  // Quand un texte est publié, tout le monde voit la nouvelle version sans rafraîchir.
   useEffect(() => {
-    if (!realIsAdmin) return;
     const channel = supabase
       .channel("cms_content_changes")
       .on("postgres_changes", { event: "*", schema: "public", table: "cms_content" }, (payload: any) => {
@@ -155,13 +155,18 @@ export function CmsProvider({ children }: { children: ReactNode }) {
           return;
         }
         setTypes(t => ({ ...t, [row.key]: row.type }));
-        setPublished(p => ({ ...p, [row.key]: row.value_published }));
-        setDrafts(d => {
-          const n = { ...d };
-          if (row.value_draft === null || row.value_draft === undefined) delete n[row.key];
-          else n[row.key] = row.value_draft;
-          return n;
-        });
+        if (row.value_published !== undefined) {
+          setPublished(p => ({ ...p, [row.key]: row.value_published }));
+        }
+        // Les brouillons ne sont utiles qu'aux admins
+        if (realIsAdmin) {
+          setDrafts(d => {
+            const n = { ...d };
+            if (row.value_draft === null || row.value_draft === undefined) delete n[row.key];
+            else n[row.key] = row.value_draft;
+            return n;
+          });
+        }
       })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
