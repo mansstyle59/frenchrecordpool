@@ -115,22 +115,9 @@ export default function TrackDetail() {
 
   return (
     <Layout>
-      <PageHero
-        eyebrow={track.version || "Original"}
-        title=""
-        highlight={track.title}
-        description={track.artist}
-        stats={[
-          { icon: <Disc3 className="h-3.5 w-3.5 text-primary" />, label: track.genre || "—" },
-          { icon: <Clock className="h-3.5 w-3.5 text-accent" />, label: track.duration || "—" },
-          { label: `${track.bpm ?? "—"} BPM` },
-          { label: `Key ${track.musical_key || "—"}` },
-        ]}
-      />
-
-      <div className="container py-6 md:py-8 space-y-6">
+      <div className="container py-4 md:py-5 space-y-4">
         <Link to="/new" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
-          <ArrowLeft className="h-4 w-4" /> Retour
+          <ArrowLeft className="h-4 w-4" /> Retour aux nouveautés
         </Link>
 
         {/* ===== MAIN CARD ===== */}
