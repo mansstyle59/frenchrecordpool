@@ -747,6 +747,8 @@ function Editor({ widget, onCancel, onSave, saving }: { widget: Widget; onCancel
           <TypographyEditor value={w.config.typo ?? {}} onChange={(v) => setC("typo", v)} />
         )}
 
+        <DimensionsEditor value={w.config.common ?? {}} onChange={setCommon} />
+
         <SpacingEditor value={w.config.common ?? {}} onChange={setCommon} />
 
         <TargetingEditor
