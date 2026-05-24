@@ -258,8 +258,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 </div>
                 <div className="flex gap-6 text-sm text-muted-foreground">
                   <CmsLink editKey="footer.link.new" defaultLabel="Nouveautés" defaultUrl="/new" className="hover:text-foreground transition-colors" />
-                  <CmsLink editKey="footer.link.djs" defaultLabel="DJ / Remixer" defaultUrl="/remixers" className="hover:text-foreground transition-colors" />
+                  <CmsLink editKey="footer.link.djs" defaultLabel="DJ & Remixers" defaultUrl="/remixers" className="hover:text-foreground transition-colors" />
                   <CmsLink editKey="footer.link.artists" defaultLabel="Artistes" defaultUrl="/artists" className="hover:text-foreground transition-colors" />
+                  <CmsLink editKey="footer.link.pricing" defaultLabel="Abonnements" defaultUrl="/pricing" className="hover:text-foreground transition-colors" />
                 </div>
                 <p className="text-xs text-muted-foreground">
                   <CmsText editKey="footer.copyright">© 2026 French Record Pool. Tous droits réservés.</CmsText>
