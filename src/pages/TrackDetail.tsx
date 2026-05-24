@@ -36,6 +36,20 @@ export default function TrackDetail() {
   const { isFavorite, toggleFavorite } = useFavorites();
   const [qrOpen, setQrOpen] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [secureUrls, setSecureUrls] = useState<{ download_url: string | null; acapella_url: string | null; instrumental_url: string | null } | null>(null);
+
+  const canSeeSecureUrls = !!user && (hasActiveSubscription || (track && (track as any).submitted_by === user.id));
+
+  useEffect(() => {
+    if (!track?.id || !canSeeSecureUrls) { setSecureUrls(null); return; }
+    let cancelled = false;
+    supabase.rpc("get_track_urls", { _id: track.id }).then(({ data }) => {
+      if (cancelled) return;
+      const row = Array.isArray(data) ? data[0] : null;
+      setSecureUrls(row ? { download_url: row.download_url ?? null, acapella_url: row.acapella_url ?? null, instrumental_url: row.instrumental_url ?? null } : null);
+    });
+    return () => { cancelled = true; };
+  }, [track?.id, canSeeSecureUrls]);
 
   const isCurrent = currentTrack?.id === track?.id;
   const playbackSrc = useMemo(() => {
