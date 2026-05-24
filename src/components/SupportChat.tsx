@@ -24,13 +24,18 @@ interface Msg {
 
 export default function SupportChat({ threadOverride = null, className }: Props) {
   const { user, realIsAdmin } = useAuth();
+  const { isOnline } = usePresence();
   const isAdminMode = !!threadOverride;
   const [threadId, setThreadId] = useState<string | null>(threadOverride?.id ?? null);
   const [messages, setMessages] = useState<Msg[]>([]);
   const [body, setBody] = useState("");
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const [peerTyping, setPeerTyping] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const typingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  const peerOnline = isAdminMode ? isOnline(threadOverride?.user_id) : false;
 
   // Ensure thread exists (user mode) + load messages
   useEffect(() => {
