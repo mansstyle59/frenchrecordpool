@@ -80,12 +80,17 @@ export default function AdminSupport() {
                   onClick={() => setSelected(t)}
                   className={`w-full text-left px-3 py-3 flex items-start gap-3 hover:bg-secondary/40 transition-colors ${active ? "bg-secondary/60" : ""}`}
                 >
-                  <div className="h-9 w-9 rounded-full bg-secondary overflow-hidden flex items-center justify-center text-xs font-bold shrink-0">
+                  <div className="relative h-9 w-9 rounded-full bg-secondary overflow-hidden flex items-center justify-center text-xs font-bold shrink-0">
                     {t.profile?.avatar_url ? (
                       <img src={t.profile.avatar_url} alt="" className="h-full w-full object-cover" />
                     ) : (
                       (t.profile?.dj_name || t.profile?.email || "?").slice(0, 1).toUpperCase()
                     )}
+                    <span
+                      className={`absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full ring-2 ring-card ${
+                        isOnline(t.user_id) ? "bg-green-500" : "bg-muted-foreground/40"
+                      }`}
+                    />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-2">
