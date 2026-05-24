@@ -319,11 +319,7 @@ export default function Shorts() {
                       <div className="mt-3 flex flex-wrap gap-2">
                         {relatedArtist && (
                           <Link
-                            to={
-                              relatedArtist.kind === "remixer"
-                                ? `/remixers/${relatedArtist.slug}`
-                                : `/artists/${relatedArtist.slug}`
-                            }
+                            to={`/artists/${relatedArtist.slug}`}
                           >
                             <Button size="sm" variant="secondary" className="gap-2">
                               {relatedArtist.photo_url ? (
