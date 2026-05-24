@@ -83,6 +83,23 @@ interface TrackFormProps {
   existingTags?: string[];
 }
 
+export interface CustomField {
+  key: string;
+  value: string;
+}
+
+export interface ExternalLinks {
+  spotify?: string;
+  beatport?: string;
+  appleMusic?: string;
+  youtube?: string;
+  soundcloud?: string;
+  deezer?: string;
+  tidal?: string;
+  bandcamp?: string;
+  [k: string]: string | undefined;
+}
+
 export interface TrackFormData {
   title: string;
   artist: string;
@@ -109,6 +126,17 @@ export interface TrackFormData {
   downloadUrl: string;
   acapellaUrl: string;
   instrumentalUrl: string;
+  // ===== Personnalisation A→Z =====
+  energy: string;            // 1..10
+  language: string;
+  explicit: boolean;
+  copyright: string;
+  notes: string;             // privé
+  mixEngineer: string;
+  masteringEngineer: string;
+  accentColor: string;       // hex ou HSL
+  externalLinks: ExternalLinks;
+  customFields: CustomField[];
 }
 
 type SourceMode = "file" | "url";
