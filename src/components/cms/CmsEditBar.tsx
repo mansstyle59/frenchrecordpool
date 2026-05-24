@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Pencil, Eye, EyeOff, Send, Undo2, Redo2, History, X, Loader2, Check } from "lucide-react";
+import { Pencil, Eye, EyeOff, Send, Undo2, Redo2, History, X, Loader2, Check, Zap, ZapOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useCms } from "@/contexts/CmsContext";
@@ -18,6 +18,7 @@ export default function CmsEditBar() {
     editMode, setEditMode, previewDrafts, setPreviewDrafts,
     pendingCount, drafts, publishAll, revertDraft,
     undo, redo, canUndo, canRedo, saving,
+    autoPublish, setAutoPublish,
   } = useCms();
   const [historyOpen, setHistoryOpen] = useState(false);
   const [versions, setVersions] = useState<any[]>([]);
@@ -101,6 +102,29 @@ export default function CmsEditBar() {
         {previewDrafts ? "Aperçu brouillons" : "Aperçu publié"}
       </Button>
 
+      <button
+        type="button"
+        onClick={() => setAutoPublish(!autoPublish)}
+        className={`flex items-center justify-between gap-2 rounded-md border px-3 h-8 text-xs transition-colors ${
+          autoPublish
+            ? "bg-primary/10 border-primary/40 text-primary"
+            : "bg-background border-border text-muted-foreground hover:bg-muted"
+        }`}
+        title={autoPublish
+          ? "Chaque modification est publiée immédiatement pour tous les visiteurs."
+          : "Les modifications restent en brouillon jusqu'à publication manuelle."}
+      >
+        <span className="inline-flex items-center gap-1.5">
+          {autoPublish ? <Zap className="h-3.5 w-3.5" /> : <ZapOff className="h-3.5 w-3.5" />}
+          Auto-publication
+        </span>
+        <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${
+          autoPublish ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+        }`}>
+          {autoPublish ? "ON" : "OFF"}
+        </span>
+      </button>
+
       <Button
         size="sm"
         className="gap-2"
@@ -108,7 +132,7 @@ export default function CmsEditBar() {
         onClick={publishAll}
       >
         <Send className="h-4 w-4" />
-        Publier tout
+        Publier tout ({pendingCount})
       </Button>
 
       {pendingCount > 0 && (

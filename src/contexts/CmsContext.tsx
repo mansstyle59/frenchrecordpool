@@ -28,6 +28,8 @@ interface CmsContextType {
   editMode: boolean;
   previewDrafts: boolean;
   saving: boolean;
+  autoPublish: boolean;
+  setAutoPublish: (v: boolean) => void;
   setEditMode: (v: boolean) => void;
   setPreviewDrafts: (v: boolean) => void;
   pendingCount: number;
@@ -44,6 +46,7 @@ interface CmsContextType {
 const CmsContext = createContext<CmsContextType>({
   values: {}, drafts: {}, published: {}, types: {}, loaded: false,
   editMode: false, previewDrafts: true, saving: false,
+  autoPublish: true, setAutoPublish: () => {},
   setEditMode: () => {}, setPreviewDrafts: () => {},
   pendingCount: 0,
   saveDraft: async () => {}, publishAll: async () => {},
@@ -61,6 +64,8 @@ export function useCmsValue<T = string>(key: string, fallback: T): T {
 
 const STORAGE_EDIT_MODE = "frp:cmsEditMode";
 
+const STORAGE_AUTO_PUBLISH = "frp:cmsAutoPublish";
+
 export function CmsProvider({ children }: { children: ReactNode }) {
   const { realIsAdmin } = useAuth();
   const [published, setPublished] = useState<Record<string, any>>({});
@@ -77,12 +82,25 @@ export function CmsProvider({ children }: { children: ReactNode }) {
     return localStorage.getItem(STORAGE_EDIT_MODE) === "1";
   });
   const [previewDrafts, setPreviewDrafts] = useState<boolean>(true);
+  const [autoPublish, setAutoPublishState] = useState<boolean>(() => {
+    if (typeof window === "undefined") return true;
+    // par défaut activé : tout changement est publié pour tous les utilisateurs immédiatement
+    const v = localStorage.getItem(STORAGE_AUTO_PUBLISH);
+    return v === null ? true : v === "1";
+  });
 
   const setEditMode = useCallback((v: boolean) => {
     setEditModeState(v);
     if (typeof window !== "undefined") {
       if (v) localStorage.setItem(STORAGE_EDIT_MODE, "1");
       else localStorage.removeItem(STORAGE_EDIT_MODE);
+    }
+  }, []);
+
+  const setAutoPublish = useCallback((v: boolean) => {
+    setAutoPublishState(v);
+    if (typeof window !== "undefined") {
+      localStorage.setItem(STORAGE_AUTO_PUBLISH, v ? "1" : "0");
     }
   }, []);
 
@@ -123,9 +141,9 @@ export function CmsProvider({ children }: { children: ReactNode }) {
     return () => { cancelled = true; };
   }, [realIsAdmin]);
 
-  // Realtime sync for admins
+  // Realtime sync — pour TOUS les visiteurs (admins ET clients).
+  // Quand un texte est publié, tout le monde voit la nouvelle version sans rafraîchir.
   useEffect(() => {
-    if (!realIsAdmin) return;
     const channel = supabase
       .channel("cms_content_changes")
       .on("postgres_changes", { event: "*", schema: "public", table: "cms_content" }, (payload: any) => {
@@ -137,13 +155,18 @@ export function CmsProvider({ children }: { children: ReactNode }) {
           return;
         }
         setTypes(t => ({ ...t, [row.key]: row.type }));
-        setPublished(p => ({ ...p, [row.key]: row.value_published }));
-        setDrafts(d => {
-          const n = { ...d };
-          if (row.value_draft === null || row.value_draft === undefined) delete n[row.key];
-          else n[row.key] = row.value_draft;
-          return n;
-        });
+        if (row.value_published !== undefined) {
+          setPublished(p => ({ ...p, [row.key]: row.value_published }));
+        }
+        // Les brouillons ne sont utiles qu'aux admins
+        if (realIsAdmin) {
+          setDrafts(d => {
+            const n = { ...d };
+            if (row.value_draft === null || row.value_draft === undefined) delete n[row.key];
+            else n[row.key] = row.value_draft;
+            return n;
+          });
+        }
       })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
@@ -163,17 +186,29 @@ export function CmsProvider({ children }: { children: ReactNode }) {
     if (error) {
       toast.error("Sauvegarde impossible");
       console.error(error);
+      return;
     }
-  }, [flashSaving]);
+    // Auto-publication: dès qu'un brouillon est sauvegardé, on publie pour tous les visiteurs.
+    if (autoPublish) {
+      const { error: pubErr } = await supabase.rpc("cms_publish", { _keys: [key] as any });
+      if (pubErr) {
+        toast.error("Publication automatique impossible");
+        console.error(pubErr);
+        return;
+      }
+      setPublished(p => ({ ...p, [key]: value }));
+      setDrafts(d => { const n = { ...d }; delete n[key]; return n; });
+    }
+  }, [flashSaving, autoPublish]);
 
   const saveDraft = useCallback(async (key: string, type: CmsType, value: any) => {
     // Snapshot prev value for undo
-    const prev = drafts[key];
+    const prev = drafts[key] ?? published[key];
     undoStack.current.push({ key, type, prev, next: value });
     redoStack.current = [];
     setUndoTick(t => t + 1);
     await persistDraft(key, type, value);
-  }, [drafts, persistDraft]);
+  }, [drafts, published, persistDraft]);
 
   const publishAll = useCallback(async () => {
     flashSaving();
@@ -257,6 +292,7 @@ export function CmsProvider({ children }: { children: ReactNode }) {
       values, drafts, published, types, loaded,
       editMode: editMode && realIsAdmin,
       previewDrafts, saving,
+      autoPublish, setAutoPublish,
       setEditMode, setPreviewDrafts,
       pendingCount,
       saveDraft, publishAll, publishKey, revertDraft,
