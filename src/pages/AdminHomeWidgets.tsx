@@ -7,6 +7,7 @@ import {
   BarChart3, Tag, Star, HelpCircle, Minus, Quote, Columns, Copy, Layout,
   Palette, Wand2, TrendingUp, Disc3, Radio, Download, Newspaper, Instagram,
   Images, Megaphone as MegaphoneIcon, Repeat, Music2, Trophy, Heart, History,
+  LayoutTemplate,
 } from "lucide-react";
 
 import IconPicker from "@/components/admin/IconPicker";
