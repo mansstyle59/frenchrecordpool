@@ -28,6 +28,8 @@ interface CmsContextType {
   editMode: boolean;
   previewDrafts: boolean;
   saving: boolean;
+  autoPublish: boolean;
+  setAutoPublish: (v: boolean) => void;
   setEditMode: (v: boolean) => void;
   setPreviewDrafts: (v: boolean) => void;
   pendingCount: number;
@@ -44,6 +46,7 @@ interface CmsContextType {
 const CmsContext = createContext<CmsContextType>({
   values: {}, drafts: {}, published: {}, types: {}, loaded: false,
   editMode: false, previewDrafts: true, saving: false,
+  autoPublish: true, setAutoPublish: () => {},
   setEditMode: () => {}, setPreviewDrafts: () => {},
   pendingCount: 0,
   saveDraft: async () => {}, publishAll: async () => {},
