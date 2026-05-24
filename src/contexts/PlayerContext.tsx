@@ -1,4 +1,5 @@
-import { createContext, useContext, useState, useRef, useCallback, useMemo, type ReactNode } from "react";
+import { createContext, useContext, useState, useRef, useCallback, useMemo, useEffect, type ReactNode } from "react";
+import { recordRecentlyPlayed } from "@/hooks/useRecentlyPlayed";
 
 export interface PlayerTrack {
   id: string;
@@ -54,6 +55,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     setCurrentTrack(track);
     setIsPlaying(true);
     if (q && q.length) setQueue(q);
+    recordRecentlyPlayed(track.id);
   }, []);
 
   const pause = useCallback(() => setIsPlaying(false), []);
