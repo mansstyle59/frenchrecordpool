@@ -52,6 +52,7 @@ import MostFavorited from "@/components/widgets/MostFavorited";
 import RecentlyPlayed from "@/components/widgets/RecentlyPlayed";
 import { useAuth } from "@/contexts/AuthContext";
 import { useIsMobile } from "@/hooks/use-mobile";
+import ArtistCredit from "@/components/ArtistCredit";
 
 export interface Widget {
   id: string;
