@@ -14,6 +14,7 @@ export default function SupportLauncher() {
   useEffect(() => {
     if (!user || realIsAdmin) return;
     let threadId: string | null = null;
+    let ch: ReturnType<typeof supabase.channel> | null = null;
 
     const refresh = async () => {
       const { data: thread } = await supabase
@@ -22,7 +23,20 @@ export default function SupportLauncher() {
         .eq("user_id", user.id)
         .maybeSingle();
       if (!thread) { setUnread(0); return; }
+      const wasNull = threadId === null;
       threadId = thread.id;
+      // Once we know the thread id, attach a thread-scoped messages listener.
+      // This avoids subscribing to the whole support_messages table.
+      if (wasNull && threadId) {
+        ch?.on(
+          "postgres_changes",
+          { event: "INSERT", schema: "public", table: "support_messages", filter: `thread_id=eq.${threadId}` },
+          (payload) => {
+            const m = payload.new as any;
+            if (m.is_admin && !open) refresh();
+          },
+        );
+      }
       if (!thread.unread_for_user) { setUnread(0); return; }
       const { count } = await supabase
         .from("support_messages")
@@ -31,22 +45,18 @@ export default function SupportLauncher() {
         .eq("is_admin", true);
       setUnread(count ?? 0);
     };
-    refresh();
 
-    const ch = supabase
+    ch = supabase
       .channel(`support-launcher:${user.id}`)
       .on("postgres_changes",
         { event: "*", schema: "public", table: "support_threads", filter: `user_id=eq.${user.id}` },
-        refresh)
-      .on("postgres_changes",
-        { event: "INSERT", schema: "public", table: "support_messages" },
-        (payload) => {
-          const m = payload.new as any;
-          if (threadId && m.thread_id === threadId && m.is_admin && !open) refresh();
-        })
-      .subscribe();
-    return () => { supabase.removeChannel(ch); };
+        refresh);
+    ch.subscribe();
+    refresh();
+
+    return () => { if (ch) supabase.removeChannel(ch); };
   }, [user, realIsAdmin, open]);
+
 
   useEffect(() => { if (open) setUnread(0); }, [open]);
 
