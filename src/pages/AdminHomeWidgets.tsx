@@ -31,7 +31,7 @@ import {
 } from "@dnd-kit/core";
 import {
   arrayMove, SortableContext, sortableKeyboardCoordinates,
-  useSortable, verticalListSortingStrategy,
+  useSortable, rectSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
@@ -321,8 +321,8 @@ export default function AdminHomeWidgets() {
   }, [widgets]);
 
   const list: Widget[] = draft ?? widgets;
-  const isDirty = draft !== null && JSON.stringify(draft.map(w => ({ id: w.id, position: w.position, is_active: w.is_active })))
-    !== JSON.stringify(widgets.map(w => ({ id: w.id, position: w.position, is_active: w.is_active })));
+  const snap = (arr: Widget[]) => JSON.stringify(arr.map(w => ({ id: w.id, position: w.position, is_active: w.is_active, col_span: (w.config as any)?.col_span ?? 2 })));
+  const isDirty = draft !== null && snap(draft) !== snap(widgets);
 
   const upsert = useMutation({
     mutationFn: async (w: Widget) => {
@@ -355,7 +355,7 @@ export default function AdminHomeWidgets() {
     mutationFn: async (items: Widget[]) => {
       await Promise.all(items.map((w) =>
         supabase.from("home_widgets")
-          .update({ position: w.position, is_active: w.is_active })
+          .update({ position: w.position, is_active: w.is_active, config: w.config as any })
           .eq("id", w.id!)
       ));
     },
@@ -384,6 +384,10 @@ export default function AdminHomeWidgets() {
 
   const toggleActiveLocal = (id: string, is_active: boolean) => {
     setDraft(list.map((w) => (w.id === id ? { ...w, is_active } : w)));
+  };
+
+  const setColSpanLocal = (id: string, col_span: 1 | 2) => {
+    setDraft(list.map((w) => (w.id === id ? { ...w, config: { ...w.config, col_span } } : w)));
   };
 
   const addNew = (type: string) => {
@@ -530,7 +534,7 @@ export default function AdminHomeWidgets() {
                 <Label className="text-xs uppercase tracking-wider text-muted-foreground">
                   Composition ({list.length})
                 </Label>
-                <p className="text-[10px] text-muted-foreground">Glisse pour réordonner · publie pour valider</p>
+                <p className="text-[10px] text-muted-foreground">Glisse pour réorganiser · clique sur le badge pour passer en 1 ou 2 colonnes</p>
               </div>
               {isLoading ? (
                 <p className="text-muted-foreground text-sm">Chargement…</p>
@@ -540,8 +544,8 @@ export default function AdminHomeWidgets() {
                 </div>
               ) : (
                 <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
-                  <SortableContext items={list.map((w) => w.id!)} strategy={verticalListSortingStrategy}>
-                    <div className="space-y-2">
+                  <SortableContext items={list.map((w) => w.id!)} strategy={rectSortingStrategy}>
+                    <div className="grid grid-cols-2 gap-2 auto-rows-min">
                       {list.map((w) => (
                         <SortableItem
                           key={w.id}
@@ -549,6 +553,7 @@ export default function AdminHomeWidgets() {
                           onEdit={() => setEditing(w)}
                           onRemove={() => confirm("Supprimer ce widget ?") && remove.mutate(w.id!)}
                           onToggle={(v) => toggleActiveLocal(w.id!, v)}
+                          onSpanChange={(span) => setColSpanLocal(w.id!, span)}
                         />
                       ))}
                     </div>
@@ -586,24 +591,30 @@ export default function AdminHomeWidgets() {
 
 /* ─── Sortable item ─── */
 function SortableItem({
-  widget, onEdit, onRemove, onToggle,
+  widget, onEdit, onRemove, onToggle, onSpanChange,
 }: {
   widget: Widget;
   onEdit: () => void;
   onRemove: () => void;
   onToggle: (v: boolean) => void;
+  onSpanChange: (span: 1 | 2) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: widget.id! });
   const meta = TYPE_META[widget.type];
   const Icon = meta?.icon || CodeIcon;
-  const style: any = { transform: CSS.Transform.toString(transform), transition };
+  const colSpan: 1 | 2 = ((widget.config as any)?.col_span === 1 ? 1 : 2);
+  const style: any = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    gridColumn: colSpan === 2 ? "span 2 / span 2" : "span 1 / span 1",
+  };
 
   return (
     <div
       ref={setNodeRef} style={style}
       className={`flex items-center gap-3 rounded-xl border bg-card p-3 transition ${isDragging ? "opacity-50 ring-2 ring-primary" : "hover:border-primary/40"}`}
     >
-      <button {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground p-1">
+      <button {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground p-1" aria-label="Déplacer">
         <GripVertical className="h-4 w-4" />
       </button>
       <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
@@ -616,6 +627,14 @@ function SortableItem({
         </div>
         <p className="text-xs text-muted-foreground truncate">{widget.config.title || meta?.desc}</p>
       </div>
+      <button
+        type="button"
+        onClick={() => onSpanChange(colSpan === 2 ? 1 : 2)}
+        title={colSpan === 2 ? "Passer en demi-largeur (2 colonnes)" : "Passer en pleine largeur"}
+        className="inline-flex items-center gap-1 h-7 px-2 rounded-md border border-border bg-background hover:border-primary/60 hover:bg-primary/5 text-[10px] font-bold uppercase tracking-wider"
+      >
+        {colSpan === 2 ? (<><LayoutTemplate className="h-3 w-3" /> Pleine</>) : (<><Columns className="h-3 w-3" /> 1/2</>)}
+      </button>
       <Switch checked={widget.is_active} onCheckedChange={onToggle} />
       <Button variant="outline" size="sm" onClick={onEdit}>Modifier</Button>
       <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onRemove} aria-label="Supprimer le widget">
