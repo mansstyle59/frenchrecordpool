@@ -129,6 +129,7 @@ const App = () => (
           </CmsProvider>
         </PlayerProvider>
         </BrandingProvider>
+        </PresenceProvider>
       </AuthProvider>
     </QueryClientProvider>
   </ThemeProvider>
