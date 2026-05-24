@@ -219,10 +219,11 @@ export default function CmsAutoEditor() {
           if (editModeRef.current) sec.style.opacity = hidden ? "0.4" : "";
           else sec.style.opacity = "";
 
-          let badge = sec.querySelector<HTMLElement>(":scope > .cms-auto-vis-btn");
+          let badge = sec.querySelector<HTMLButtonElement>(":scope > .cms-auto-vis-btn");
           if (editModeRef.current) {
             if (!badge) {
               badge = document.createElement("button");
+              badge.type = "button";
               badge.className = "cms-auto-vis-btn";
               badge.type = "button";
               if (getComputedStyle(sec).position === "static") sec.style.position = "relative";
