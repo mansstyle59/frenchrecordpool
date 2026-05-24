@@ -77,9 +77,12 @@ export default function TrackDetail() {
   }
 
   const shareUrl = typeof window !== "undefined" ? window.location.href : "";
-  const format = inferFormat(track.audio_url || (track as any).download_url);
-  const fullIsHosted = !!track.audio_url && !((track as any).download_url && (track as any).download_url.startsWith("http") && !track.audio_url.includes("/object/public/track-audio/"));
-  const resolvedUrl = (track as any).download_url || track.audio_url;
+  const downloadUrl = secureUrls?.download_url ?? null;
+  const acapellaUrl = secureUrls?.acapella_url ?? null;
+  const instrumentalUrl = secureUrls?.instrumental_url ?? null;
+  const format = inferFormat(track.audio_url || downloadUrl);
+  const fullIsHosted = !!track.audio_url && !(downloadUrl && downloadUrl.startsWith("http") && !track.audio_url.includes("/object/public/track-audio/"));
+  const resolvedUrl = downloadUrl || track.audio_url;
   const isExternalLink = resolvedUrl && !resolvedUrl.includes("/object/public/track-audio/");
   const DownloadIcon = isExternalLink ? ExternalLink : Download;
 
