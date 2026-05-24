@@ -101,14 +101,14 @@ function PublicSidebar({ onNavigate }: { onNavigate?: () => void }) {
 
         {user && (
           <SidebarGroup>
-            <SidebarGroupLabel>Espaces</SidebarGroupLabel>
+            <SidebarGroupLabel><CmsText editKey="nav.group.spaces">Mes espaces</CmsText></SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
                 <SidebarMenuItem>
-                  <SidebarMenuButton asChild isActive={pathname.startsWith("/dashboard")} tooltip="Mon compte">
+                  <SidebarMenuButton asChild isActive={pathname.startsWith("/dashboard")} tooltip="Tableau de bord">
                     <NavLink to="/dashboard" onClick={onNavigate} className="flex items-center gap-2">
                       <User className="h-4 w-4" />
-                      <span>{profile?.dj_name || "Mon compte"}</span>
+                      <span>{profile?.dj_name || "Tableau de bord"}</span>
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -116,16 +116,16 @@ function PublicSidebar({ onNavigate }: { onNavigate?: () => void }) {
                   <SidebarMenuButton asChild isActive={pathname.startsWith("/dj")} tooltip="Espace DJ">
                     <NavLink to="/dj" onClick={onNavigate} className="flex items-center gap-2">
                       <Mic2 className="h-4 w-4" />
-                      <span>Espace DJ</span>
+                      <span><CmsText editKey="nav.dj_space">Espace DJ</CmsText></span>
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
                 {isAdmin && (
                   <SidebarMenuItem>
-                    <SidebarMenuButton asChild isActive={pathname.startsWith("/admin")} tooltip="Admin">
+                    <SidebarMenuButton asChild isActive={pathname.startsWith("/admin")} tooltip="Administration">
                       <NavLink to="/admin" onClick={onNavigate} className="flex items-center gap-2 text-primary">
                         <Shield className="h-4 w-4" />
-                        <span>Admin</span>
+                        <span><CmsText editKey="nav.admin">Administration</CmsText></span>
                       </NavLink>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
