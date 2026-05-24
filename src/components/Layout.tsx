@@ -2,6 +2,7 @@ import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
   Search, Disc3, LogIn, LogOut, Shield, Mic2, Eye, EyeOff, User,
   Home, Sparkles, Music2, Download, CreditCard, Users as UsersIcon, Clapperboard,
+  ListMusic, Layers,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,19 +21,23 @@ import {
   SidebarHeader, SidebarFooter, SidebarSeparator,
 } from "@/components/ui/sidebar";
 
-const NAV_MAIN = [
+// Navigation harmonisée — libellés courts, cohérents, icônes distinctes.
+const NAV_DISCOVER = [
   { key: "nav.home", to: "/", label: "Accueil", icon: Home, end: true },
   { key: "nav.new", to: "/new", label: "Nouveautés", icon: Sparkles },
   { key: "nav.shorts", to: "/shorts", label: "Shorts", icon: Clapperboard },
-  { key: "nav.playlists", to: "/playlists", label: "Playlists", icon: Music2 },
-  { key: "nav.djs", to: "/remixers", label: "DJ / Remixer", icon: Mic2 },
+];
+
+const NAV_CATALOG = [
+  { key: "nav.playlists", to: "/playlists", label: "Playlists", icon: ListMusic },
+  { key: "nav.djs", to: "/remixers", label: "DJ & Remixers", icon: Mic2 },
   { key: "nav.artists", to: "/artists", label: "Artistes", icon: Music2 },
-  { key: "nav.stems", to: "/stems", label: "Stems", icon: Music2 },
+  { key: "nav.stems", to: "/stems", label: "Stems", icon: Layers },
 ];
 
 const NAV_ACCOUNT = [
-  { key: "nav.downloads", to: "/downloads", label: "Téléchargements", icon: Download },
-  { key: "nav.pricing", to: "/pricing", label: "Tarifs", icon: CreditCard },
+  { key: "nav.downloads", to: "/downloads", label: "Mes téléchargements", icon: Download },
+  { key: "nav.pricing", to: "/pricing", label: "Abonnements", icon: CreditCard },
 ];
 
 function PublicSidebar({ onNavigate }: { onNavigate?: () => void }) {
@@ -73,29 +78,37 @@ function PublicSidebar({ onNavigate }: { onNavigate?: () => void }) {
 
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Catalogue</SidebarGroupLabel>
+          <SidebarGroupLabel><CmsText editKey="nav.group.discover">Découvrir</CmsText></SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>{NAV_MAIN.map(renderItem)}</SidebarMenu>
+            <SidebarMenu>{NAV_DISCOVER.map(renderItem)}</SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
 
         <SidebarGroup>
-          <SidebarGroupLabel>Compte</SidebarGroupLabel>
+          <SidebarGroupLabel><CmsText editKey="nav.group.catalog">Catalogue</CmsText></SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>{NAV_CATALOG.map(renderItem)}</SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarGroup>
+          <SidebarGroupLabel><CmsText editKey="nav.group.account">Mon compte</CmsText></SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>{NAV_ACCOUNT.map(renderItem)}</SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
 
+
         {user && (
           <SidebarGroup>
-            <SidebarGroupLabel>Espaces</SidebarGroupLabel>
+            <SidebarGroupLabel><CmsText editKey="nav.group.spaces">Mes espaces</CmsText></SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
                 <SidebarMenuItem>
-                  <SidebarMenuButton asChild isActive={pathname.startsWith("/dashboard")} tooltip="Mon compte">
+                  <SidebarMenuButton asChild isActive={pathname.startsWith("/dashboard")} tooltip="Tableau de bord">
                     <NavLink to="/dashboard" onClick={onNavigate} className="flex items-center gap-2">
                       <User className="h-4 w-4" />
-                      <span>{profile?.dj_name || "Mon compte"}</span>
+                      <span>{profile?.dj_name || "Tableau de bord"}</span>
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -103,16 +116,16 @@ function PublicSidebar({ onNavigate }: { onNavigate?: () => void }) {
                   <SidebarMenuButton asChild isActive={pathname.startsWith("/dj")} tooltip="Espace DJ">
                     <NavLink to="/dj" onClick={onNavigate} className="flex items-center gap-2">
                       <Mic2 className="h-4 w-4" />
-                      <span>Espace DJ</span>
+                      <span><CmsText editKey="nav.dj_space">Espace DJ</CmsText></span>
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
                 {isAdmin && (
                   <SidebarMenuItem>
-                    <SidebarMenuButton asChild isActive={pathname.startsWith("/admin")} tooltip="Admin">
+                    <SidebarMenuButton asChild isActive={pathname.startsWith("/admin")} tooltip="Administration">
                       <NavLink to="/admin" onClick={onNavigate} className="flex items-center gap-2 text-primary">
                         <Shield className="h-4 w-4" />
-                        <span>Admin</span>
+                        <span><CmsText editKey="nav.admin">Administration</CmsText></span>
                       </NavLink>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -130,36 +143,36 @@ function PublicSidebar({ onNavigate }: { onNavigate?: () => void }) {
             {realIsAdmin && (
               <SidebarMenuItem>
                 <SidebarMenuButton
-                  tooltip={viewAsUser ? "Quitter aperçu" : "Voir comme user"}
+                  tooltip={viewAsUser ? "Repasser en admin" : "Aperçu utilisateur"}
                   onClick={() => setViewAsUser(!viewAsUser)}
                 >
                   {viewAsUser ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  <span>{viewAsUser ? "Quitter aperçu" : "Voir comme user"}</span>
+                  <span>{viewAsUser ? "Repasser en admin" : "Aperçu utilisateur"}</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             )}
             <SidebarMenuItem>
-              <SidebarMenuButton tooltip="Déconnexion" onClick={handleSignOut}>
+              <SidebarMenuButton tooltip="Se déconnecter" onClick={handleSignOut}>
                 <LogOut className="h-4 w-4" />
-                <span>Déconnexion</span>
+                <span><CmsText editKey="nav.signout">Se déconnecter</CmsText></span>
               </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>
         ) : (
           <SidebarMenu>
             <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="Connexion">
+              <SidebarMenuButton asChild tooltip="Se connecter">
                 <Link to="/login" onClick={onNavigate} className="flex items-center gap-2">
                   <LogIn className="h-4 w-4" />
-                  <span>Connexion</span>
+                  <span><CmsText editKey="nav.signin">Se connecter</CmsText></span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="S'inscrire" className="text-primary">
+              <SidebarMenuButton asChild tooltip="Créer un compte" className="text-primary">
                 <Link to="/signup" onClick={onNavigate} className="flex items-center gap-2">
                   <UsersIcon className="h-4 w-4" />
-                  <span>S'inscrire</span>
+                  <span><CmsText editKey="nav.signup">Créer un compte</CmsText></span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
@@ -206,13 +219,13 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     {isAdmin && (
                       <Link to="/admin" className="hidden md:inline-flex">
                         <Button variant="ghost" size="sm" className="gap-1">
-                          <Shield className="h-4 w-4" /> <span className="hidden lg:inline">Admin</span>
+                          <Shield className="h-4 w-4" /> <span className="hidden lg:inline">Administration</span>
                         </Button>
                       </Link>
                     )}
                     <Link to="/dashboard" className="hidden sm:inline-flex">
                       <Button variant="ghost" size="sm">
-                        {profile?.dj_name || "Mon compte"}
+                        {profile?.dj_name || "Tableau de bord"}
                       </Button>
                     </Link>
                   </>
@@ -220,11 +233,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   <>
                     <Link to="/login" className="hidden sm:inline-flex">
                       <Button variant="ghost" size="sm" className="gap-1">
-                        <LogIn className="h-4 w-4" /> Connexion
+                        <LogIn className="h-4 w-4" /> Se connecter
                       </Button>
                     </Link>
                     <Link to="/signup" className="hidden sm:inline-flex">
-                      <Button variant="hero" size="sm">S'inscrire</Button>
+                      <Button variant="hero" size="sm">Créer un compte</Button>
                     </Link>
                   </>
                 )}
@@ -245,8 +258,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 </div>
                 <div className="flex gap-6 text-sm text-muted-foreground">
                   <CmsLink editKey="footer.link.new" defaultLabel="Nouveautés" defaultUrl="/new" className="hover:text-foreground transition-colors" />
-                  <CmsLink editKey="footer.link.djs" defaultLabel="DJ / Remixer" defaultUrl="/remixers" className="hover:text-foreground transition-colors" />
+                  <CmsLink editKey="footer.link.djs" defaultLabel="DJ & Remixers" defaultUrl="/remixers" className="hover:text-foreground transition-colors" />
                   <CmsLink editKey="footer.link.artists" defaultLabel="Artistes" defaultUrl="/artists" className="hover:text-foreground transition-colors" />
+                  <CmsLink editKey="footer.link.pricing" defaultLabel="Abonnements" defaultUrl="/pricing" className="hover:text-foreground transition-colors" />
                 </div>
                 <p className="text-xs text-muted-foreground">
                   <CmsText editKey="footer.copyright">© 2026 French Record Pool. Tous droits réservés.</CmsText>
