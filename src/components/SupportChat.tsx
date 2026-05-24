@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Send, Loader2, MessageCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { usePresence } from "@/contexts/PresenceContext";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
@@ -23,13 +24,18 @@ interface Msg {
 
 export default function SupportChat({ threadOverride = null, className }: Props) {
   const { user, realIsAdmin } = useAuth();
+  const { isOnline } = usePresence();
   const isAdminMode = !!threadOverride;
   const [threadId, setThreadId] = useState<string | null>(threadOverride?.id ?? null);
   const [messages, setMessages] = useState<Msg[]>([]);
   const [body, setBody] = useState("");
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const [peerTyping, setPeerTyping] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const typingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  const peerOnline = isAdminMode ? isOnline(threadOverride?.user_id) : false;
 
   // Ensure thread exists (user mode) + load messages
   useEffect(() => {
@@ -84,11 +90,11 @@ export default function SupportChat({ threadOverride = null, className }: Props)
     return () => { cancelled = true; };
   }, [user, threadOverride?.id, isAdminMode]);
 
-  // Realtime
+  // Realtime messages + typing broadcast
   useEffect(() => {
     if (!threadId) return;
     const ch = supabase
-      .channel(`support_messages:${threadId}`)
+      .channel(`support_messages:${threadId}`, { config: { broadcast: { self: false } } })
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "support_messages", filter: `thread_id=eq.${threadId}` },
@@ -97,16 +103,36 @@ export default function SupportChat({ threadOverride = null, className }: Props)
             if (prev.some((m) => m.id === (payload.new as any).id)) return prev;
             return [...prev, payload.new as Msg];
           });
-          // mark read
           supabase
             .from("support_threads")
             .update(isAdminMode ? { unread_for_admin: false } : { unread_for_user: false })
             .eq("id", threadId);
         }
       )
+      .on("broadcast", { event: "typing" }, (payload) => {
+        const fromAdmin = !!(payload.payload as any)?.is_admin;
+        // Show typing only if it's from the opposite side
+        if (fromAdmin !== isAdminMode) {
+          setPeerTyping(true);
+          if (typingTimer.current) clearTimeout(typingTimer.current);
+          typingTimer.current = setTimeout(() => setPeerTyping(false), 2500);
+        }
+      })
       .subscribe();
-    return () => { supabase.removeChannel(ch); };
+    channelRef.current = ch;
+    return () => {
+      supabase.removeChannel(ch);
+      channelRef.current = null;
+    };
   }, [threadId, isAdminMode]);
+
+  const broadcastTyping = () => {
+    channelRef.current?.send({
+      type: "broadcast",
+      event: "typing",
+      payload: { is_admin: isAdminMode && realIsAdmin },
+    });
+  };
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
@@ -137,6 +163,15 @@ export default function SupportChat({ threadOverride = null, className }: Props)
         <span className="font-medium text-sm">
           {isAdminMode ? "Conversation" : "Support — discuter avec un admin"}
         </span>
+        {isAdminMode && (
+          <span className="flex items-center gap-1.5 text-[11px] text-muted-foreground ml-2">
+            <span className={`h-2 w-2 rounded-full ${peerOnline ? "bg-green-500" : "bg-muted-foreground/40"}`} />
+            {peerOnline ? "En ligne" : "Hors ligne"}
+          </span>
+        )}
+        {peerTyping && (
+          <span className="text-[11px] text-muted-foreground ml-auto italic">en train d'écrire…</span>
+        )}
       </div>
 
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-3">
@@ -179,7 +214,7 @@ export default function SupportChat({ threadOverride = null, className }: Props)
       <div className="border-t border-border p-2 flex gap-2 items-end">
         <Textarea
           value={body}
-          onChange={(e) => setBody(e.target.value)}
+          onChange={(e) => { setBody(e.target.value); broadcastTyping(); }}
           onKeyDown={(e) => {
             if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }
           }}
