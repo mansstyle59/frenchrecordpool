@@ -53,11 +53,16 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { data: track, error: trackError } = await adminClient
+    const { data: isAdmin } = await adminClient.rpc("has_role", { _user_id: user.id, _role: "admin" });
+
+    let trackQuery = adminClient
       .from("tracks")
-      .select("id, title, artist, version, audio_url, download_url")
-      .eq("id", track_id)
-      .single();
+      .select("id, title, artist, version, audio_url, download_url, status, submitted_by")
+      .eq("id", track_id);
+    if (!isAdmin) {
+      trackQuery = trackQuery.eq("status", "approved");
+    }
+    const { data: track, error: trackError } = await trackQuery.single();
 
     if (trackError || !track) {
       return new Response(JSON.stringify({ error: "Track introuvable" }), {

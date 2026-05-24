@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ElementType } from "react";
 import { Pencil, Bold, Italic, Underline as UIcon, Link2, List, ListOrdered } from "lucide-react";
 import { useCms, useCmsValue } from "@/contexts/CmsContext";
 import { cn } from "@/lib/utils";
+import { sanitizeHtml } from "@/lib/sanitizeHtml";
 
 interface Props {
   editKey: string;
@@ -23,11 +24,11 @@ export default function CmsRichText({ editKey, as: Tag = "div", className, child
   const [editing, setEditing] = useState(false);
 
   useEffect(() => {
-    if (!editing && ref.current) ref.current.innerHTML = value || "";
+    if (!editing && ref.current) ref.current.innerHTML = sanitizeHtml(value);
   }, [value, editing]);
 
   if (!editMode) {
-    return <Tag className={className} dangerouslySetInnerHTML={{ __html: value || "" }} />;
+    return <Tag className={className} dangerouslySetInnerHTML={{ __html: sanitizeHtml(value) }} />;
   }
 
   const queueSave = () => {
@@ -73,7 +74,7 @@ export default function CmsRichText({ editKey, as: Tag = "div", className, child
           saveDraft(editKey, "richtext", ref.current?.innerHTML || "");
         }}
         onInput={queueSave}
-        dangerouslySetInnerHTML={{ __html: value || "" }}
+        dangerouslySetInnerHTML={{ __html: sanitizeHtml(value) }}
       />
       <span className="absolute -top-2 -right-2 z-10 hidden group-hover/cms:flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground shadow-md pointer-events-none">
         <Pencil className="h-3 w-3" />
