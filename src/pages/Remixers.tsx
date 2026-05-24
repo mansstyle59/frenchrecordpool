@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Search, Users, Disc3, X, Headphones, Music2 } from "lucide-react";
+import { Search, Users, Disc3, X, Headphones, Music2, Mic2, Guitar } from "lucide-react";
 import { motion } from "framer-motion";
 import Layout from "@/components/Layout";
 import PageHero from "@/components/PageHero";
@@ -12,10 +12,18 @@ import { normalizeRoles, roleLabel, roleClassName } from "@/lib/artistRoles";
 
 const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ#".split("");
 
-const ROLE_FILTERS = [
+const DJ_ROLES = ["dj", "remixer"];
+const ARTIST_ROLES = ["vocalist", "band", "producer"];
+
+const DJ_FILTERS = [
   { key: "dj", label: "DJ", icon: <Users className="h-3 w-3" /> },
   { key: "remixer", label: "Remixer", icon: <Headphones className="h-3 w-3" /> },
-  { key: "producer", label: "Producer", icon: <Music2 className="h-3 w-3" /> },
+] as const;
+
+const ARTIST_FILTERS = [
+  { key: "vocalist", label: "Chanteur·euse", icon: <Mic2 className="h-3 w-3" /> },
+  { key: "band", label: "Groupe", icon: <Users className="h-3 w-3" /> },
+  { key: "producer", label: "Musicien", icon: <Guitar className="h-3 w-3" /> },
 ] as const;
 
 export default function Remixers() {
