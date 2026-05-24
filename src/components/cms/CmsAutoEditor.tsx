@@ -31,6 +31,8 @@ function hashStr(s: string) {
 type ImgTarget = { key: string; el: HTMLImageElement; current: string };
 type LinkTarget = { key: string; el: HTMLAnchorElement; current: string };
 
+const SECTION_SELECTOR = "section[id], section[data-cms-section], [data-cms-block]";
+
 export default function CmsAutoEditor() {
   const { editMode, values, saveDraft } = useCms();
   const { pathname } = useLocation();
