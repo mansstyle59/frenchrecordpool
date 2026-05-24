@@ -64,6 +64,7 @@ const App = () => (
   <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
+        <PresenceProvider>
         <BrandingProvider>
         <PlayerProvider>
           <CmsProvider>
