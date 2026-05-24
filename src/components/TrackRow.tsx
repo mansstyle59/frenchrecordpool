@@ -11,6 +11,7 @@ import { useFavorites } from "@/hooks/useFavorites";
 import type { DbTrack } from "@/hooks/useTracks";
 import { resolveCover } from "@/lib/trackCover";
 import ArtistCredit from "@/components/ArtistCredit";
+import AdminCoverEditor from "@/components/admin/AdminCoverEditor";
 
 /* ─── Responsive grid template (header + rows MUST match exactly) ───
    Column count per breakpoint:
