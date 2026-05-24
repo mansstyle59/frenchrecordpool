@@ -171,22 +171,13 @@ export default function NewReleases() {
 
   return (
     <Layout>
-      {/* ── DJCity-style title block ── */}
-      <div className="border-b border-border/40 bg-gradient-to-b from-secondary/30 to-transparent">
-        <div className="container py-8 md:py-12">
-          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.25em] text-primary mb-2">
-                Record Pool
-              </p>
-              <h1 className="text-4xl md:text-6xl font-black uppercase tracking-tight leading-none">
-                Nouveautés
-              </h1>
-              <div className="mt-3 h-1 w-12 bg-primary rounded-full" />
-              <p className="text-sm text-muted-foreground mt-4 max-w-xl">
-                Découvrez les dernières sorties, edits et remixes ajoutés au pool — mis à jour quotidiennement.
-              </p>
-            </div>
+      {/* ── Compact header ── */}
+      <div className="border-b border-border/40">
+        <div className="container py-4 md:py-5">
+          <div className="flex items-center justify-between gap-4">
+            <h1 className="font-display text-xl md:text-2xl font-bold uppercase tracking-tight leading-none">
+              Nouveautés
+            </h1>
             <div className="flex items-center gap-3 text-xs text-muted-foreground">
               <span className="inline-flex items-center gap-1.5">
                 <Disc3 className="h-3.5 w-3.5 text-primary" />
@@ -202,7 +193,7 @@ export default function NewReleases() {
         </div>
       </div>
 
-      <div className="container py-6">
+      <div className="container py-4">
         {/* ── Genre tabs (DJCity-style underlined pills) ── */}
         {genres.length > 0 && (
           <div className="flex gap-1 overflow-x-auto pb-2 mb-5 -mx-2 px-2 border-b border-border/40 scrollbar-thin">
