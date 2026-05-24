@@ -530,7 +530,7 @@ export default function AdminHomeWidgets() {
                 <Label className="text-xs uppercase tracking-wider text-muted-foreground">
                   Composition ({list.length})
                 </Label>
-                <p className="text-[10px] text-muted-foreground">Glisse pour réordonner · publie pour valider</p>
+                <p className="text-[10px] text-muted-foreground">Glisse pour réorganiser · clique sur le badge pour passer en 1 ou 2 colonnes</p>
               </div>
               {isLoading ? (
                 <p className="text-muted-foreground text-sm">Chargement…</p>
@@ -540,8 +540,8 @@ export default function AdminHomeWidgets() {
                 </div>
               ) : (
                 <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
-                  <SortableContext items={list.map((w) => w.id!)} strategy={verticalListSortingStrategy}>
-                    <div className="space-y-2">
+                  <SortableContext items={list.map((w) => w.id!)} strategy={rectSortingStrategy}>
+                    <div className="grid grid-cols-2 gap-2 auto-rows-min">
                       {list.map((w) => (
                         <SortableItem
                           key={w.id}
@@ -549,6 +549,7 @@ export default function AdminHomeWidgets() {
                           onEdit={() => setEditing(w)}
                           onRemove={() => confirm("Supprimer ce widget ?") && remove.mutate(w.id!)}
                           onToggle={(v) => toggleActiveLocal(w.id!, v)}
+                          onSpanChange={(span) => setColSpanLocal(w.id!, span)}
                         />
                       ))}
                     </div>
