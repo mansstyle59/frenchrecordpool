@@ -1451,6 +1451,105 @@ function Field({ label, children, className = "" }: { label: string; children: R
   );
 }
 
+/* ─── Dimensions editor (largeur + hauteur du bloc) ─── */
+const CONTAINER_PRESETS: Array<{ value: string; label: string; hint: string }> = [
+  { value: "narrow",  label: "Étroit",   hint: "~768 px" },
+  { value: "default", label: "Standard", hint: "~1200 px" },
+  { value: "wide",    label: "Large",    hint: "~1440 px" },
+  { value: "full",    label: "Pleine largeur", hint: "100%" },
+];
+
+function DimensionsEditor({ value, onChange }: { value: any; onChange: (k: string, v: any) => void }) {
+  return (
+    <details className="group rounded-lg border border-border/60 bg-card/40" open>
+      <summary className="cursor-pointer list-none flex items-center justify-between px-3 py-2 text-sm font-medium">
+        <span className="flex items-center gap-2">
+          <LayoutTemplate className="h-4 w-4 text-primary" />
+          Dimensions du bloc (largeur · hauteur)
+        </span>
+        <span className="text-xs text-muted-foreground group-open:hidden">Régler</span>
+      </summary>
+      <div className="px-3 pb-3 pt-1 space-y-3">
+        <Field label="Largeur (préréglage)">
+          <Select
+            value={value.container ?? "default"}
+            onValueChange={(v) => onChange("container", v)}
+          >
+            <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {CONTAINER_PRESETS.map((p) => (
+                <SelectItem key={p.value} value={p.value}>
+                  {p.label} <span className="text-muted-foreground">· {p.hint}</span>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </Field>
+
+        <Field label={`Largeur personnalisée (px) — laisse vide pour utiliser le préréglage`}>
+          <Input
+            type="number" min={320} max={2560} step={10}
+            placeholder="ex. 960"
+            value={value.max_width_px ?? ""}
+            onChange={(e) => {
+              const n = parseInt(e.target.value);
+              onChange("max_width_px", Number.isFinite(n) && n > 0 ? n : undefined);
+            }}
+          />
+        </Field>
+
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="Hauteur min. (px)">
+            <Input
+              type="number" min={0} max={2000} step={10}
+              placeholder="ex. 400"
+              value={value.min_height_px ?? ""}
+              onChange={(e) => {
+                const n = parseInt(e.target.value);
+                onChange("min_height_px", Number.isFinite(n) && n > 0 ? n : undefined);
+              }}
+            />
+          </Field>
+          <Field label="ou hauteur min. (vh)">
+            <Input
+              type="number" min={0} max={100} step={1}
+              placeholder="ex. 60"
+              value={value.min_height_vh ?? ""}
+              onChange={(e) => {
+                const n = parseInt(e.target.value);
+                onChange("min_height_vh", Number.isFinite(n) && n > 0 ? n : undefined);
+              }}
+            />
+          </Field>
+        </div>
+
+        <Field label="Alignement vertical du contenu (quand une hauteur est fixée)">
+          <Select
+            value={value.align_y ?? "center"}
+            onValueChange={(v) => onChange("align_y", v)}
+          >
+            <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="start">Haut</SelectItem>
+              <SelectItem value="center">Centre</SelectItem>
+              <SelectItem value="end">Bas</SelectItem>
+            </SelectContent>
+          </Select>
+        </Field>
+
+        <Button
+          variant="ghost" size="sm" className="text-xs h-7"
+          onClick={() => {
+            ["max_width_px", "min_height_px", "min_height_vh", "align_y"].forEach((k) => onChange(k, undefined));
+          }}
+        >
+          Réinitialiser dimensions
+        </Button>
+      </div>
+    </details>
+  );
+}
+
 /* ─── Spacing editor (responsive top/bottom padding) ─── */
 const PAD_SIZES: Array<{ value: string; label: string }> = [
   { value: "none", label: "Aucun" },
