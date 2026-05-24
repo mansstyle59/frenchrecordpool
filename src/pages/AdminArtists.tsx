@@ -43,6 +43,10 @@ const slugify = (s: string) =>
   s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
     .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 64);
 
+type RoleTab = "all" | "dj" | "artist";
+const DJ_ROLES: ArtistRole[] = ["dj", "remixer"];
+const ARTIST_ROLES: ArtistRole[] = ["vocalist", "band", "producer"];
+
 export default function AdminArtists() {
   const { isAdmin } = useAuth();
   const qc = useQueryClient();
@@ -52,6 +56,7 @@ export default function AdminArtists() {
   const [saving, setSaving] = useState(false);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [search, setSearch] = useState("");
+  const [tab, setTab] = useState<RoleTab>("all");
 
   const { data: artists = [], isLoading } = useQuery({
     queryKey: ["admin-artists"],
@@ -83,22 +88,32 @@ export default function AdminArtists() {
     enabled: isAdmin,
   });
 
+  const withRoles = useMemo(
+    () => artists.map((a) => ({ ...a, _roles: normalizeRoles(a.roles, a.kind) })),
+    [artists],
+  );
+
   const stats = useMemo(() => ({
-    total: artists.length,
-    featured: artists.filter((a) => a.featured).length,
-    withPhoto: artists.filter((a) => !!a.photo_url).length,
-    countries: new Set(artists.map((a) => a.country).filter(Boolean)).size,
-  }), [artists]);
+    total: withRoles.length,
+    djs: withRoles.filter((a) => a._roles.some((r) => DJ_ROLES.includes(r))).length,
+    artists: withRoles.filter((a) => a._roles.some((r) => ARTIST_ROLES.includes(r))).length,
+    featured: withRoles.filter((a) => a.featured).length,
+  }), [withRoles]);
 
   const filtered = useMemo(() => {
-    if (!search) return artists;
-    const q = search.toLowerCase();
-    return artists.filter((a) =>
-      a.name.toLowerCase().includes(q) ||
-      (a.genre ?? "").toLowerCase().includes(q) ||
-      (a.country ?? "").toLowerCase().includes(q),
-    );
-  }, [artists, search]);
+    let list = withRoles;
+    if (tab === "dj") list = list.filter((a) => a._roles.some((r) => DJ_ROLES.includes(r)));
+    else if (tab === "artist") list = list.filter((a) => a._roles.some((r) => ARTIST_ROLES.includes(r)));
+    if (search) {
+      const q = search.toLowerCase();
+      list = list.filter((a) =>
+        a.name.toLowerCase().includes(q) ||
+        (a.genre ?? "").toLowerCase().includes(q) ||
+        (a.country ?? "").toLowerCase().includes(q),
+      );
+    }
+    return list;
+  }, [withRoles, search, tab]);
 
   const openAdd = () => { setEditing(null); setForm({ ...empty, sort_order: artists.length }); setPhotoFile(null); setOpen(true); };
   const openEdit = (a: Artist) => {
