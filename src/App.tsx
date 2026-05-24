@@ -8,6 +8,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { PlayerProvider } from "@/contexts/PlayerContext";
 import { BrandingProvider } from "@/contexts/BrandingContext";
 import { CmsProvider } from "@/contexts/CmsContext";
+import { PresenceProvider } from "@/contexts/PresenceContext";
 import MiniPlayer from "@/components/MiniPlayer";
 import PageTransition from "@/components/PageTransition";
 import SubscriptionRequiredDialog from "@/components/SubscriptionRequiredDialog";
