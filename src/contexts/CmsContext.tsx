@@ -64,6 +64,8 @@ export function useCmsValue<T = string>(key: string, fallback: T): T {
 
 const STORAGE_EDIT_MODE = "frp:cmsEditMode";
 
+const STORAGE_AUTO_PUBLISH = "frp:cmsAutoPublish";
+
 export function CmsProvider({ children }: { children: ReactNode }) {
   const { realIsAdmin } = useAuth();
   const [published, setPublished] = useState<Record<string, any>>({});
@@ -80,12 +82,25 @@ export function CmsProvider({ children }: { children: ReactNode }) {
     return localStorage.getItem(STORAGE_EDIT_MODE) === "1";
   });
   const [previewDrafts, setPreviewDrafts] = useState<boolean>(true);
+  const [autoPublish, setAutoPublishState] = useState<boolean>(() => {
+    if (typeof window === "undefined") return true;
+    // par défaut activé : tout changement est publié pour tous les utilisateurs immédiatement
+    const v = localStorage.getItem(STORAGE_AUTO_PUBLISH);
+    return v === null ? true : v === "1";
+  });
 
   const setEditMode = useCallback((v: boolean) => {
     setEditModeState(v);
     if (typeof window !== "undefined") {
       if (v) localStorage.setItem(STORAGE_EDIT_MODE, "1");
       else localStorage.removeItem(STORAGE_EDIT_MODE);
+    }
+  }, []);
+
+  const setAutoPublish = useCallback((v: boolean) => {
+    setAutoPublishState(v);
+    if (typeof window !== "undefined") {
+      localStorage.setItem(STORAGE_AUTO_PUBLISH, v ? "1" : "0");
     }
   }, []);
 
