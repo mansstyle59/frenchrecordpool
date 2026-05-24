@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Plus, Pencil, Trash2, Users, Star, Image as ImageIcon, Upload, ExternalLink, Search } from "lucide-react";
+import { Plus, Pencil, Trash2, Users, Star, Image as ImageIcon, Upload, ExternalLink, Search, Mic2 } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -43,6 +43,10 @@ const slugify = (s: string) =>
   s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
     .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 64);
 
+type RoleTab = "all" | "dj" | "artist";
+const DJ_ROLES: ArtistRole[] = ["dj", "remixer"];
+const ARTIST_ROLES: ArtistRole[] = ["vocalist", "band", "producer"];
+
 export default function AdminArtists() {
   const { isAdmin } = useAuth();
   const qc = useQueryClient();
@@ -52,6 +56,7 @@ export default function AdminArtists() {
   const [saving, setSaving] = useState(false);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [search, setSearch] = useState("");
+  const [tab, setTab] = useState<RoleTab>("all");
 
   const { data: artists = [], isLoading } = useQuery({
     queryKey: ["admin-artists"],
@@ -83,22 +88,32 @@ export default function AdminArtists() {
     enabled: isAdmin,
   });
 
+  const withRoles = useMemo(
+    () => artists.map((a) => ({ ...a, _roles: normalizeRoles(a.roles, a.kind) })),
+    [artists],
+  );
+
   const stats = useMemo(() => ({
-    total: artists.length,
-    featured: artists.filter((a) => a.featured).length,
-    withPhoto: artists.filter((a) => !!a.photo_url).length,
-    countries: new Set(artists.map((a) => a.country).filter(Boolean)).size,
-  }), [artists]);
+    total: withRoles.length,
+    djs: withRoles.filter((a) => a._roles.some((r) => DJ_ROLES.includes(r))).length,
+    artists: withRoles.filter((a) => a._roles.some((r) => ARTIST_ROLES.includes(r))).length,
+    featured: withRoles.filter((a) => a.featured).length,
+  }), [withRoles]);
 
   const filtered = useMemo(() => {
-    if (!search) return artists;
-    const q = search.toLowerCase();
-    return artists.filter((a) =>
-      a.name.toLowerCase().includes(q) ||
-      (a.genre ?? "").toLowerCase().includes(q) ||
-      (a.country ?? "").toLowerCase().includes(q),
-    );
-  }, [artists, search]);
+    let list = withRoles;
+    if (tab === "dj") list = list.filter((a) => a._roles.some((r) => DJ_ROLES.includes(r)));
+    else if (tab === "artist") list = list.filter((a) => a._roles.some((r) => ARTIST_ROLES.includes(r)));
+    if (search) {
+      const q = search.toLowerCase();
+      list = list.filter((a) =>
+        a.name.toLowerCase().includes(q) ||
+        (a.genre ?? "").toLowerCase().includes(q) ||
+        (a.country ?? "").toLowerCase().includes(q),
+      );
+    }
+    return list;
+  }, [withRoles, search, tab]);
 
   const openAdd = () => { setEditing(null); setForm({ ...empty, sort_order: artists.length }); setPhotoFile(null); setOpen(true); };
   const openEdit = (a: Artist) => {
@@ -157,7 +172,7 @@ export default function AdminArtists() {
       : await supabase.from("artists" as any).insert(payload);
     setSaving(false);
     if (error) { toast({ title: "Erreur", description: error.message, variant: "destructive" }); return; }
-    toast({ title: editing ? "DJ modifié" : "DJ ajouté" });
+    toast({ title: editing ? "Artiste modifié" : "Artiste ajouté" });
     setOpen(false);
     qc.invalidateQueries({ queryKey: ["admin-artists"] });
   };
@@ -172,34 +187,51 @@ export default function AdminArtists() {
     if (!confirm(`Supprimer "${a.name}" ? Les tracks associés ne sont pas affectés.`)) return;
     const { error } = await supabase.from("artists" as any).delete().eq("id", a.id);
     if (error) { toast({ title: "Erreur", description: error.message, variant: "destructive" }); return; }
-    toast({ title: "DJ supprimé" });
+    toast({ title: "Artiste supprimé" });
     qc.invalidateQueries({ queryKey: ["admin-artists"] });
   };
+
+  const TABS: { key: RoleTab; label: string; hint: string }[] = [
+    { key: "all", label: "Tous", hint: `${stats.total}` },
+    { key: "dj", label: "DJ / Remixers", hint: `${stats.djs}` },
+    { key: "artist", label: "Artistes", hint: `${stats.artists}` },
+  ];
 
   return (
     <AdminLayout
       wide
-      title="DJs / Remixers"
-      subtitle="Fichier des artistes et remixeurs présents sur la plateforme."
-      actions={<Button onClick={openAdd} variant="hero"><Plus className="h-4 w-4 mr-2" />Nouveau DJ</Button>}
+      title="Artistes & DJs"
+      subtitle="Gestion unifiée : DJs, remixers, chanteurs, groupes, producteurs."
+      actions={<Button onClick={openAdd} variant="hero"><Plus className="h-4 w-4 mr-2" />Nouvel artiste</Button>}
     >
       <AdminStatsRow
         stats={[
-          { icon: <Users className="h-4 w-4" />, label: "Total", value: stats.total, hint: "DJs enregistrés" },
-          { icon: <Star className="h-4 w-4" />, label: "Mis en avant", value: stats.featured, hint: "vitrine", accent: "primary" },
-          { icon: <ImageIcon className="h-4 w-4" />, label: "Avec photo", value: stats.withPhoto, hint: `${stats.total - stats.withPhoto} sans photo`, accent: "accent" },
-          { icon: <Users className="h-4 w-4" />, label: "Pays", value: stats.countries, hint: "représentés", accent: "muted" },
+          { icon: <Users className="h-4 w-4" />, label: "Total", value: stats.total, hint: "fiches enregistrées" },
+          { icon: <Mic2 className="h-4 w-4" />, label: "DJ / Remixers", value: stats.djs, hint: "platines & remix", accent: "primary" },
+          { icon: <Users className="h-4 w-4" />, label: "Artistes", value: stats.artists, hint: "chanteurs, groupes", accent: "accent" },
+          { icon: <Star className="h-4 w-4" />, label: "Mis en avant", value: stats.featured, hint: "vitrine", accent: "muted" },
         ]}
       />
 
-      <div className="relative max-w-md">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="Rechercher par nom, genre, pays…"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="pl-10"
-        />
+      <div className="flex flex-wrap items-center gap-2">
+        {TABS.map((t) => (
+          <button
+            key={t.key}
+            onClick={() => setTab(t.key)}
+            className={`px-3 h-9 rounded-md text-xs font-bold uppercase tracking-wider border transition-all ${tab === t.key ? "bg-primary text-primary-foreground border-primary" : "bg-secondary/40 text-muted-foreground border-border/50 hover:text-foreground"}`}
+          >
+            {t.label} <span className="ml-1 opacity-70">({t.hint})</span>
+          </button>
+        ))}
+        <div className="relative ml-auto max-w-md w-full sm:w-auto">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Rechercher par nom, genre, pays…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-10"
+          />
+        </div>
       </div>
 
       {isLoading ? (
@@ -207,8 +239,8 @@ export default function AdminArtists() {
       ) : filtered.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-border bg-card/40 p-12 text-center">
           <Users className="h-10 w-10 mx-auto mb-3 text-muted-foreground/50" />
-          <p className="text-muted-foreground mb-4">{search ? "Aucun résultat." : "Aucun DJ pour le moment."}</p>
-          {!search && <Button onClick={openAdd} variant="hero"><Plus className="h-4 w-4 mr-2" />Ajouter le premier DJ</Button>}
+          <p className="text-muted-foreground mb-4">{search ? "Aucun résultat." : "Aucune fiche pour le moment."}</p>
+          {!search && <Button onClick={openAdd} variant="hero"><Plus className="h-4 w-4 mr-2" />Ajouter le premier artiste</Button>}
         </div>
       ) : (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -264,7 +296,7 @@ export default function AdminArtists() {
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editing ? `Modifier ${editing.name}` : "Nouveau DJ"}</DialogTitle>
+            <DialogTitle>{editing ? `Modifier ${editing.name}` : "Nouvel artiste"}</DialogTitle>
           </DialogHeader>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2 col-span-2">
