@@ -164,9 +164,12 @@ export default function AdminTracks() {
         cover_url: coverUrl,
         audio_url: audioUrl,
         preview_url: previewUrl,
-        download_url: data.downloadUrl || (editingTrack as any)?.download_url || null,
-        acapella_url: data.acapellaUrl || (editingTrack as any)?.acapella_url || null,
-        instrumental_url: data.instrumentalUrl || (editingTrack as any)?.instrumental_url || null,
+        // Only send these when the admin explicitly typed a value; the RPC
+        // preserves the existing URL when the key is omitted (the client can
+        // no longer read these columns directly for security reasons).
+        ...(data.downloadUrl ? { download_url: data.downloadUrl } : {}),
+        ...(data.acapellaUrl ? { acapella_url: data.acapellaUrl } : {}),
+        ...(data.instrumentalUrl ? { instrumental_url: data.instrumentalUrl } : {}),
       };
 
       // Insert/update via RPC SECURITY DEFINER — contourne tout faux positif RLS
