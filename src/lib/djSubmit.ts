@@ -62,6 +62,17 @@ export async function buildTrackPayload({ data, existingTrackId, existing }: Bui
     download_url: data.downloadUrl || existing?.download_url || null,
     acapella_url: data.acapellaUrl || existing?.acapella_url || null,
     instrumental_url: data.instrumentalUrl || existing?.instrumental_url || null,
+    // Personnalisation A→Z
+    energy: data.energy || null,
+    language: data.language || null,
+    explicit: !!data.explicit,
+    copyright: data.copyright || null,
+    notes: data.notes || null,
+    mix_engineer: data.mixEngineer || null,
+    mastering_engineer: data.masteringEngineer || null,
+    accent_color: data.accentColor || null,
+    external_links: data.externalLinks ?? {},
+    custom_fields: data.customFields ?? [],
   };
 }
 
