@@ -78,18 +78,26 @@ function PublicSidebar({ onNavigate }: { onNavigate?: () => void }) {
 
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Catalogue</SidebarGroupLabel>
+          <SidebarGroupLabel><CmsText editKey="nav.group.discover">Découvrir</CmsText></SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>{NAV_MAIN.map(renderItem)}</SidebarMenu>
+            <SidebarMenu>{NAV_DISCOVER.map(renderItem)}</SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
 
         <SidebarGroup>
-          <SidebarGroupLabel>Compte</SidebarGroupLabel>
+          <SidebarGroupLabel><CmsText editKey="nav.group.catalog">Catalogue</CmsText></SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>{NAV_CATALOG.map(renderItem)}</SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarGroup>
+          <SidebarGroupLabel><CmsText editKey="nav.group.account">Mon compte</CmsText></SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>{NAV_ACCOUNT.map(renderItem)}</SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
 
         {user && (
           <SidebarGroup>
