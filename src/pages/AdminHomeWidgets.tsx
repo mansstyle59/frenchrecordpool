@@ -6,7 +6,7 @@ import {
   Type, Video, Eye, EyeOff, Smartphone, Monitor, Pencil, Undo2, CheckCircle2,
   BarChart3, Tag, Star, HelpCircle, Minus, Quote, Columns, Copy, Layout,
   Palette, Wand2, TrendingUp, Disc3, Radio, Download, Newspaper, Instagram,
-  Images, Megaphone as MegaphoneIcon, Repeat, Music2,
+  Images, Megaphone as MegaphoneIcon, Repeat, Music2, Trophy, Heart, History,
 } from "lucide-react";
 
 import IconPicker from "@/components/admin/IconPicker";
@@ -268,6 +268,21 @@ const TYPE_META: Record<string, { label: string; icon: any; desc: string; defaul
     label: "Playlists (carrousel)", icon: ListMusic, group: "Mise en avant",
     desc: "Carrousel de playlists Spotify/Deezer/SoundCloud/internes",
     defaults: { title: "Playlists", auto: true, limit: 8, playlist_ids: [], see_all_url: "/playlists" },
+  },
+  dj_charts: {
+    label: "DJ Charts (hebdo ↑↓)", icon: Trophy, group: "Catalogue",
+    desc: "Top 10 hebdomadaire avec position et variation vs semaine précédente",
+    defaults: { title: "DJ Charts", limit: 10, see_all_url: "/popular" },
+  },
+  most_favorited: {
+    label: "Les plus likés", icon: Heart, group: "Catalogue",
+    desc: "Morceaux les plus ajoutés en favoris par la communauté",
+    defaults: { title: "Les + likés", limit: 8 },
+  },
+  recently_played: {
+    label: "Écoutés récemment", icon: History, group: "Mise en avant",
+    desc: "Historique des previews écoutés par le visiteur (local, masqué si vide)",
+    defaults: { title: "Écoutés récemment", limit: 6, show_when_empty: false },
   },
 };
 
