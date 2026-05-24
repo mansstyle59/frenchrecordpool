@@ -393,6 +393,27 @@ export type Database = {
         }
         Relationships: []
       }
+      play_history: {
+        Row: {
+          id: string
+          played_at: string
+          track_id: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          played_at?: string
+          track_id: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          played_at?: string
+          track_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       playlists: {
         Row: {
           accent_color: string
