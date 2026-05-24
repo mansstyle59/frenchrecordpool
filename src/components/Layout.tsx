@@ -219,13 +219,13 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     {isAdmin && (
                       <Link to="/admin" className="hidden md:inline-flex">
                         <Button variant="ghost" size="sm" className="gap-1">
-                          <Shield className="h-4 w-4" /> <span className="hidden lg:inline">Admin</span>
+                          <Shield className="h-4 w-4" /> <span className="hidden lg:inline">Administration</span>
                         </Button>
                       </Link>
                     )}
                     <Link to="/dashboard" className="hidden sm:inline-flex">
                       <Button variant="ghost" size="sm">
-                        {profile?.dj_name || "Mon compte"}
+                        {profile?.dj_name || "Tableau de bord"}
                       </Button>
                     </Link>
                   </>
@@ -233,11 +233,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   <>
                     <Link to="/login" className="hidden sm:inline-flex">
                       <Button variant="ghost" size="sm" className="gap-1">
-                        <LogIn className="h-4 w-4" /> Connexion
+                        <LogIn className="h-4 w-4" /> Se connecter
                       </Button>
                     </Link>
                     <Link to="/signup" className="hidden sm:inline-flex">
-                      <Button variant="hero" size="sm">S'inscrire</Button>
+                      <Button variant="hero" size="sm">Créer un compte</Button>
                     </Link>
                   </>
                 )}
