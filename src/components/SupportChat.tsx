@@ -214,7 +214,7 @@ export default function SupportChat({ threadOverride = null, className }: Props)
       <div className="border-t border-border p-2 flex gap-2 items-end">
         <Textarea
           value={body}
-          onChange={(e) => setBody(e.target.value)}
+          onChange={(e) => { setBody(e.target.value); broadcastTyping(); }}
           onKeyDown={(e) => {
             if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }
           }}
