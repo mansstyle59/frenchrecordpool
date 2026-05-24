@@ -24,11 +24,11 @@ export default function CmsRichText({ editKey, as: Tag = "div", className, child
   const [editing, setEditing] = useState(false);
 
   useEffect(() => {
-    if (!editing && ref.current) ref.current.innerHTML = value || "";
+    if (!editing && ref.current) ref.current.innerHTML = sanitizeHtml(value);
   }, [value, editing]);
 
   if (!editMode) {
-    return <Tag className={className} dangerouslySetInnerHTML={{ __html: value || "" }} />;
+    return <Tag className={className} dangerouslySetInnerHTML={{ __html: sanitizeHtml(value) }} />;
   }
 
   const queueSave = () => {
