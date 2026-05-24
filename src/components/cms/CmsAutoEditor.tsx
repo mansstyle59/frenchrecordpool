@@ -206,6 +206,40 @@ export default function CmsAutoEditor() {
             next!.remove();
           }
         });
+
+        // ===== Sections (visibilité) =====
+        document.body.querySelectorAll<HTMLElement>(SECTION_SELECTOR).forEach((sec) => {
+          if (sec.closest("[data-cms-skip]")) return;
+          const id = sec.id || sec.dataset.cmsSection || hashStr(sec.outerHTML.slice(0, 200));
+          const key = `auto-vis:${pathRef.current}:${id}`;
+          sec.dataset.cmsVis = key;
+          const stored = valuesRef.current[key];
+          const hidden = stored === false || stored === "hidden";
+          sec.style.display = hidden ? (editModeRef.current ? "" : "none") : "";
+          if (editModeRef.current) sec.style.opacity = hidden ? "0.4" : "";
+          else sec.style.opacity = "";
+
+          let badge = sec.querySelector<HTMLElement>(":scope > .cms-auto-vis-btn");
+          if (editModeRef.current) {
+            if (!badge) {
+              badge = document.createElement("button");
+              badge.className = "cms-auto-vis-btn";
+              badge.type = "button";
+              if (getComputedStyle(sec).position === "static") sec.style.position = "relative";
+              sec.appendChild(badge);
+              badge.addEventListener("click", (ev) => {
+                ev.preventDefault();
+                ev.stopPropagation();
+                const cur = valuesRef.current[key];
+                const isHidden = cur === false || cur === "hidden";
+                saveRef.current(key, "visibility", !isHidden ? "hidden" : "visible");
+              });
+            }
+            badge.textContent = hidden ? "👁 Afficher" : "🚫 Masquer";
+          } else if (badge) {
+            badge.remove();
+          }
+        });
       } finally {
         scanning = false;
       }
