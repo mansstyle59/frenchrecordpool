@@ -90,11 +90,11 @@ export default function SupportChat({ threadOverride = null, className }: Props)
     return () => { cancelled = true; };
   }, [user, threadOverride?.id, isAdminMode]);
 
-  // Realtime
+  // Realtime messages + typing broadcast
   useEffect(() => {
     if (!threadId) return;
     const ch = supabase
-      .channel(`support_messages:${threadId}`)
+      .channel(`support_messages:${threadId}`, { config: { broadcast: { self: false } } })
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "support_messages", filter: `thread_id=eq.${threadId}` },
@@ -103,16 +103,36 @@ export default function SupportChat({ threadOverride = null, className }: Props)
             if (prev.some((m) => m.id === (payload.new as any).id)) return prev;
             return [...prev, payload.new as Msg];
           });
-          // mark read
           supabase
             .from("support_threads")
             .update(isAdminMode ? { unread_for_admin: false } : { unread_for_user: false })
             .eq("id", threadId);
         }
       )
+      .on("broadcast", { event: "typing" }, (payload) => {
+        const fromAdmin = !!(payload.payload as any)?.is_admin;
+        // Show typing only if it's from the opposite side
+        if (fromAdmin !== isAdminMode) {
+          setPeerTyping(true);
+          if (typingTimer.current) clearTimeout(typingTimer.current);
+          typingTimer.current = setTimeout(() => setPeerTyping(false), 2500);
+        }
+      })
       .subscribe();
-    return () => { supabase.removeChannel(ch); };
+    channelRef.current = ch;
+    return () => {
+      supabase.removeChannel(ch);
+      channelRef.current = null;
+    };
   }, [threadId, isAdminMode]);
+
+  const broadcastTyping = () => {
+    channelRef.current?.send({
+      type: "broadcast",
+      event: "typing",
+      payload: { is_admin: isAdminMode && realIsAdmin },
+    });
+  };
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
