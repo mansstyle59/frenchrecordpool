@@ -355,7 +355,7 @@ export default function AdminHomeWidgets() {
     mutationFn: async (items: Widget[]) => {
       await Promise.all(items.map((w) =>
         supabase.from("home_widgets")
-          .update({ position: w.position, is_active: w.is_active })
+          .update({ position: w.position, is_active: w.is_active, config: w.config as any })
           .eq("id", w.id!)
       ));
     },
@@ -384,6 +384,10 @@ export default function AdminHomeWidgets() {
 
   const toggleActiveLocal = (id: string, is_active: boolean) => {
     setDraft(list.map((w) => (w.id === id ? { ...w, is_active } : w)));
+  };
+
+  const setColSpanLocal = (id: string, col_span: 1 | 2) => {
+    setDraft(list.map((w) => (w.id === id ? { ...w, config: { ...w.config, col_span } } : w)));
   };
 
   const addNew = (type: string) => {
