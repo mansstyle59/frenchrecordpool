@@ -909,6 +909,7 @@ function GenresCloudWidget({ config }: { config: any }) {
 function FeaturedTrackWidget({ config }: { config: any }) {
   const [track, setTrack] = useState<any>(null);
   const { play } = usePlayer();
+  const { hasActiveSubscription } = useAuth();
   useEffect(() => {
     if (config.track_id) {
       supabase.from("tracks").select("*").eq("id", config.track_id).maybeSingle().then(({ data }) => setTrack(data));
@@ -919,6 +920,19 @@ function FeaturedTrackWidget({ config }: { config: any }) {
 
   if (!track) return null;
   const cover = resolveCover(track);
+  const playbackSrc = hasActiveSubscription
+    ? (track.audio_url || track.preview_url)
+    : (track.preview_url || track.audio_url);
+  const handlePlay = () => {
+    play({
+      id: track.id,
+      title: track.title,
+      artist: track.artist,
+      coverUrl: cover,
+      previewUrl: playbackSrc,
+      isFull: hasActiveSubscription && !!track.audio_url,
+    });
+  };
   return (
     <div className="relative overflow-hidden rounded-3xl border border-border bg-card flex flex-col md:flex-row gap-6 md:gap-10 p-6 md:p-10">
       {cover && <div className="absolute inset-0 opacity-25 bg-cover bg-center blur-3xl" style={{ backgroundImage: `url(${cover})` }} />}
@@ -930,9 +944,11 @@ function FeaturedTrackWidget({ config }: { config: any }) {
           <Star className="h-3 w-3" /> {config.tag || "Track de la semaine"}
         </div>
         <h2 className="font-display text-3xl md:text-5xl font-black mb-2" style={titleStyle(config.typo)}>{track.title}</h2>
-        <p className="text-muted-foreground text-lg mb-4">{track.artist}</p>
+        <p className="text-muted-foreground text-lg mb-4">
+          <ArtistCredit name={track.artist} artistSlug={(track as any).artist_slug} />
+        </p>
         <div className="flex flex-wrap gap-3 justify-center md:justify-start">
-          <Button size="lg" variant="hero" onClick={() => play(track)}>
+          <Button size="lg" variant="hero" onClick={handlePlay}>
             <Play className="mr-1 h-4 w-4" /> Écouter
           </Button>
           <Button asChild size="lg" variant="outline">
