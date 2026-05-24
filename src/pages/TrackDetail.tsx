@@ -1,5 +1,6 @@
 import { useParams, Link } from "react-router-dom";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Play, Pause, Heart, Download, ExternalLink, ArrowLeft, Clock, Music, Tag, Disc3,
   Share2, QrCode, Copy, Calendar, Headphones, FileAudio, Mic2, Users, Loader2,
@@ -35,6 +36,20 @@ export default function TrackDetail() {
   const { isFavorite, toggleFavorite } = useFavorites();
   const [qrOpen, setQrOpen] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [secureUrls, setSecureUrls] = useState<{ download_url: string | null; acapella_url: string | null; instrumental_url: string | null } | null>(null);
+
+  const canSeeSecureUrls = !!user && (hasActiveSubscription || (track && (track as any).submitted_by === user.id));
+
+  useEffect(() => {
+    if (!track?.id || !canSeeSecureUrls) { setSecureUrls(null); return; }
+    let cancelled = false;
+    supabase.rpc("get_track_urls", { _id: track.id }).then(({ data }) => {
+      if (cancelled) return;
+      const row = Array.isArray(data) ? data[0] : null;
+      setSecureUrls(row ? { download_url: row.download_url ?? null, acapella_url: row.acapella_url ?? null, instrumental_url: row.instrumental_url ?? null } : null);
+    });
+    return () => { cancelled = true; };
+  }, [track?.id, canSeeSecureUrls]);
 
   const isCurrent = currentTrack?.id === track?.id;
   const playbackSrc = useMemo(() => {
@@ -62,9 +77,12 @@ export default function TrackDetail() {
   }
 
   const shareUrl = typeof window !== "undefined" ? window.location.href : "";
-  const format = inferFormat(track.audio_url || (track as any).download_url);
-  const fullIsHosted = !!track.audio_url && !((track as any).download_url && (track as any).download_url.startsWith("http") && !track.audio_url.includes("/object/public/track-audio/"));
-  const resolvedUrl = (track as any).download_url || track.audio_url;
+  const downloadUrl = secureUrls?.download_url ?? null;
+  const acapellaUrl = secureUrls?.acapella_url ?? null;
+  const instrumentalUrl = secureUrls?.instrumental_url ?? null;
+  const format = inferFormat(track.audio_url || downloadUrl);
+  const fullIsHosted = !!track.audio_url && !(downloadUrl && downloadUrl.startsWith("http") && !track.audio_url.includes("/object/public/track-audio/"));
+  const resolvedUrl = downloadUrl || track.audio_url;
   const isExternalLink = resolvedUrl && !resolvedUrl.includes("/object/public/track-audio/");
   const DownloadIcon = isExternalLink ? ExternalLink : Download;
 
@@ -243,18 +261,18 @@ export default function TrackDetail() {
                 </div>
               )}
 
-              {/* Alt download links (acapella / instrumental) */}
-              {(track.acapella_url || track.instrumental_url) && (
+              {/* Alt download links (acapella / instrumental) — only for subscribers / owner / admin */}
+              {(acapellaUrl || instrumentalUrl) && (
                 <div className="flex flex-wrap gap-2 mt-5">
-                  {track.acapella_url && (
-                    <a href={track.acapella_url} target="_blank" rel="noopener noreferrer">
+                  {acapellaUrl && (
+                    <a href={acapellaUrl} target="_blank" rel="noopener noreferrer">
                       <Badge variant="outline" className="cursor-pointer hover:bg-secondary text-xs gap-1">
                         <Mic2 className="h-3 w-3" /> Acapella
                       </Badge>
                     </a>
                   )}
-                  {track.instrumental_url && (
-                    <a href={track.instrumental_url} target="_blank" rel="noopener noreferrer">
+                  {instrumentalUrl && (
+                    <a href={instrumentalUrl} target="_blank" rel="noopener noreferrer">
                       <Badge variant="outline" className="cursor-pointer hover:bg-secondary text-xs gap-1">
                         <Music className="h-3 w-3" /> Instrumental
                       </Badge>
