@@ -57,12 +57,10 @@ export default function Playlists() {
   return (
     <Layout>
 
-      <div className="container mx-auto px-4 py-8 md:py-12">
-        <header className="mb-8">
-          <h1 className="font-display text-3xl md:text-5xl font-black tracking-tight">Playlists</h1>
-          <p className="text-muted-foreground mt-2 max-w-2xl">
-            Sélections curatées par notre équipe — Spotify, Deezer, SoundCloud et nos playlists internes du catalogue.
-          </p>
+      <div className="container mx-auto px-4 py-4 md:py-5">
+        <header className="mb-4 flex items-center justify-between gap-4">
+          <h1 className="font-display text-xl md:text-2xl font-bold uppercase tracking-tight leading-none">Playlists</h1>
+          <span className="text-xs text-muted-foreground font-mono tabular-nums">{filtered.length} résultats</span>
         </header>
 
         {/* Filters */}

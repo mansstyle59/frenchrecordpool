@@ -83,7 +83,7 @@ export default function TrendingArtists({ config }: { config: any }) {
               className="snap-start shrink-0 w-32 md:w-40"
             >
               <Link
-                to={a.kind === "remixer" ? `/remixers/${a.slug}` : `/artists/${a.slug}`}
+                to={`/artists/${a.slug}`}
                 className="block group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-2xl"
               >
                 <div className="relative aspect-square rounded-2xl overflow-hidden border border-border bg-card hover:border-primary/60 transition-all group-hover:scale-[1.03]">

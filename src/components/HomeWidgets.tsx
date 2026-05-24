@@ -52,6 +52,7 @@ import MostFavorited from "@/components/widgets/MostFavorited";
 import RecentlyPlayed from "@/components/widgets/RecentlyPlayed";
 import { useAuth } from "@/contexts/AuthContext";
 import { useIsMobile } from "@/hooks/use-mobile";
+import ArtistCredit from "@/components/ArtistCredit";
 
 export interface Widget {
   id: string;
@@ -554,9 +555,9 @@ function TopArtistsWidget({ config }: { config: any }) {
 function ArtistCarouselWidget({ config }: { config: any }) {
   const [list, setList] = useState<any[]>([]);
   useEffect(() => {
-    let q = supabase.from("artists").select("id, name, slug, photo_url, kind");
+    let q = supabase.from("artists").select("id, name, slug, photo_url, roles");
     if (config.featured_only) q = q.eq("featured", true);
-    if (config.kind === "remixer" || config.kind === "artist") q = q.eq("kind", config.kind);
+    if (config.kind === "remixer" || config.kind === "artist") q = (q as any).contains("roles", [config.kind === "artist" ? "dj" : config.kind]);
     q.order("sort_order", { ascending: true })
      .limit(config.limit || 8)
      .then(({ data }) => data && setList(data));
@@ -575,7 +576,7 @@ function ArtistCarouselWidget({ config }: { config: any }) {
         {list.map((dj) => (
           <Link
             key={dj.id}
-            to={`/remixers/${dj.slug}`}
+            to={`/artists/${dj.slug}`}
             className="group relative aspect-square rounded-2xl overflow-hidden border border-border hover:border-primary/60 transition-all hover:scale-[1.03]"
           >
             {dj.photo_url ? (
@@ -909,6 +910,7 @@ function GenresCloudWidget({ config }: { config: any }) {
 function FeaturedTrackWidget({ config }: { config: any }) {
   const [track, setTrack] = useState<any>(null);
   const { play } = usePlayer();
+  const { hasActiveSubscription } = useAuth();
   useEffect(() => {
     if (config.track_id) {
       supabase.from("tracks").select("*").eq("id", config.track_id).maybeSingle().then(({ data }) => setTrack(data));
@@ -919,6 +921,19 @@ function FeaturedTrackWidget({ config }: { config: any }) {
 
   if (!track) return null;
   const cover = resolveCover(track);
+  const playbackSrc = hasActiveSubscription
+    ? (track.audio_url || track.preview_url)
+    : (track.preview_url || track.audio_url);
+  const handlePlay = () => {
+    play({
+      id: track.id,
+      title: track.title,
+      artist: track.artist,
+      coverUrl: cover,
+      previewUrl: playbackSrc,
+      isFull: hasActiveSubscription && !!track.audio_url,
+    });
+  };
   return (
     <div className="relative overflow-hidden rounded-3xl border border-border bg-card flex flex-col md:flex-row gap-6 md:gap-10 p-6 md:p-10">
       {cover && <div className="absolute inset-0 opacity-25 bg-cover bg-center blur-3xl" style={{ backgroundImage: `url(${cover})` }} />}
@@ -930,9 +945,11 @@ function FeaturedTrackWidget({ config }: { config: any }) {
           <Star className="h-3 w-3" /> {config.tag || "Track de la semaine"}
         </div>
         <h2 className="font-display text-3xl md:text-5xl font-black mb-2" style={titleStyle(config.typo)}>{track.title}</h2>
-        <p className="text-muted-foreground text-lg mb-4">{track.artist}</p>
+        <p className="text-muted-foreground text-lg mb-4">
+          <ArtistCredit name={track.artist} artistSlug={(track as any).artist_slug} />
+        </p>
         <div className="flex flex-wrap gap-3 justify-center md:justify-start">
-          <Button size="lg" variant="hero" onClick={() => play(track)}>
+          <Button size="lg" variant="hero" onClick={handlePlay}>
             <Play className="mr-1 h-4 w-4" /> Écouter
           </Button>
           <Button asChild size="lg" variant="outline">

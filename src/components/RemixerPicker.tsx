@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { X, ChevronDown, Plus, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { normalizeRoles, roleLabel } from "@/lib/artistRoles";
 
 interface RemixerOption {
   id: string;
   name: string;
-  kind: string;
+  roles: string[];
 }
 
 interface Props {
@@ -28,8 +29,8 @@ export default function RemixerPicker({ value, onChange, placeholder }: Props) {
   useEffect(() => {
     supabase
       .from("artists")
-      .select("id, name, kind")
-      .in("kind", ["remixer", "both"])
+      .select("id, name, roles")
+      .contains("roles", ["remixer"])
       .order("name", { ascending: true })
       .then(({ data }) => {
         if (data) setOptions(data as RemixerOption[]);
@@ -135,7 +136,7 @@ export default function RemixerPicker({ value, onChange, placeholder }: Props) {
                   >
                     <span className="truncate">{o.name}</span>
                     <span className="text-[9px] uppercase tracking-wider text-muted-foreground border border-border rounded px-1.5 py-0.5">
-                      {o.kind === "both" ? "DJ + Remixer" : "Remixer"}
+                      {normalizeRoles(o.roles).map((r) => roleLabel(r)).join(" + ")}
                     </span>
                   </button>
                 </li>

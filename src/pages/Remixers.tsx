@@ -34,7 +34,7 @@ export default function Remixers() {
         .order("name", { ascending: true });
 
       if (!isArtistsPage) {
-        query = (query as any).in("kind", ["remixer", "both"]);
+        query = (query as any).contains("roles", ["remixer"]);
       }
 
       const { data } = await query;

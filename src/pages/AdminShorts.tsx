@@ -10,6 +10,7 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { normalizeRoles } from "@/lib/artistRoles";
 import { detectProvider, extractShortId, shortThumbnail, providerLabel, type ShortProvider } from "@/lib/shorts";
 
 type ShortRow = {
@@ -52,7 +53,7 @@ export default function AdminShorts() {
   const { data: artists = [] } = useQuery({
     queryKey: ["admin-shorts-artists"],
     queryFn: async () => {
-      const { data } = await supabase.from("artists").select("id,name,kind").order("name");
+      const { data } = await supabase.from("artists").select("id,name,kind,roles").order("name");
       return data ?? [];
     },
   });
@@ -246,7 +247,7 @@ function ShortEditor({
   saving,
 }: {
   draft: Draft;
-  artists: { id: string; name: string; kind: string }[];
+  artists: { id: string; name: string; kind: string; roles: string[] | null }[];
   tracks: { id: string; title: string; artist: string }[];
   onCancel: () => void;
   onSave: (d: Draft) => void;
@@ -344,7 +345,7 @@ function ShortEditor({
                 <SelectItem value="none">Aucun</SelectItem>
                 {artists.map((a) => (
                   <SelectItem key={a.id} value={a.id}>
-                    {a.name} {a.kind === "remixer" ? "· remixer" : ""}
+                    {a.name} {(normalizeRoles(a.roles, a.kind) as string[]).includes("remixer") ? "· remixer" : ""}
                   </SelectItem>
                 ))}
               </SelectContent>
