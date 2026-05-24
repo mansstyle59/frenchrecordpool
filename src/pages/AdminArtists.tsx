@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Plus, Pencil, Trash2, Users, Star, Image as ImageIcon, Upload, ExternalLink, Search } from "lucide-react";
+import { Plus, Pencil, Trash2, Users, Star, Image as ImageIcon, Upload, ExternalLink, Search, Mic2 } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
