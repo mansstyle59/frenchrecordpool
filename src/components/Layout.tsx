@@ -25,7 +25,8 @@ const NAV_MAIN = [
   { key: "nav.new", to: "/new", label: "Nouveautés", icon: Sparkles },
   { key: "nav.shorts", to: "/shorts", label: "Shorts", icon: Clapperboard },
   { key: "nav.playlists", to: "/playlists", label: "Playlists", icon: Music2 },
-  { key: "nav.artists", to: "/remixers", label: "Remixers", icon: Mic2 },
+  { key: "nav.djs", to: "/remixers", label: "DJ / Remixer", icon: Mic2 },
+  { key: "nav.artists", to: "/artists", label: "Artistes", icon: Music2 },
   { key: "nav.stems", to: "/stems", label: "Stems", icon: Music2 },
 ];
 

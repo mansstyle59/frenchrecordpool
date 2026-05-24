@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Search, Users, Disc3, X, Headphones, Music2 } from "lucide-react";
+import { Search, Users, Disc3, X, Headphones, Music2, Mic2, Guitar } from "lucide-react";
 import { motion } from "framer-motion";
 import Layout from "@/components/Layout";
 import PageHero from "@/components/PageHero";
@@ -12,10 +12,18 @@ import { normalizeRoles, roleLabel, roleClassName } from "@/lib/artistRoles";
 
 const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ#".split("");
 
-const ROLE_FILTERS = [
+const DJ_ROLES = ["dj", "remixer"];
+const ARTIST_ROLES = ["vocalist", "band", "producer"];
+
+const DJ_FILTERS = [
   { key: "dj", label: "DJ", icon: <Users className="h-3 w-3" /> },
   { key: "remixer", label: "Remixer", icon: <Headphones className="h-3 w-3" /> },
-  { key: "producer", label: "Producer", icon: <Music2 className="h-3 w-3" /> },
+] as const;
+
+const ARTIST_FILTERS = [
+  { key: "vocalist", label: "Chanteur·euse", icon: <Mic2 className="h-3 w-3" /> },
+  { key: "band", label: "Groupe", icon: <Users className="h-3 w-3" /> },
+  { key: "producer", label: "Musicien", icon: <Guitar className="h-3 w-3" /> },
 ] as const;
 
 export default function Remixers() {
@@ -33,14 +41,15 @@ export default function Remixers() {
         .select("id, name, slug, photo_url, kind, roles")
         .order("name", { ascending: true });
 
-      if (!isArtistsPage) {
-        query = (query as any).contains("roles", ["remixer"]);
-      }
-
       const { data } = await query;
+      const targetRoles = isArtistsPage ? ARTIST_ROLES : DJ_ROLES;
+      const filteredByRole = (data ?? []).filter((d: any) => {
+        const r = normalizeRoles(d.roles, d.kind);
+        return r.some((role) => targetRoles.includes(role));
+      });
 
-      // Count tracks per artist (remixes for remixers, originals for all)
-      const ids = (data ?? []).map((d) => d.id);
+      // Count tracks per artist (remixes for DJ page, originals for Artistes page)
+      const ids = filteredByRole.map((d: any) => d.id);
       let counts: Record<string, number> = {};
       if (ids.length > 0) {
         const { data: trackData } = await supabase
@@ -58,7 +67,7 @@ export default function Remixers() {
         });
       }
 
-      return (data ?? []).map((d: any) => ({
+      return filteredByRole.map((d: any) => ({
         ...d,
         trackCount: counts[d.id] ?? 0,
         normalizedRoles: normalizeRoles(d.roles, d.kind),
@@ -150,7 +159,7 @@ export default function Remixers() {
         {/* Role filters */}
         <div className="flex flex-wrap items-center gap-2 mb-4">
           <span className="text-[11px] uppercase tracking-widest text-muted-foreground font-bold mr-1">Filtrer :</span>
-          {ROLE_FILTERS.map((r) => {
+          {(isArtistsPage ? ARTIST_FILTERS : DJ_FILTERS).map((r) => {
             const active = activeRoles.has(r.key);
             return (
               <button
