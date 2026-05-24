@@ -28,6 +28,7 @@ interface Thread {
 
 export default function AdminSupport() {
   const { isAdmin } = useAuth();
+  const { isOnline } = usePresence();
   const qc = useQueryClient();
   const [selected, setSelected] = useState<Thread | null>(null);
 
