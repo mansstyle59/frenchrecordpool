@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useParams } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { PlayerProvider } from "@/contexts/PlayerContext";
@@ -60,6 +60,11 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
+const RemixersRedirect = () => {
+  const { slug } = useParams();
+  return <Navigate to={`/artists/${slug}`} replace />;
+};
+
 const App = () => (
   <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
     <QueryClientProvider client={queryClient}>
@@ -106,7 +111,7 @@ const App = () => (
               <Route path="/artists" element={<Remixers />} />
               <Route path="/artists/:slug" element={<ArtistDetail />} />
               <Route path="/remixers" element={<Remixers />} />
-              <Route path="/remixers/:slug" element={<ArtistDetail />} />
+              <Route path="/remixers/:slug" element={<RemixersRedirect />} />
 
               <Route path="/genres" element={<Navigate to="/new" replace />} />
               <Route path="/top" element={<Navigate to="/new" replace />} />
