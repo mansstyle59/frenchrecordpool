@@ -45,6 +45,9 @@ import TrendingArtists from "@/components/widgets/TrendingArtists";
 import FeaturedGenres from "@/components/widgets/FeaturedGenres";
 import WelcomeBanner from "@/components/widgets/WelcomeBanner";
 import PlaylistsCarousel from "@/components/widgets/PlaylistsCarousel";
+import DjCharts from "@/components/widgets/DjCharts";
+import MostFavorited from "@/components/widgets/MostFavorited";
+import RecentlyPlayed from "@/components/widgets/RecentlyPlayed";
 import { useAuth } from "@/contexts/AuthContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -216,6 +219,9 @@ function WidgetRenderer({ widget, preview }: { widget: Widget; preview: boolean 
     case "blog_cards":       return <BlogCardsWidget config={widget.config} />;
     case "team_grid":        return <TeamGridWidget config={widget.config} />;
     case "instagram_feed":   return <InstagramFeedWidget config={widget.config} />;
+    case "dj_charts":        return <DjCharts config={widget.config} />;
+    case "most_favorited":   return <MostFavorited config={widget.config} />;
+    case "recently_played":  return <RecentlyPlayed config={widget.config} />;
     default: return null;
   }
 }
