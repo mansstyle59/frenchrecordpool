@@ -513,6 +513,10 @@ export default function TrackForm({ initialData, saving, onSubmit, existingGenre
       releaseYear: finalReleaseYear, isrc: finalIsrc, subgenre, mood,
       audioFile, audioUrl, previewFile, previewUrl, coverFile, coverUrl,
       downloadUrl, acapellaUrl, instrumentalUrl,
+      energy, language, explicit, copyright, notes,
+      mixEngineer, masteringEngineer, accentColor,
+      externalLinks,
+      customFields: customFields.filter((f) => f.key.trim() || f.value.trim()),
     });
   };
 
