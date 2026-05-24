@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ElementType } from "react";
 import { Pencil, Bold, Italic, Underline as UIcon, Link2, List, ListOrdered } from "lucide-react";
 import { useCms, useCmsValue } from "@/contexts/CmsContext";
 import { cn } from "@/lib/utils";
+import { sanitizeHtml } from "@/lib/sanitizeHtml";
 
 interface Props {
   editKey: string;
