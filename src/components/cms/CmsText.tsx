@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useRef, useState, type ElementType } from "react";
-import { Pencil, Type, Smartphone, Tablet, Monitor, Lock } from "lucide-react";
+import { Pencil, Type, Lock, RotateCcw, Smartphone, Monitor } from "lucide-react";
 import { useCms, useCmsValue } from "@/contexts/CmsContext";
 import { cn } from "@/lib/utils";
 import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem,
+  DropdownMenu, DropdownMenuContent,
   DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
@@ -18,26 +18,42 @@ interface CmsTextProps {
   children: string;
 }
 
-type Breakpoint = "mobile" | "tablet" | "desktop";
-
+/**
+ * SizeValue — nouveau modèle fluide:
+ *   - min: taille px à 320 vw (mobile)
+ *   - max: taille px à 1440 vw (desktop)
+ *   Le rendu utilise clamp() pour interpoler linéairement entre les deux.
+ *
+ * Compatibilité ascendante: les anciennes valeurs (mobile/tablet/desktop/fontSize)
+ * sont automatiquement converties en min/max au premier rendu.
+ */
 interface SizeValue {
+  min?: number;
+  max?: number;
+  // legacy
   mobile?: number;
   tablet?: number;
   desktop?: number;
-  /** legacy single-size value */
   fontSize?: number;
 }
 
-const SIZE_PRESETS = [
-  10, 11, 12, 13, 14, 15, 16, 18, 20, 22, 24, 28, 32, 36,
-  40, 48, 56, 64, 72, 80, 96, 112, 128,
+/** Presets sémantiques (min → max en px) */
+const SEMANTIC_PRESETS: { label: string; min: number; max: number; hint: string }[] = [
+  { label: "Caption",  min: 11, max: 13,  hint: "Légendes, métadonnées" },
+  { label: "Body S",   min: 13, max: 14,  hint: "Texte secondaire" },
+  { label: "Body",     min: 14, max: 16,  hint: "Paragraphe par défaut" },
+  { label: "Body L",   min: 16, max: 18,  hint: "Texte mis en avant" },
+  { label: "Lead",     min: 18, max: 22,  hint: "Intros / chapeaux" },
+  { label: "H4",       min: 18, max: 24,  hint: "Sous-section" },
+  { label: "H3",       min: 22, max: 30,  hint: "Titre tertiaire" },
+  { label: "H2",       min: 26, max: 44,  hint: "Titre de section" },
+  { label: "H1",       min: 34, max: 64,  hint: "Titre principal" },
+  { label: "Display",  min: 48, max: 96,  hint: "Hero / accroche" },
+  { label: "Hero XL",  min: 56, max: 128, hint: "Très grand impact" },
 ];
 
-const BP_META: Record<Breakpoint, { label: string; icon: ElementType; mq: string }> = {
-  mobile:  { label: "Mobile",   icon: Smartphone, mq: "(max-width: 767px)" },
-  tablet:  { label: "Tablette", icon: Tablet,     mq: "(min-width: 768px) and (max-width: 1023px)" },
-  desktop: { label: "Desktop",  icon: Monitor,    mq: "(min-width: 1024px)" },
-};
+const VP_MIN = 320;
+const VP_MAX = 1440;
 
 const saveTimer: Record<string, any> = {};
 
@@ -46,34 +62,25 @@ function safeId(key: string) {
   return "cms-" + key.replace(/[^a-zA-Z0-9_-]/g, "_");
 }
 
-/** Detect current breakpoint (client-only). Falls back to desktop on SSR. */
-function useCurrentBreakpoint(): Breakpoint {
-  const [bp, setBp] = useState<Breakpoint>(() => {
-    if (typeof window === "undefined") return "desktop";
-    const w = window.innerWidth;
-    if (w < 768) return "mobile";
-    if (w < 1024) return "tablet";
-    return "desktop";
-  });
-  useEffect(() => {
-    const onR = () => {
-      const w = window.innerWidth;
-      setBp(w < 768 ? "mobile" : w < 1024 ? "tablet" : "desktop");
-    };
-    window.addEventListener("resize", onR);
-    return () => window.removeEventListener("resize", onR);
-  }, []);
-  return bp;
+/** Convertit l'ancien format en {min,max}. */
+function normalize(v: SizeValue | null | undefined): { min?: number; max?: number } {
+  if (!v) return {};
+  if (v.min != null || v.max != null) return { min: v.min, max: v.max };
+  const legacy = v.fontSize;
+  const mobile = v.mobile ?? v.tablet ?? v.desktop ?? legacy;
+  const desktop = v.desktop ?? v.tablet ?? v.mobile ?? legacy;
+  if (mobile == null && desktop == null) return {};
+  return { min: mobile, max: desktop };
 }
 
-/** Resolve effective size for a breakpoint with desktop→tablet→mobile fallback. */
-function resolveSize(v: SizeValue | null | undefined, bp: Breakpoint): number | undefined {
-  if (!v) return undefined;
-  // legacy
-  const legacy = v.fontSize;
-  if (bp === "mobile")  return v.mobile  ?? v.tablet  ?? v.desktop ?? legacy;
-  if (bp === "tablet")  return v.tablet  ?? v.desktop ?? v.mobile  ?? legacy;
-  return v.desktop ?? v.tablet ?? v.mobile ?? legacy;
+/** clamp() linéaire entre VP_MIN et VP_MAX. */
+function clampExpr(min: number, max: number) {
+  if (min === max) return `${min}px`;
+  const slope = ((max - min) * 100) / (VP_MAX - VP_MIN);          // vw factor
+  const intercept = min - (slope * VP_MIN) / 100;                 // px constant
+  const lo = Math.min(min, max);
+  const hi = Math.max(min, max);
+  return `clamp(${lo}px, ${intercept.toFixed(3)}px + ${slope.toFixed(4)}vw, ${hi}px)`;
 }
 
 export default function CmsText({
@@ -85,37 +92,42 @@ export default function CmsText({
   const { editMode, saveDraft } = useCms();
   const ref = useRef<HTMLElement>(null);
   const [editing, setEditing] = useState(false);
-  const [customSize, setCustomSize] = useState("");
-  const [activeBp, setActiveBp] = useState<Breakpoint>("desktop");
-  const currentBp = useCurrentBreakpoint();
+
+  const { min, max } = useMemo(() => normalize(sizeVal), [sizeVal]);
+  const hasSize = !lockSize && (min != null || max != null);
+
+  // Sliders state (initialisé depuis sizeVal, restauré quand on change d'élément)
+  const [minDraft, setMinDraft] = useState<number>(min ?? 16);
+  const [maxDraft, setMaxDraft] = useState<number>(max ?? Math.max(min ?? 16, 24));
+  useEffect(() => {
+    setMinDraft(min ?? 16);
+    setMaxDraft(max ?? Math.max(min ?? 16, 24));
+  }, [min, max]);
 
   useEffect(() => {
     if (!editing && ref.current) ref.current.textContent = value;
   }, [value, editing]);
 
-  // Build a stable class + scoped <style> with media queries
   const cls = useMemo(() => safeId(editKey), [editKey]);
-  const hasAnySize = !lockSize && !!(sizeVal && (sizeVal.mobile || sizeVal.tablet || sizeVal.desktop || sizeVal.fontSize));
 
-  const styleTag = hasAnySize ? (
-    <style>{[
-      sizeVal?.mobile  && `@media ${BP_META.mobile.mq}{.${cls}{font-size:${sizeVal.mobile}px;line-height:1.15}}`,
-      sizeVal?.tablet  && `@media ${BP_META.tablet.mq}{.${cls}{font-size:${sizeVal.tablet}px;line-height:1.15}}`,
-      sizeVal?.desktop && `@media ${BP_META.desktop.mq}{.${cls}{font-size:${sizeVal.desktop}px;line-height:1.15}}`,
-      // legacy fallback if no per-bp value
-      !sizeVal?.mobile && !sizeVal?.tablet && !sizeVal?.desktop && sizeVal?.fontSize
-        && `.${cls}{font-size:${sizeVal.fontSize}px;line-height:1.15}`,
-    ].filter(Boolean).join("")}</style>
+  const styleTag = hasSize ? (
+    <style>{
+      `.${cls}{font-size:${clampExpr(min ?? maxDraft, max ?? minDraft)};line-height:1.1}`
+    }</style>
   ) : null;
 
   if (!editMode) {
     return (
       <>
         {styleTag}
-        <Tag className={cn(className, hasAnySize && cls)}>{value}</Tag>
+        <Tag className={cn(className, hasSize && cls)}>{value}</Tag>
       </>
     );
   }
+
+  const commitSize = (next: SizeValue | null) => {
+    saveDraft(sizeKey, "style", next ?? {});
+  };
 
   const onInput = (e: React.FormEvent<HTMLElement>) => {
     const txt = (e.currentTarget.textContent || "").slice(0, maxLength);
@@ -125,20 +137,33 @@ export default function CmsText({
     }, 700);
   };
 
-  const setBpSize = (bp: Breakpoint, size: number | null) => {
-    const next: SizeValue = { ...(sizeVal || {}) };
-    // strip legacy once user starts using per-bp
-    delete next.fontSize;
-    if (size == null) delete next[bp];
-    else next[bp] = size;
-    saveDraft(sizeKey, "style", next);
+  const applyPreset = (p: { min: number; max: number }) => {
+    setMinDraft(p.min);
+    setMaxDraft(p.max);
+    commitSize({ min: p.min, max: p.max });
   };
 
-  const resetAll = () => saveDraft(sizeKey, "style", {});
+  const onMinChange = (n: number) => {
+    const clamped = Math.max(8, Math.min(200, n));
+    setMinDraft(clamped);
+    const safeMax = Math.max(clamped, maxDraft);
+    if (safeMax !== maxDraft) setMaxDraft(safeMax);
+    commitSize({ min: clamped, max: safeMax });
+  };
+  const onMaxChange = (n: number) => {
+    const clamped = Math.max(8, Math.min(300, n));
+    setMaxDraft(clamped);
+    const safeMin = Math.min(clamped, minDraft);
+    if (safeMin !== minDraft) setMinDraft(safeMin);
+    commitSize({ min: safeMin, max: clamped });
+  };
 
-  const activeSize = sizeVal?.[activeBp];
-  const ActiveIcon = BP_META[activeBp].icon;
-  const displaySize = resolveSize(sizeVal, currentBp);
+  const resetAll = () => commitSize(null);
+
+  // Sample courant rendu (utile pour montrer la taille effective)
+  const effectiveSummary = min != null || max != null
+    ? `${min ?? "—"} → ${max ?? "—"}px`
+    : "auto";
 
   return (
     <span className="relative inline-block group/cms align-baseline">
@@ -147,7 +172,7 @@ export default function CmsText({
         ref={ref as any}
         className={cn(
           className,
-          hasAnySize && cls,
+          hasSize && cls,
           "outline-none ring-1 ring-transparent hover:ring-primary/40 focus:ring-primary rounded-sm transition-shadow",
           editing && "ring-primary"
         )}
@@ -187,97 +212,132 @@ export default function CmsText({
               type="button"
               onMouseDown={(e) => e.preventDefault()}
               className="flex items-center gap-1 h-6 px-1.5 rounded-full bg-background text-foreground border border-primary shadow-md text-[10px] font-mono hover:bg-primary hover:text-primary-foreground transition-colors"
-              title={`Taille du texte (rendu actuel: ${displaySize ?? "auto"})`}
+              title={`Taille fluide (min → max): ${effectiveSummary}`}
             >
               <Type className="h-3 w-3" />
-              {displaySize ?? "auto"}
+              {effectiveSummary}
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="max-h-96 overflow-y-auto w-56">
-            <DropdownMenuLabel className="text-[10px]">Taille par breakpoint</DropdownMenuLabel>
-
-            {/* Breakpoint tabs */}
-            <div className="px-2 pb-2 pt-1 flex gap-1">
-              {(Object.keys(BP_META) as Breakpoint[]).map((bp) => {
-                const Icon = BP_META[bp].icon;
-                const has = !!sizeVal?.[bp];
-                return (
-                  <button
-                    key={bp}
-                    type="button"
-                    onMouseDown={(e) => e.preventDefault()}
-                    onClick={() => setActiveBp(bp)}
-                    className={cn(
-                      "flex-1 flex flex-col items-center gap-0.5 py-1.5 rounded border text-[10px] transition-colors",
-                      activeBp === bp
-                        ? "bg-primary text-primary-foreground border-primary"
-                        : "bg-background border-border hover:bg-muted",
-                      has && activeBp !== bp && "border-primary/50"
-                    )}
-                    title={BP_META[bp].label}
-                  >
-                    <Icon className="h-3 w-3" />
-                    <span className="font-mono">{sizeVal?.[bp] ?? "—"}</span>
-                  </button>
-                );
-              })}
-            </div>
-
-            <DropdownMenuSeparator />
-            <div className="px-2 py-1 text-[10px] text-muted-foreground flex items-center gap-1">
-              <ActiveIcon className="h-3 w-3" />
-              Définir pour <strong className="text-foreground">{BP_META[activeBp].label}</strong>
-            </div>
-
-            <DropdownMenuItem onClick={() => setBpSize(activeBp, null)} className="text-xs">
-              Hériter (par défaut)
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-
-            <div className="max-h-48 overflow-y-auto">
-              {SIZE_PRESETS.map(s => (
-                <DropdownMenuItem
-                  key={s}
-                  onClick={() => setBpSize(activeBp, s)}
-                  className={cn("text-xs font-mono", activeSize === s && "bg-primary/10 text-primary")}
+          <DropdownMenuContent
+            align="end"
+            className="w-72 p-0"
+            onCloseAutoFocus={(e) => e.preventDefault()}
+          >
+            <div className="px-3 py-2">
+              <DropdownMenuLabel className="px-0 text-[10px] flex items-center justify-between">
+                <span>Taille fluide (clamp)</span>
+                <button
+                  type="button"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={resetAll}
+                  className="inline-flex items-center gap-1 text-[10px] text-muted-foreground hover:text-destructive transition-colors"
+                  title="Hériter (taille par défaut)"
                 >
-                  {s}px
-                </DropdownMenuItem>
-              ))}
+                  <RotateCcw className="h-3 w-3" /> reset
+                </button>
+              </DropdownMenuLabel>
+
+              {/* Sliders */}
+              <div className="space-y-3 mt-2">
+                <SizeSlider
+                  icon={<Smartphone className="h-3 w-3" />}
+                  label="Min (mobile)"
+                  value={minDraft}
+                  min={8}
+                  max={120}
+                  onChange={onMinChange}
+                />
+                <SizeSlider
+                  icon={<Monitor className="h-3 w-3" />}
+                  label="Max (desktop)"
+                  value={maxDraft}
+                  min={8}
+                  max={200}
+                  onChange={onMaxChange}
+                />
+              </div>
+
+              {/* Aperçu live */}
+              <div className="mt-3 rounded border border-border bg-muted/40 px-2 py-1.5 text-center overflow-hidden">
+                <span
+                  className={cn("inline-block leading-none", className)}
+                  style={{ fontSize: clampExpr(minDraft, maxDraft) as any }}
+                >
+                  Aa
+                </span>
+                <div className="mt-1 text-[9px] font-mono text-muted-foreground truncate">
+                  clamp({minDraft}px, …, {maxDraft}px)
+                </div>
+              </div>
             </div>
 
             <DropdownMenuSeparator />
-            <DropdownMenuLabel className="text-[10px]">Personnalisé (px)</DropdownMenuLabel>
-            <div className="px-2 py-1">
-              <input
-                type="number"
-                min={1}
-                max={999}
-                value={customSize}
-                placeholder="ex: 34"
-                onChange={(e) => setCustomSize(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    const n = parseInt(customSize, 10);
-                    if (!isNaN(n) && n >= 1 && n <= 999) {
-                      setBpSize(activeBp, n);
-                      setCustomSize("");
-                    }
-                  }
-                }}
-                onBlur={() => setCustomSize("")}
-                className="w-full h-7 px-1.5 text-xs font-mono bg-background border border-border rounded focus:outline-none focus:ring-1 focus:ring-primary"
-              />
-            </div>
 
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={resetAll} className="text-xs text-destructive">
-              Réinitialiser tous les breakpoints
-            </DropdownMenuItem>
+            <div className="px-2 py-2">
+              <div className="text-[10px] text-muted-foreground px-1 mb-1">Presets sémantiques</div>
+              <div className="grid grid-cols-2 gap-1 max-h-56 overflow-y-auto">
+                {SEMANTIC_PRESETS.map((p) => {
+                  const active = minDraft === p.min && maxDraft === p.max;
+                  return (
+                    <button
+                      key={p.label}
+                      type="button"
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => applyPreset(p)}
+                      title={p.hint}
+                      className={cn(
+                        "flex items-center justify-between px-2 py-1 rounded border text-[10px] font-mono transition-colors",
+                        active
+                          ? "bg-primary text-primary-foreground border-primary"
+                          : "bg-background border-border hover:bg-muted"
+                      )}
+                    >
+                      <span className="font-sans font-semibold">{p.label}</span>
+                      <span className="opacity-70">{p.min}-{p.max}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           </DropdownMenuContent>
         </DropdownMenu>
         )}
       </span>
     </span>
+  );
+}
+
+function SizeSlider({
+  icon, label, value, min, max, onChange,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: number;
+  min: number;
+  max: number;
+  onChange: (n: number) => void;
+}) {
+  return (
+    <div>
+      <div className="flex items-center justify-between text-[10px] mb-1">
+        <span className="inline-flex items-center gap-1 text-muted-foreground">{icon}{label}</span>
+        <input
+          type="number"
+          min={min}
+          max={max}
+          value={value}
+          onChange={(e) => onChange(parseInt(e.target.value, 10) || min)}
+          className="w-14 h-5 px-1 text-[10px] font-mono bg-background border border-border rounded text-right focus:outline-none focus:ring-1 focus:ring-primary"
+        />
+      </div>
+      <input
+        type="range"
+        min={min}
+        max={max}
+        value={value}
+        onChange={(e) => onChange(parseInt(e.target.value, 10))}
+        className="w-full h-1.5 accent-primary cursor-pointer"
+      />
+    </div>
   );
 }
