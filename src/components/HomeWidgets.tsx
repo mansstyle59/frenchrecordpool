@@ -38,6 +38,7 @@ import { usePlayer } from "@/contexts/PlayerContext";
 import { titleStyle, bodyStyle } from "@/lib/widgetTypography";
 import {
   ANIM_VARIANTS, CONTAINER_CLASS, PAD_X, padYClasses, bgStyle,
+  containerStyle, shellStyle, alignYClass,
   type WidgetCommon,
 } from "@/lib/widgetCommon";
 import DjShortsWidget from "@/components/DjShortsWidget";
@@ -146,7 +147,10 @@ function WidgetWrapper({ widget, preview }: { widget: Widget; preview: boolean }
   const variants = ANIM_VARIANTS[animKey] || ANIM_VARIANTS["slide-up"];
 
   const content = (
-    <div className={`${CONTAINER_CLASS[containerKey]} ${padX} relative z-10`}>
+    <div
+      className={`${CONTAINER_CLASS[containerKey]} ${padX} relative z-10`}
+      style={containerStyle(common)}
+    >
       <WidgetRenderer widget={widget} preview={preview} />
     </div>
   );
@@ -158,7 +162,8 @@ function WidgetWrapper({ widget, preview }: { widget: Widget; preview: boolean }
       whileInView={animKey === "none" ? undefined : "show"}
       viewport={{ once: true, amount: 0.15 }}
       transition={common.anim_delay ? { delay: common.anim_delay / 1000 } : undefined}
-      className={`relative ${padY} ${hasBg ? "overflow-hidden" : ""}`}
+      className={`relative ${padY} ${alignYClass(common)} ${hasBg ? "overflow-hidden" : ""}`}
+      style={shellStyle(common)}
     >
       {hasBg && (
         <>

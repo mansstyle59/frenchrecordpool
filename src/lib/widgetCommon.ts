@@ -4,7 +4,16 @@ import type { Variants } from "framer-motion";
 export type PadSize = "none" | "sm" | "md" | "lg" | "xl";
 
 export interface WidgetCommon {
-  container?: "full" | "wide" | "default" | "narrow"; // max width
+  container?: "full" | "wide" | "default" | "narrow"; // max width preset
+  /** Custom width override in px (wins over container preset when set). */
+  max_width_px?: number;
+  /** Minimum height in px (responsive: applied via inline style). */
+  min_height_px?: number;
+  /** Minimum height in viewport units (e.g. 60 = 60vh). When both set, px wins. */
+  min_height_vh?: number;
+  /** Vertical alignment of content inside the shell when min-height is set. */
+  align_y?: "start" | "center" | "end";
+
   /** Legacy uniform Y padding (applied as fallback to top + bottom on every breakpoint). */
   pad_y?: PadSize;
   pad_x?: "none" | "sm" | "md";
@@ -26,6 +35,29 @@ export interface WidgetCommon {
   bg_overlay?: number;     // 0..100
   anim?: "none" | "fade" | "slide-up" | "slide-left" | "zoom";
   anim_delay?: number;     // ms
+}
+
+/** Build inline style for the inner container (custom width override). */
+export function containerStyle(c: WidgetCommon = {}): React.CSSProperties {
+  if (c.max_width_px && c.max_width_px > 0) {
+    return { maxWidth: `${c.max_width_px}px`, marginLeft: "auto", marginRight: "auto" };
+  }
+  return {};
+}
+
+/** Build inline style for the outer shell (min-height + flex alignment). */
+export function shellStyle(c: WidgetCommon = {}): React.CSSProperties {
+  const s: React.CSSProperties = {};
+  if (c.min_height_px && c.min_height_px > 0) s.minHeight = `${c.min_height_px}px`;
+  else if (c.min_height_vh && c.min_height_vh > 0) s.minHeight = `${c.min_height_vh}vh`;
+  return s;
+}
+
+/** Flex classes when a min-height is defined, to vertically center/align content. */
+export function alignYClass(c: WidgetCommon = {}): string {
+  if (!c.min_height_px && !c.min_height_vh) return "";
+  const map = { start: "items-start", center: "items-center", end: "items-end" } as const;
+  return `flex flex-col ${map[c.align_y ?? "center"]}`;
 }
 
 // djcity-like: contenu cadré ~1200-1280px max au centre, marges latérales.
