@@ -961,17 +961,23 @@ export type Database = {
       tracks: {
         Row: {
           acapella_url: string | null
+          accent_color: string | null
           artist: string
           artist_id: string | null
           audio_format: string | null
           audio_url: string | null
           bpm: number | null
+          copyright: string | null
           cover_url: string | null
           created_at: string
           created_by: string | null
+          custom_fields: Json
           download_url: string | null
           downloads: number | null
           duration: string | null
+          energy: number | null
+          explicit: boolean
+          external_links: Json
           featured_artists: string[] | null
           file_size_bytes: number | null
           genre: string
@@ -979,8 +985,12 @@ export type Database = {
           instrumental_url: string | null
           isrc: string | null
           label: string | null
+          language: string | null
+          mastering_engineer: string | null
+          mix_engineer: string | null
           mood: string | null
           musical_key: string | null
+          notes: string | null
           preview_url: string | null
           producer: string | null
           rejection_reason: string | null
@@ -999,17 +1009,23 @@ export type Database = {
         }
         Insert: {
           acapella_url?: string | null
+          accent_color?: string | null
           artist: string
           artist_id?: string | null
           audio_format?: string | null
           audio_url?: string | null
           bpm?: number | null
+          copyright?: string | null
           cover_url?: string | null
           created_at?: string
           created_by?: string | null
+          custom_fields?: Json
           download_url?: string | null
           downloads?: number | null
           duration?: string | null
+          energy?: number | null
+          explicit?: boolean
+          external_links?: Json
           featured_artists?: string[] | null
           file_size_bytes?: number | null
           genre: string
@@ -1017,8 +1033,12 @@ export type Database = {
           instrumental_url?: string | null
           isrc?: string | null
           label?: string | null
+          language?: string | null
+          mastering_engineer?: string | null
+          mix_engineer?: string | null
           mood?: string | null
           musical_key?: string | null
+          notes?: string | null
           preview_url?: string | null
           producer?: string | null
           rejection_reason?: string | null
@@ -1037,17 +1057,23 @@ export type Database = {
         }
         Update: {
           acapella_url?: string | null
+          accent_color?: string | null
           artist?: string
           artist_id?: string | null
           audio_format?: string | null
           audio_url?: string | null
           bpm?: number | null
+          copyright?: string | null
           cover_url?: string | null
           created_at?: string
           created_by?: string | null
+          custom_fields?: Json
           download_url?: string | null
           downloads?: number | null
           duration?: string | null
+          energy?: number | null
+          explicit?: boolean
+          external_links?: Json
           featured_artists?: string[] | null
           file_size_bytes?: number | null
           genre?: string
@@ -1055,8 +1081,12 @@ export type Database = {
           instrumental_url?: string | null
           isrc?: string | null
           label?: string | null
+          language?: string | null
+          mastering_engineer?: string | null
+          mix_engineer?: string | null
           mood?: string | null
           musical_key?: string | null
+          notes?: string | null
           preview_url?: string | null
           producer?: string | null
           rejection_reason?: string | null
@@ -1284,17 +1314,23 @@ export type Database = {
         Args: { _days: number; _limit: number }
         Returns: {
           acapella_url: string | null
+          accent_color: string | null
           artist: string
           artist_id: string | null
           audio_format: string | null
           audio_url: string | null
           bpm: number | null
+          copyright: string | null
           cover_url: string | null
           created_at: string
           created_by: string | null
+          custom_fields: Json
           download_url: string | null
           downloads: number | null
           duration: string | null
+          energy: number | null
+          explicit: boolean
+          external_links: Json
           featured_artists: string[] | null
           file_size_bytes: number | null
           genre: string
@@ -1302,8 +1338,12 @@ export type Database = {
           instrumental_url: string | null
           isrc: string | null
           label: string | null
+          language: string | null
+          mastering_engineer: string | null
+          mix_engineer: string | null
           mood: string | null
           musical_key: string | null
+          notes: string | null
           preview_url: string | null
           producer: string | null
           rejection_reason: string | null
