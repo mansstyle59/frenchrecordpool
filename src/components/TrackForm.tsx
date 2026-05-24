@@ -195,6 +195,30 @@ export default function TrackForm({ initialData, saving, onSubmit, existingGenre
   const [metaSearching, setMetaSearching] = useState(false);
   const [metaResults, setMetaResults] = useState<any[]>([]);
 
+  // ===== Personnalisation A→Z =====
+  const init: any = initialData ?? {};
+  const [energy, setEnergy] = useState<string>(init.energy != null ? String(init.energy) : "");
+  const [language, setLanguage] = useState<string>(init.language ?? "");
+  const [explicit, setExplicit] = useState<boolean>(!!init.explicit);
+  const [copyright, setCopyright] = useState<string>(init.copyright ?? "");
+  const [notes, setNotes] = useState<string>(init.notes ?? "");
+  const [mixEngineer, setMixEngineer] = useState<string>(init.mix_engineer ?? "");
+  const [masteringEngineer, setMasteringEngineer] = useState<string>(init.mastering_engineer ?? "");
+  const [accentColor, setAccentColor] = useState<string>(init.accent_color ?? "");
+  const [externalLinks, setExternalLinks] = useState<ExternalLinks>(
+    (init.external_links && typeof init.external_links === "object") ? init.external_links : {}
+  );
+  const [customFields, setCustomFields] = useState<CustomField[]>(
+    Array.isArray(init.custom_fields) ? init.custom_fields : []
+  );
+  const setLink = (k: keyof ExternalLinks, v: string) =>
+    setExternalLinks((prev) => ({ ...prev, [k]: v }));
+  const addCustomField = () => setCustomFields((p) => [...p, { key: "", value: "" }]);
+  const updateCustomField = (i: number, patch: Partial<CustomField>) =>
+    setCustomFields((p) => p.map((f, idx) => (idx === i ? { ...f, ...patch } : f)));
+  const removeCustomField = (i: number) =>
+    setCustomFields((p) => p.filter((_, idx) => idx !== i));
+
   // Preview auto-generation
   const [previewAuto, setPreviewAuto] = useState(true);
   const [previewStart, setPreviewStart] = useState<PreviewStartMode>("quarter");
