@@ -2,6 +2,7 @@ import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
   Search, Disc3, LogIn, LogOut, Shield, Mic2, Eye, EyeOff, User,
   Home, Sparkles, Music2, Download, CreditCard, Users as UsersIcon, Clapperboard,
+  ListMusic, Layers,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,19 +21,23 @@ import {
   SidebarHeader, SidebarFooter, SidebarSeparator,
 } from "@/components/ui/sidebar";
 
-const NAV_MAIN = [
+// Navigation harmonisée — libellés courts, cohérents, icônes distinctes.
+const NAV_DISCOVER = [
   { key: "nav.home", to: "/", label: "Accueil", icon: Home, end: true },
   { key: "nav.new", to: "/new", label: "Nouveautés", icon: Sparkles },
   { key: "nav.shorts", to: "/shorts", label: "Shorts", icon: Clapperboard },
-  { key: "nav.playlists", to: "/playlists", label: "Playlists", icon: Music2 },
-  { key: "nav.djs", to: "/remixers", label: "DJ / Remixer", icon: Mic2 },
+];
+
+const NAV_CATALOG = [
+  { key: "nav.playlists", to: "/playlists", label: "Playlists", icon: ListMusic },
+  { key: "nav.djs", to: "/remixers", label: "DJ & Remixers", icon: Mic2 },
   { key: "nav.artists", to: "/artists", label: "Artistes", icon: Music2 },
-  { key: "nav.stems", to: "/stems", label: "Stems", icon: Music2 },
+  { key: "nav.stems", to: "/stems", label: "Stems", icon: Layers },
 ];
 
 const NAV_ACCOUNT = [
-  { key: "nav.downloads", to: "/downloads", label: "Téléchargements", icon: Download },
-  { key: "nav.pricing", to: "/pricing", label: "Tarifs", icon: CreditCard },
+  { key: "nav.downloads", to: "/downloads", label: "Mes téléchargements", icon: Download },
+  { key: "nav.pricing", to: "/pricing", label: "Abonnements", icon: CreditCard },
 ];
 
 function PublicSidebar({ onNavigate }: { onNavigate?: () => void }) {
