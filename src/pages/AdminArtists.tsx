@@ -172,7 +172,7 @@ export default function AdminArtists() {
       : await supabase.from("artists" as any).insert(payload);
     setSaving(false);
     if (error) { toast({ title: "Erreur", description: error.message, variant: "destructive" }); return; }
-    toast({ title: editing ? "DJ modifié" : "DJ ajouté" });
+    toast({ title: editing ? "Artiste modifié" : "Artiste ajouté" });
     setOpen(false);
     qc.invalidateQueries({ queryKey: ["admin-artists"] });
   };
