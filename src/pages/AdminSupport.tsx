@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { usePresence } from "@/contexts/PresenceContext";
 import AdminLayout from "@/components/admin/AdminLayout";
 import SupportChat from "@/components/SupportChat";
 import { Badge } from "@/components/ui/badge";
