@@ -261,18 +261,18 @@ export default function TrackDetail() {
                 </div>
               )}
 
-              {/* Alt download links (acapella / instrumental) */}
-              {(track.acapella_url || track.instrumental_url) && (
+              {/* Alt download links (acapella / instrumental) — only for subscribers / owner / admin */}
+              {(acapellaUrl || instrumentalUrl) && (
                 <div className="flex flex-wrap gap-2 mt-5">
-                  {track.acapella_url && (
-                    <a href={track.acapella_url} target="_blank" rel="noopener noreferrer">
+                  {acapellaUrl && (
+                    <a href={acapellaUrl} target="_blank" rel="noopener noreferrer">
                       <Badge variant="outline" className="cursor-pointer hover:bg-secondary text-xs gap-1">
                         <Mic2 className="h-3 w-3" /> Acapella
                       </Badge>
                     </a>
                   )}
-                  {track.instrumental_url && (
-                    <a href={track.instrumental_url} target="_blank" rel="noopener noreferrer">
+                  {instrumentalUrl && (
+                    <a href={instrumentalUrl} target="_blank" rel="noopener noreferrer">
                       <Badge variant="outline" className="cursor-pointer hover:bg-secondary text-xs gap-1">
                         <Music className="h-3 w-3" /> Instrumental
                       </Badge>
