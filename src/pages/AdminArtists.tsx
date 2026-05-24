@@ -187,7 +187,7 @@ export default function AdminArtists() {
     if (!confirm(`Supprimer "${a.name}" ? Les tracks associés ne sont pas affectés.`)) return;
     const { error } = await supabase.from("artists" as any).delete().eq("id", a.id);
     if (error) { toast({ title: "Erreur", description: error.message, variant: "destructive" }); return; }
-    toast({ title: "DJ supprimé" });
+    toast({ title: "Artiste supprimé" });
     qc.invalidateQueries({ queryKey: ["admin-artists"] });
   };
 
