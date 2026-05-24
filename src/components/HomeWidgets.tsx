@@ -790,7 +790,7 @@ function StickyPromoWidget({ config }: { config: any }) {
 function HtmlBlockWidget({ config }: { config: any }) {
   return (
     <div className="rounded-3xl border border-border bg-card p-6 md:p-8 prose prose-invert max-w-none">
-      <div dangerouslySetInnerHTML={{ __html: config.html || "" }} />
+      <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(config.html) }} />
     </div>
   );
 }
