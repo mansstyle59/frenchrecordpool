@@ -11,6 +11,7 @@ import { useFavorites } from "@/hooks/useFavorites";
 import type { DbTrack } from "@/hooks/useTracks";
 import { resolveCover } from "@/lib/trackCover";
 import ArtistCredit from "@/components/ArtistCredit";
+import AdminCoverEditor from "@/components/admin/AdminCoverEditor";
 
 /* ─── Responsive grid template (header + rows MUST match exactly) ───
    Column count per breakpoint:
@@ -238,6 +239,7 @@ export default function TrackRow({ track }: TrackRowProps) {
             </div>
           )}
         </div>
+        <AdminCoverEditor trackId={track.id} currentUrl={track.cover_url} />
         {!isFullPlayback && !isActive && (
           <span className="pointer-events-none absolute bottom-0.5 left-0.5 right-0.5 z-20 text-center text-[8px] font-bold uppercase tracking-wider text-white/90 bg-black/40 rounded-sm opacity-0 group-hover:opacity-100 transition-opacity">
             Extrait
