@@ -32,7 +32,7 @@ export const ADMIN_NAV: AdminNavGroup[] = [
       { to: "/admin/queue", label: "File de modération", icon: Inbox, desc: "Soumissions DJ en attente", keywords: "moderation pending review" },
       { to: "/admin/shorts", label: "Shorts DJ", icon: Clapperboard, desc: "Vidéos YouTube courtes", keywords: "video youtube" },
       { to: "/admin/playlists", label: "Playlists", icon: ListMusic, desc: "Spotify, Deezer, internes", keywords: "spotify deezer soundcloud" },
-      { to: "/admin/artists", label: "DJs & Remixers", icon: Mic2, desc: "Fiches artistes", keywords: "artistes producteurs" },
+      { to: "/admin/artists", label: "Artistes & DJs", icon: Mic2, desc: "DJ, remixers, chanteurs, groupes", keywords: "artistes producteurs chanteurs vocalist band groupes remixers" },
     ],
   },
   {
