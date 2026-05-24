@@ -163,6 +163,15 @@ export default function SupportChat({ threadOverride = null, className }: Props)
         <span className="font-medium text-sm">
           {isAdminMode ? "Conversation" : "Support — discuter avec un admin"}
         </span>
+        {isAdminMode && (
+          <span className="flex items-center gap-1.5 text-[11px] text-muted-foreground ml-2">
+            <span className={`h-2 w-2 rounded-full ${peerOnline ? "bg-green-500" : "bg-muted-foreground/40"}`} />
+            {peerOnline ? "En ligne" : "Hors ligne"}
+          </span>
+        )}
+        {peerTyping && (
+          <span className="text-[11px] text-muted-foreground ml-auto italic">en train d'écrire…</span>
+        )}
       </div>
 
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-3">
