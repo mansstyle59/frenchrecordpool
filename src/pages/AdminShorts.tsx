@@ -247,7 +247,7 @@ function ShortEditor({
   saving,
 }: {
   draft: Draft;
-  artists: { id: string; name: string; kind: string }[];
+  artists: { id: string; name: string; kind: string; roles: string[] | null }[];
   tracks: { id: string; title: string; artist: string }[];
   onCancel: () => void;
   onSave: (d: Draft) => void;
