@@ -74,7 +74,7 @@ export default function CmsRichText({ editKey, as: Tag = "div", className, child
           saveDraft(editKey, "richtext", ref.current?.innerHTML || "");
         }}
         onInput={queueSave}
-        dangerouslySetInnerHTML={{ __html: value || "" }}
+        dangerouslySetInnerHTML={{ __html: sanitizeHtml(value) }}
       />
       <span className="absolute -top-2 -right-2 z-10 hidden group-hover/cms:flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground shadow-md pointer-events-none">
         <Pencil className="h-3 w-3" />
