@@ -1125,6 +1125,178 @@ export default function TrackForm({ initialData, saving, onSubmit, existingGenre
               <Input type="url" value={instrumentalUrl} onChange={(e) => setInstrumentalUrl(e.target.value)} placeholder="https://…" className="bg-secondary border-border" />
             </div>
           </div>
+
+          {/* ============= PERSONNALISATION A→Z ============= */}
+          <div className="rounded-xl border border-accent/30 bg-accent/5 p-4 space-y-4">
+            <div className="flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-accent" />
+              <h3 className="text-sm font-semibold uppercase tracking-wider">Personnalisation avancée</h3>
+              <span className="text-[10px] text-muted-foreground font-normal">— tout est optionnel</span>
+            </div>
+
+            {/* Energie / langue / explicit */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="space-y-1">
+                <Label className="text-xs">Énergie {energy && <span className="text-accent font-mono">· {energy}/10</span>}</Label>
+                <input
+                  type="range"
+                  min={0}
+                  max={10}
+                  step={1}
+                  value={energy || "0"}
+                  onChange={(e) => setEnergy(e.target.value === "0" ? "" : e.target.value)}
+                  className="w-full accent-accent"
+                />
+                <p className="text-[10px] text-muted-foreground">0 = non défini · 10 = peak time</p>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Langue</Label>
+                <Input
+                  list="track-lang-suggest"
+                  value={language}
+                  onChange={(e) => setLanguage(e.target.value)}
+                  placeholder="Français, English, Español…"
+                  className="bg-secondary border-border"
+                />
+                <datalist id="track-lang-suggest">
+                  {["Instrumental","Français","English","Español","Portuguese","Italiano","Arabe","Créole","Lingala","Wolof"].map((l) => <option key={l} value={l} />)}
+                </datalist>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Contenu explicite</Label>
+                <label className="flex items-center gap-2 h-9 px-3 rounded-md border border-border bg-secondary cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={explicit}
+                    onChange={(e) => setExplicit(e.target.checked)}
+                    className="accent-accent"
+                  />
+                  <span className="text-sm">{explicit ? "🅴 Explicit" : "Clean / non spécifié"}</span>
+                </label>
+              </div>
+            </div>
+
+            {/* Credits supplémentaires */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label className="text-xs">Mixage</Label>
+                <Input value={mixEngineer} onChange={(e) => setMixEngineer(e.target.value)} placeholder="Mix engineer" className="bg-secondary border-border" />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Mastering</Label>
+                <Input value={masteringEngineer} onChange={(e) => setMasteringEngineer(e.target.value)} placeholder="Mastering engineer" className="bg-secondary border-border" />
+              </div>
+              <div className="space-y-1 sm:col-span-2">
+                <Label className="text-xs">Copyright / Éditeur</Label>
+                <Input value={copyright} onChange={(e) => setCopyright(e.target.value)} placeholder="© 2025 Mon Label / Publishing" className="bg-secondary border-border" />
+              </div>
+            </div>
+
+            {/* Couleur d'accent */}
+            <div className="space-y-1">
+              <Label className="text-xs">Couleur d'accent de la fiche</Label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="color"
+                  value={/^#/.test(accentColor) ? accentColor : "#1e3a8a"}
+                  onChange={(e) => setAccentColor(e.target.value)}
+                  className="h-9 w-12 rounded border border-border bg-secondary cursor-pointer"
+                  aria-label="Choisir une couleur d'accent"
+                />
+                <Input
+                  value={accentColor}
+                  onChange={(e) => setAccentColor(e.target.value)}
+                  placeholder="#1e3a8a ou 220 80% 58%"
+                  className="bg-secondary border-border font-mono flex-1"
+                />
+                {accentColor && (
+                  <Button type="button" variant="ghost" size="sm" onClick={() => setAccentColor("")}>
+                    <X className="h-3.5 w-3.5" />
+                  </Button>
+                )}
+              </div>
+              <p className="text-[10px] text-muted-foreground">Personnalise la teinte affichée sur la fiche de cette track uniquement.</p>
+            </div>
+
+            {/* Liens externes */}
+            <div className="space-y-2">
+              <Label className="text-xs flex items-center gap-1.5">
+                <LinkIcon className="h-3 w-3" /> Liens externes (streaming, store)
+              </Label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {([
+                  ["spotify", "Spotify"],
+                  ["beatport", "Beatport"],
+                  ["appleMusic", "Apple Music"],
+                  ["youtube", "YouTube"],
+                  ["soundcloud", "SoundCloud"],
+                  ["deezer", "Deezer"],
+                  ["tidal", "Tidal"],
+                  ["bandcamp", "Bandcamp"],
+                ] as const).map(([key, label]) => (
+                  <div key={key} className="space-y-1">
+                    <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</Label>
+                    <Input
+                      type="url"
+                      value={externalLinks[key] ?? ""}
+                      onChange={(e) => setLink(key, e.target.value)}
+                      placeholder={`https://… ${label}`}
+                      className="bg-secondary border-border h-9"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Champs personnalisés libres */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label className="text-xs">Champs personnalisés (clé / valeur)</Label>
+                <Button type="button" variant="outline" size="sm" className="h-7 gap-1 text-xs" onClick={addCustomField}>
+                  + Ajouter
+                </Button>
+              </div>
+              {customFields.length === 0 ? (
+                <p className="text-[11px] text-muted-foreground italic">
+                  Aucun champ. Ajoute des infos sur-mesure pour cette track (ex : « Voix », « Sample », « Studio »…).
+                </p>
+              ) : (
+                <div className="space-y-2">
+                  {customFields.map((f, i) => (
+                    <div key={i} className="flex gap-2">
+                      <Input
+                        value={f.key}
+                        onChange={(e) => updateCustomField(i, { key: e.target.value })}
+                        placeholder="Clé (ex : Voix)"
+                        className="bg-secondary border-border w-1/3"
+                      />
+                      <Input
+                        value={f.value}
+                        onChange={(e) => updateCustomField(i, { value: e.target.value })}
+                        placeholder="Valeur"
+                        className="bg-secondary border-border flex-1"
+                      />
+                      <Button type="button" variant="ghost" size="icon" className="shrink-0" onClick={() => removeCustomField(i)} aria-label="Supprimer">
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Notes privées */}
+            <div className="space-y-1">
+              <Label className="text-xs">Notes privées (visibles uniquement par toi et les admins)</Label>
+              <textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Mémo perso, contexte, sample clearance, indications de mix…"
+                rows={3}
+                className="w-full rounded-md bg-secondary border border-border px-3 py-2 text-sm resize-y"
+              />
+            </div>
+          </div>
         </div>
       )}
 
