@@ -186,17 +186,29 @@ export function CmsProvider({ children }: { children: ReactNode }) {
     if (error) {
       toast.error("Sauvegarde impossible");
       console.error(error);
+      return;
     }
-  }, [flashSaving]);
+    // Auto-publication: dès qu'un brouillon est sauvegardé, on publie pour tous les visiteurs.
+    if (autoPublish) {
+      const { error: pubErr } = await supabase.rpc("cms_publish", { _keys: [key] as any });
+      if (pubErr) {
+        toast.error("Publication automatique impossible");
+        console.error(pubErr);
+        return;
+      }
+      setPublished(p => ({ ...p, [key]: value }));
+      setDrafts(d => { const n = { ...d }; delete n[key]; return n; });
+    }
+  }, [flashSaving, autoPublish]);
 
   const saveDraft = useCallback(async (key: string, type: CmsType, value: any) => {
     // Snapshot prev value for undo
-    const prev = drafts[key];
+    const prev = drafts[key] ?? published[key];
     undoStack.current.push({ key, type, prev, next: value });
     redoStack.current = [];
     setUndoTick(t => t + 1);
     await persistDraft(key, type, value);
-  }, [drafts, persistDraft]);
+  }, [drafts, published, persistDraft]);
 
   const publishAll = useCallback(async () => {
     flashSaving();
