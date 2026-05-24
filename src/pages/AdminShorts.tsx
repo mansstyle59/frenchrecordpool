@@ -53,7 +53,7 @@ export default function AdminShorts() {
   const { data: artists = [] } = useQuery({
     queryKey: ["admin-shorts-artists"],
     queryFn: async () => {
-      const { data } = await supabase.from("artists").select("id,name,kind").order("name");
+      const { data } = await supabase.from("artists").select("id,name,kind,roles").order("name");
       return data ?? [];
     },
   });
