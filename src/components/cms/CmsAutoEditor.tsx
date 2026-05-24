@@ -31,6 +31,8 @@ function hashStr(s: string) {
 type ImgTarget = { key: string; el: HTMLImageElement; current: string };
 type LinkTarget = { key: string; el: HTMLAnchorElement; current: string };
 
+const SECTION_SELECTOR = "section[id], section[data-cms-section], [data-cms-block]";
+
 export default function CmsAutoEditor() {
   const { editMode, values, saveDraft } = useCms();
   const { pathname } = useLocation();
@@ -204,6 +206,40 @@ export default function CmsAutoEditor() {
             next!.remove();
           }
         });
+
+        // ===== Sections (visibilité) =====
+        document.body.querySelectorAll<HTMLElement>(SECTION_SELECTOR).forEach((sec) => {
+          if (sec.closest("[data-cms-skip]")) return;
+          const id = sec.id || sec.dataset.cmsSection || hashStr(sec.outerHTML.slice(0, 200));
+          const key = `auto-vis:${pathRef.current}:${id}`;
+          sec.dataset.cmsVis = key;
+          const stored = valuesRef.current[key];
+          const hidden = stored === false || stored === "hidden";
+          sec.style.display = hidden ? (editModeRef.current ? "" : "none") : "";
+          if (editModeRef.current) sec.style.opacity = hidden ? "0.4" : "";
+          else sec.style.opacity = "";
+
+          let badge = sec.querySelector<HTMLButtonElement>(":scope > .cms-auto-vis-btn");
+          if (editModeRef.current) {
+            if (!badge) {
+              badge = document.createElement("button");
+              badge.type = "button";
+              badge.className = "cms-auto-vis-btn";
+              if (getComputedStyle(sec).position === "static") sec.style.position = "relative";
+              sec.appendChild(badge);
+              badge.addEventListener("click", (ev) => {
+                ev.preventDefault();
+                ev.stopPropagation();
+                const cur = valuesRef.current[key];
+                const isHidden = cur === false || cur === "hidden";
+                saveRef.current(key, "visibility", !isHidden ? "hidden" : "visible");
+              });
+            }
+            badge.textContent = hidden ? "👁 Afficher" : "🚫 Masquer";
+          } else if (badge) {
+            badge.remove();
+          }
+        });
       } finally {
         scanning = false;
       }
@@ -229,7 +265,7 @@ export default function CmsAutoEditor() {
           e.removeEventListener("blur", onTextBlur);
         }
       });
-      document.querySelectorAll<HTMLElement>(".cms-auto-img-btn, .cms-auto-link-btn").forEach((b) => b.remove());
+      document.querySelectorAll<HTMLElement>(".cms-auto-img-btn, .cms-auto-link-btn, .cms-auto-vis-btn").forEach((b) => b.remove());
     };
   }, []);
 
