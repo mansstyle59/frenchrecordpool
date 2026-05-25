@@ -545,7 +545,7 @@ export default function AdminHomeWidgets() {
               ) : (
                 <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
                   <SortableContext items={list.map((w) => w.id!)} strategy={rectSortingStrategy}>
-                    <div className="grid grid-cols-2 gap-2 auto-rows-min">
+                    <div className="grid grid-cols-6 gap-2 auto-rows-min">
                       {list.map((w) => (
                         <SortableItem
                           key={w.id}
