@@ -31,7 +31,7 @@ export default function WelcomeBanner({ config }: { config: any }) {
           eyebrow: config.eyebrow_registered || "Bienvenue",
           title: config.title_registered || "Active ton accès complet",
           body: config.body_registered || "Choisis ton plan pour télécharger toutes les exclus.",
-          cta: config.cta_registered || "Voir les plans",
+          cta: config.cta_registered || "Voir les abonnements",
           url: config.cta_registered_url || "/pricing",
           icon: Sparkles,
           accent: "bg-primary/15 text-primary",

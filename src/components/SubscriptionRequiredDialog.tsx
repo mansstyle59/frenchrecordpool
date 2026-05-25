@@ -64,7 +64,7 @@ export default function SubscriptionRequiredDialog() {
           </Button>
           <Button asChild className="flex-1 bg-gradient-to-r from-primary to-accent text-primary-foreground">
             <Link to="/pricing" onClick={() => setOpen(false)}>
-              Voir les offres
+              Voir les abonnements
             </Link>
           </Button>
         </div>

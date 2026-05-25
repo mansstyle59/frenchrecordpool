@@ -40,7 +40,7 @@ export default function Login() {
             <Disc3 className="h-8 w-8 text-primary" />
             <span className="font-display font-bold text-xl gradient-text">French Record Pool</span>
           </Link>
-          <h1 className="font-display text-2xl font-bold">Connexion</h1>
+          <h1 className="font-display text-2xl font-bold">Se connecter</h1>
           <p className="text-sm text-muted-foreground mt-1">Accédez à votre compte DJ</p>
         </motion.div>
 
@@ -56,6 +56,7 @@ export default function Login() {
             </div>
             <Button variant="hero" className="w-full" type="submit" disabled={loading}>
               <LogIn className="h-4 w-4 mr-2" /> {loading ? "Connexion..." : "Se connecter"}
+
             </Button>
             <div className="text-right">
               <Link to="/forgot-password" className="text-xs text-muted-foreground hover:text-primary hover:underline">
@@ -67,7 +68,7 @@ export default function Login() {
 
         <motion.p className="text-center text-sm text-muted-foreground" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5, duration: 0.4 }}>
           Pas encore de compte ?{" "}
-          <Link to="/signup" className="text-primary hover:underline font-medium">S'inscrire</Link>
+          <Link to="/signup" className="text-primary hover:underline font-medium">Créer un compte</Link>
         </motion.p>
       </motion.div>
     </div>

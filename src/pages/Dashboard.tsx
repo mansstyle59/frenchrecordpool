@@ -110,7 +110,7 @@ export default function Dashboard() {
             <p className="text-sm text-muted-foreground mt-1">Voici un aperçu de votre activité.</p>
           </div>
           <Button variant="ghost" size="sm" onClick={() => signOut().then(() => navigate("/"))}>
-            <LogOut className="h-4 w-4 mr-1" /> Déconnexion
+            <LogOut className="h-4 w-4 mr-1" /> Se déconnecter
           </Button>
         </motion.div>
 
@@ -232,8 +232,8 @@ export default function Dashboard() {
 
                 {!hasActive && (
                   <div className="space-y-2 border-t border-border pt-3">
-                    <p className="text-sm text-muted-foreground">Choisissez un plan ou utilisez un code partenaire.</p>
-                    <Button asChild size="sm" variant="hero"><Link to="/pricing">Voir les plans</Link></Button>
+                    <p className="text-sm text-muted-foreground">Choisissez un abonnement ou utilisez un code partenaire.</p>
+                    <Button asChild size="sm" variant="hero"><Link to="/pricing">Voir les abonnements</Link></Button>
                   </div>
                 )}
 
