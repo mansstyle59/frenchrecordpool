@@ -34,6 +34,7 @@ import AdminPopups from "./pages/AdminPopups";
 import AdminHomeWidgets from "./pages/AdminHomeWidgets";
 import PopupHost from "@/components/PopupHost";
 import AdminAuditLog from "./pages/AdminAuditLog";
+import AdminLabels from "./pages/AdminLabels";
 import AdminSupport from "./pages/AdminSupport";
 import AdminPlans from "./pages/AdminPlans";
 import AdminPromoCodes from "./pages/AdminPromoCodes";
@@ -100,6 +101,7 @@ const App = () => (
               <Route path="/admin/popups" element={<AdminPopups />} />
               <Route path="/admin/widgets" element={<AdminHomeWidgets />} />
               <Route path="/admin/audit" element={<AdminAuditLog />} />
+              <Route path="/admin/labels" element={<AdminLabels />} />
               <Route path="/admin/support" element={<AdminSupport />} />
               <Route path="/admin/queue" element={<AdminQueue />} />
               <Route path="/dj" element={<DjDashboard />} />
