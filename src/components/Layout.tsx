@@ -108,7 +108,7 @@ function PublicSidebar({ onNavigate }: { onNavigate?: () => void }) {
                   <SidebarMenuButton asChild isActive={pathname.startsWith("/dashboard")} tooltip="Tableau de bord">
                     <NavLink to="/dashboard" onClick={onNavigate} className="flex items-center gap-2">
                       <User className="h-4 w-4" />
-                      <span>{profile?.dj_name || "Tableau de bord"}</span>
+                      <span>{profile?.dj_name || <CmsText editKey="nav.dashboard">Tableau de bord</CmsText>}</span>
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -147,7 +147,11 @@ function PublicSidebar({ onNavigate }: { onNavigate?: () => void }) {
                   onClick={() => setViewAsUser(!viewAsUser)}
                 >
                   {viewAsUser ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  <span>{viewAsUser ? "Repasser en admin" : "Aperçu utilisateur"}</span>
+                  <span>
+                    {viewAsUser
+                      ? <CmsText editKey="nav.back_to_admin">Repasser en admin</CmsText>
+                      : <CmsText editKey="nav.view_as_user">Aperçu utilisateur</CmsText>}
+                  </span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             )}
@@ -219,13 +223,16 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     {isAdmin && (
                       <Link to="/admin" className="hidden md:inline-flex">
                         <Button variant="ghost" size="sm" className="gap-1">
-                          <Shield className="h-4 w-4" /> <span className="hidden lg:inline">Administration</span>
+                          <Shield className="h-4 w-4" />
+                          <span className="hidden lg:inline">
+                            <CmsText editKey="nav.admin">Administration</CmsText>
+                          </span>
                         </Button>
                       </Link>
                     )}
                     <Link to="/dashboard" className="hidden sm:inline-flex">
                       <Button variant="ghost" size="sm">
-                        {profile?.dj_name || "Tableau de bord"}
+                        {profile?.dj_name || <CmsText editKey="nav.dashboard">Tableau de bord</CmsText>}
                       </Button>
                     </Link>
                   </>
@@ -233,11 +240,14 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   <>
                     <Link to="/login" className="hidden sm:inline-flex">
                       <Button variant="ghost" size="sm" className="gap-1">
-                        <LogIn className="h-4 w-4" /> Se connecter
+                        <LogIn className="h-4 w-4" />
+                        <CmsText editKey="nav.signin">Se connecter</CmsText>
                       </Button>
                     </Link>
                     <Link to="/signup" className="hidden sm:inline-flex">
-                      <Button variant="hero" size="sm">Créer un compte</Button>
+                      <Button variant="hero" size="sm">
+                        <CmsText editKey="nav.signup">Créer un compte</CmsText>
+                      </Button>
                     </Link>
                   </>
                 )}
