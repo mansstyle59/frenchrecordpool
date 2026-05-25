@@ -1,7 +1,7 @@
 import {
   LayoutDashboard, Music, Inbox, Clapperboard, ListMusic, Mic2,
   Users, MessageSquare, CreditCard, Layers, Ticket,
-  Palette, Camera, Blocks, MessageCircle, ScrollText, Sparkles, type LucideIcon,
+  Palette, Camera, Blocks, MessageCircle, ScrollText, Sparkles, Tags, type LucideIcon,
 } from "lucide-react";
 
 export type AdminNavItem = {
@@ -57,6 +57,7 @@ export const ADMIN_NAV: AdminNavGroup[] = [
       { to: "/admin/branding", label: "Branding", icon: Palette, desc: "Couleurs, logos, typo", keywords: "theme design couleurs" },
       { to: "/admin/widgets", label: "Widgets Home", icon: Blocks, desc: "Sections de l'accueil", keywords: "homepage modules" },
       { to: "/admin/popups", label: "Popups", icon: MessageCircle, desc: "Messages contextuels", keywords: "modal annonce" },
+      { to: "/admin/labels", label: "Libellés", icon: Tags, desc: "Textes du menu, footer, CTA", keywords: "libelles textes menu navigation cms" },
       { to: "/admin/screenshot-studio", label: "Screenshot Studio", icon: Camera, desc: "Captures marketing", keywords: "screenshot capture" },
     ],
   },
