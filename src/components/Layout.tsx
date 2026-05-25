@@ -108,7 +108,7 @@ function PublicSidebar({ onNavigate }: { onNavigate?: () => void }) {
                   <SidebarMenuButton asChild isActive={pathname.startsWith("/dashboard")} tooltip="Tableau de bord">
                     <NavLink to="/dashboard" onClick={onNavigate} className="flex items-center gap-2">
                       <User className="h-4 w-4" />
-                      <span>{profile?.dj_name || "Tableau de bord"}</span>
+                      <span>{profile?.dj_name || <CmsText editKey="nav.dashboard">Tableau de bord</CmsText>}</span>
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
