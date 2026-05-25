@@ -125,20 +125,24 @@ export default function HomeWidgets({ widgets: propWidgets, preview = false }: P
 
   if (visible.length === 0) return null;
 
-  // Group consecutive half-width widgets into 2-col rows.
-  type Row = { kind: "full"; w: Widget } | { kind: "pair"; items: Widget[] };
+  // Group consecutive partial-width widgets (halves → 2-col, thirds → 3-col).
+  type Row =
+    | { kind: "full"; w: Widget }
+    | { kind: "group"; span: 1 | 3; items: Widget[] };
   const rows: Row[] = [];
   for (const w of visible) {
-    const span: 1 | 2 = ((w.config as any)?.col_span === 1 ? 1 : 2);
-    if (span === 1) {
+    const raw = (w.config as any)?.col_span;
+    const span: 1 | 2 | 3 = raw === 1 ? 1 : raw === 3 ? 3 : 2;
+    if (span === 2) {
+      rows.push({ kind: "full", w });
+    } else {
+      const max = span === 1 ? 2 : 3;
       const last = rows[rows.length - 1];
-      if (last && last.kind === "pair" && last.items.length < 2) {
+      if (last && last.kind === "group" && last.span === span && last.items.length < max) {
         last.items.push(w);
       } else {
-        rows.push({ kind: "pair", items: [w] });
+        rows.push({ kind: "group", span, items: [w] });
       }
-    } else {
-      rows.push({ kind: "full", w });
     }
   }
 
@@ -148,7 +152,12 @@ export default function HomeWidgets({ widgets: propWidgets, preview = false }: P
         row.kind === "full" ? (
           <WidgetWrapper key={row.w.id} widget={row.w} preview={preview} />
         ) : (
-          <div key={`pair-${i}`} className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+          <div
+            key={`grp-${i}`}
+            className={`grid gap-4 md:gap-6 grid-cols-1 ${
+              row.span === 1 ? "md:grid-cols-2" : "md:grid-cols-2 lg:grid-cols-3"
+            }`}
+          >
             {row.items.map((w) => (
               <WidgetWrapper key={w.id} widget={w} preview={preview} />
             ))}
