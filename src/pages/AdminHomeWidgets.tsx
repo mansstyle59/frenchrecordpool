@@ -4,7 +4,7 @@ import {
   Plus, Trash2, Save, X, Mail, Clock, Megaphone, Users, Code as CodeIcon,
   GripVertical, Image as ImageIcon, ListMusic, Sparkles, MousePointerClick,
   Type, Video, Eye, EyeOff, Smartphone, Monitor, Pencil, Undo2, CheckCircle2,
-  BarChart3, Tag, Star, HelpCircle, Minus, Quote, Columns, Copy, Layout,
+  BarChart3, Tag, Star, HelpCircle, Minus, Quote, Columns, Columns3, Copy, Layout,
   Palette, Wand2, TrendingUp, Disc3, Radio, Download, Newspaper, Instagram,
   Images, Megaphone as MegaphoneIcon, Repeat, Music2, Trophy, Heart, History,
   LayoutTemplate,
