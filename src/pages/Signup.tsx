@@ -76,7 +76,7 @@ export default function Signup() {
               <Input id="confirm" type="password" className="bg-secondary border-border" value={confirm} onChange={(e) => setConfirm(e.target.value)} required />
             </div>
             <Button variant="hero" className="w-full" type="submit" disabled={loading}>
-              <UserPlus className="h-4 w-4 mr-2" /> {loading ? "Inscription..." : "S'inscrire"}
+              <UserPlus className="h-4 w-4 mr-2" /> {loading ? "Création..." : "Créer un compte"}
             </Button>
           </form>
         </motion.div>

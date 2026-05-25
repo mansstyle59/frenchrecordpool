@@ -259,7 +259,7 @@ const TYPE_META: Record<string, { label: string; icon: any; desc: string; defaul
       cta_anon: "Créer un compte", cta_anon_url: "/signup",
       title_registered: "Active ton accès complet",
       body_registered: "Choisis ton plan pour télécharger toutes les exclus.",
-      cta_registered: "Voir les plans", cta_registered_url: "/pricing",
+      cta_registered: "Voir les abonnements", cta_registered_url: "/pricing",
       title_subscribed: "Bon retour, {name}",
       body_subscribed: "Profite de tes téléchargements illimités.",
       cta_subscribed: "Voir les nouveautés", cta_subscribed_url: "/new",
