@@ -4,7 +4,7 @@ import {
   Plus, Trash2, Save, X, Mail, Clock, Megaphone, Users, Code as CodeIcon,
   GripVertical, Image as ImageIcon, ListMusic, Sparkles, MousePointerClick,
   Type, Video, Eye, EyeOff, Smartphone, Monitor, Pencil, Undo2, CheckCircle2,
-  BarChart3, Tag, Star, HelpCircle, Minus, Quote, Columns, Copy, Layout,
+  BarChart3, Tag, Star, HelpCircle, Minus, Quote, Columns, Columns3, Copy, Layout,
   Palette, Wand2, TrendingUp, Disc3, Radio, Download, Newspaper, Instagram,
   Images, Megaphone as MegaphoneIcon, Repeat, Music2, Trophy, Heart, History,
   LayoutTemplate,
@@ -386,7 +386,7 @@ export default function AdminHomeWidgets() {
     setDraft(list.map((w) => (w.id === id ? { ...w, is_active } : w)));
   };
 
-  const setColSpanLocal = (id: string, col_span: 1 | 2) => {
+  const setColSpanLocal = (id: string, col_span: 1 | 2 | 3) => {
     setDraft(list.map((w) => (w.id === id ? { ...w, config: { ...w.config, col_span } } : w)));
   };
 
@@ -545,7 +545,7 @@ export default function AdminHomeWidgets() {
               ) : (
                 <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
                   <SortableContext items={list.map((w) => w.id!)} strategy={rectSortingStrategy}>
-                    <div className="grid grid-cols-2 gap-2 auto-rows-min">
+                    <div className="grid grid-cols-6 gap-2 auto-rows-min">
                       {list.map((w) => (
                         <SortableItem
                           key={w.id}
@@ -597,17 +597,25 @@ function SortableItem({
   onEdit: () => void;
   onRemove: () => void;
   onToggle: (v: boolean) => void;
-  onSpanChange: (span: 1 | 2) => void;
+  onSpanChange: (span: 1 | 2 | 3) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: widget.id! });
   const meta = TYPE_META[widget.type];
   const Icon = meta?.icon || CodeIcon;
-  const colSpan: 1 | 2 = ((widget.config as any)?.col_span === 1 ? 1 : 2);
+  const raw = (widget.config as any)?.col_span;
+  const colSpan: 1 | 2 | 3 = raw === 1 ? 1 : raw === 3 ? 3 : 2;
+  // Admin display grid is 6 cols → full=6, half=3, third=2
+  const gridSpan = colSpan === 2 ? 6 : colSpan === 1 ? 3 : 2;
   const style: any = {
     transform: CSS.Transform.toString(transform),
     transition,
-    gridColumn: colSpan === 2 ? "span 2 / span 2" : "span 1 / span 1",
+    gridColumn: `span ${gridSpan} / span ${gridSpan}`,
   };
+  // Cycle: Full → Half → Third → Full
+  const nextSpan: 1 | 2 | 3 = colSpan === 2 ? 1 : colSpan === 1 ? 3 : 2;
+  const spanLabel = colSpan === 2 ? "Pleine" : colSpan === 1 ? "1/2" : "1/3";
+  const SpanIcon = colSpan === 2 ? LayoutTemplate : colSpan === 1 ? Columns : Columns3;
+  const nextLabel = nextSpan === 2 ? "pleine largeur" : nextSpan === 1 ? "1/2 (2 colonnes)" : "1/3 (3 colonnes)";
 
   return (
     <div
@@ -624,16 +632,19 @@ function SortableItem({
         <div className="flex items-center gap-2">
           <h3 className="font-semibold text-sm truncate">{meta?.label || widget.type}</h3>
           {!widget.is_active && <Badge variant="secondary" className="text-[10px] h-4 px-1">Masqué</Badge>}
+          <Badge variant="outline" className="text-[10px] h-4 px-1 gap-1">
+            <SpanIcon className="h-2.5 w-2.5" /> {spanLabel}
+          </Badge>
         </div>
         <p className="text-xs text-muted-foreground truncate">{widget.config.title || meta?.desc}</p>
       </div>
       <button
         type="button"
-        onClick={() => onSpanChange(colSpan === 2 ? 1 : 2)}
-        title={colSpan === 2 ? "Passer en demi-largeur (2 colonnes)" : "Passer en pleine largeur"}
+        onClick={() => onSpanChange(nextSpan)}
+        title={`Passer en ${nextLabel}`}
         className="inline-flex items-center gap-1 h-7 px-2 rounded-md border border-border bg-background hover:border-primary/60 hover:bg-primary/5 text-[10px] font-bold uppercase tracking-wider"
       >
-        {colSpan === 2 ? (<><LayoutTemplate className="h-3 w-3" /> Pleine</>) : (<><Columns className="h-3 w-3" /> 1/2</>)}
+        <SpanIcon className="h-3 w-3" /> {spanLabel}
       </button>
       <Switch checked={widget.is_active} onCheckedChange={onToggle} />
       <Button variant="outline" size="sm" onClick={onEdit}>Modifier</Button>
