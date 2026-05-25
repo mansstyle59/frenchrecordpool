@@ -147,7 +147,11 @@ function PublicSidebar({ onNavigate }: { onNavigate?: () => void }) {
                   onClick={() => setViewAsUser(!viewAsUser)}
                 >
                   {viewAsUser ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  <span>{viewAsUser ? "Repasser en admin" : "Aperçu utilisateur"}</span>
+                  <span>
+                    {viewAsUser
+                      ? <CmsText editKey="nav.back_to_admin">Repasser en admin</CmsText>
+                      : <CmsText editKey="nav.view_as_user">Aperçu utilisateur</CmsText>}
+                  </span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             )}
