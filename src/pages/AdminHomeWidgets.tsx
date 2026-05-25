@@ -386,7 +386,7 @@ export default function AdminHomeWidgets() {
     setDraft(list.map((w) => (w.id === id ? { ...w, is_active } : w)));
   };
 
-  const setColSpanLocal = (id: string, col_span: 1 | 2) => {
+  const setColSpanLocal = (id: string, col_span: 1 | 2 | 3) => {
     setDraft(list.map((w) => (w.id === id ? { ...w, config: { ...w.config, col_span } } : w)));
   };
 
