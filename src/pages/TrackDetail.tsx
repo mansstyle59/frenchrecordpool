@@ -239,6 +239,13 @@ export default function TrackDetail() {
                 </p>
               )}
 
+              {/* Waveform — SoundCloud-style */}
+              {playbackSrc && (
+                <div className="mt-5 rounded-xl border border-border bg-background/40 p-3 md:p-4">
+                  <TrackWaveform trackId={track.id} onSeekIfNotCurrent={handlePlay} />
+                </div>
+              )}
+
               {/* Metadata grid */}
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mt-6 pt-6 border-t border-border/60">
                 <InfoItem icon={Music} label="Genre" value={track.genre || "—"} />
