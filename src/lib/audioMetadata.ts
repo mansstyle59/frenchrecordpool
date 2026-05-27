@@ -190,3 +190,155 @@ export async function extractAudioMetadata(file: File): Promise<AudioMetadata> {
   return fast;
 }
 
+
+// =====================================================================
+// Detection audio "SoundCloud-like" — Clé musicale (Krumhansl-Schmuckler),
+// énergie (RMS) et ambiance (combinaison énergie + centroïde spectral).
+// 100% client-side via Web Audio API, sans dépendance lourde.
+// =====================================================================
+
+const KS_MAJOR = [6.35,2.23,3.48,2.33,4.38,4.09,2.52,5.19,2.39,3.66,2.29,2.88];
+const KS_MINOR = [6.33,2.68,3.52,5.38,2.60,3.53,2.54,4.75,3.98,2.69,3.34,3.17];
+const PITCHES = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
+
+function correlate(a: number[], b: number[]): number {
+  const mean = (arr: number[]) => arr.reduce((s, v) => s + v, 0) / arr.length;
+  const ma = mean(a), mb = mean(b);
+  let num = 0, da = 0, db = 0;
+  for (let i = 0; i < 12; i++) {
+    const xa = a[i] - ma, xb = b[i] - mb;
+    num += xa * xb;
+    da += xa * xa;
+    db += xb * xb;
+  }
+  return num / (Math.sqrt(da * db) || 1);
+}
+
+function detectKeyFromChroma(chroma: number[]): string {
+  let best = { score: -Infinity, key: "" };
+  for (let i = 0; i < 12; i++) {
+    const rotated = chroma.slice(i).concat(chroma.slice(0, i));
+    const maj = correlate(rotated, KS_MAJOR);
+    const min = correlate(rotated, KS_MINOR);
+    if (maj > best.score) best = { score: maj, key: `${PITCHES[i]}` };
+    if (min > best.score) best = { score: min, key: `${PITCHES[i]}m` };
+  }
+  return best.key;
+}
+
+function energyToScale(rms: number): number {
+  // rms typique 0.02 (calme) → 0.30 (saturé). Mappage vers 1..10.
+  const n = Math.max(0, Math.min(1, (rms - 0.02) / 0.22));
+  return Math.max(1, Math.min(10, Math.round(1 + n * 9)));
+}
+
+function inferMood(energy: number, brightness: number): string {
+  // brightness ∈ [0,1] (centroïde normalisé), energy ∈ [1,10]
+  if (energy >= 7 && brightness >= 0.55) return "Énergique";
+  if (energy >= 7 && brightness < 0.45) return "Sombre";
+  if (energy >= 5 && brightness >= 0.55) return "Festif";
+  if (energy <= 4 && brightness >= 0.55) return "Apaisant";
+  if (energy <= 4 && brightness < 0.45) return "Mélancolique";
+  return "Groovy";
+}
+
+export async function analyzeAudioFeaturesAsync(file: File): Promise<AudioFeatures> {
+  try {
+    const Ctx: typeof AudioContext =
+      (window as any).AudioContext || (window as any).webkitAudioContext;
+    if (!Ctx) return {};
+    const ctx = new Ctx();
+    const buf = await ctx.decodeAudioData((await file.arrayBuffer()).slice(0));
+    const sr = buf.sampleRate;
+    const data = buf.getChannelData(0);
+    // Fenêtre centrale de 30 s pour éviter les intros/outros
+    const len = data.length;
+    const targetSec = Math.min(30, buf.duration);
+    const start = Math.max(0, Math.floor(len / 2 - (targetSec * sr) / 2));
+    const end = Math.min(len, start + Math.floor(targetSec * sr));
+    const slice = data.subarray(start, end);
+
+    // RMS énergie
+    let sumSq = 0;
+    for (let i = 0; i < slice.length; i++) sumSq += slice[i] * slice[i];
+    const rms = Math.sqrt(sumSq / slice.length);
+
+    // FFT par fenêtres → chroma + centroïde spectral
+    const N = 4096;
+    const hop = N;
+    const chroma = new Array(12).fill(0);
+    let centroidSum = 0, centroidWeight = 0, frames = 0;
+
+    // FFT naïf via DFT pondéré sur magnitudes — assez précis pour la clé/centroïde
+    // On évite l'import d'une lib FFT en restant raisonnable: max 30 fenêtres.
+    const maxFrames = Math.min(30, Math.floor(slice.length / hop));
+    const re = new Float32Array(N);
+    const im = new Float32Array(N);
+
+    for (let f = 0; f < maxFrames; f++) {
+      const off = f * hop;
+      for (let i = 0; i < N; i++) {
+        const w = 0.5 - 0.5 * Math.cos((2 * Math.PI * i) / (N - 1)); // Hann
+        re[i] = (slice[off + i] || 0) * w;
+        im[i] = 0;
+      }
+      fftInPlace(re, im);
+      // Garde la moitié utile
+      for (let k = 1; k < N / 2; k++) {
+        const mag = Math.hypot(re[k], im[k]);
+        const freq = (k * sr) / N;
+        if (freq < 60 || freq > 5000) continue;
+        // Convertit fréquence → pitch class
+        const midi = 69 + 12 * Math.log2(freq / 440);
+        const pc = ((Math.round(midi) % 12) + 12) % 12;
+        chroma[pc] += mag;
+        centroidSum += freq * mag;
+        centroidWeight += mag;
+      }
+      frames++;
+    }
+
+    ctx.close?.();
+    const key = frames > 0 ? detectKeyFromChroma(chroma) : undefined;
+    const centroid = centroidWeight > 0 ? centroidSum / centroidWeight : 0;
+    // 200 Hz → sombre, 3500 Hz → brillant
+    const brightness = Math.max(0, Math.min(1, (centroid - 200) / 3300));
+    const energy = energyToScale(rms);
+    const mood = inferMood(energy, brightness);
+    return { key, energy, mood };
+  } catch {
+    return {};
+  }
+}
+
+// FFT itérative Cooley-Tukey en place (N puissance de 2)
+function fftInPlace(re: Float32Array, im: Float32Array) {
+  const n = re.length;
+  // bit-reversal
+  for (let i = 1, j = 0; i < n; i++) {
+    let bit = n >> 1;
+    for (; j & bit; bit >>= 1) j ^= bit;
+    j ^= bit;
+    if (i < j) {
+      [re[i], re[j]] = [re[j], re[i]];
+      [im[i], im[j]] = [im[j], im[i]];
+    }
+  }
+  for (let len = 2; len <= n; len <<= 1) {
+    const ang = (-2 * Math.PI) / len;
+    const wRe = Math.cos(ang), wIm = Math.sin(ang);
+    for (let i = 0; i < n; i += len) {
+      let cRe = 1, cIm = 0;
+      for (let k = 0; k < len / 2; k++) {
+        const uRe = re[i + k], uIm = im[i + k];
+        const tRe = cRe * re[i + k + len / 2] - cIm * im[i + k + len / 2];
+        const tIm = cRe * im[i + k + len / 2] + cIm * re[i + k + len / 2];
+        re[i + k] = uRe + tRe; im[i + k] = uIm + tIm;
+        re[i + k + len / 2] = uRe - tRe; im[i + k + len / 2] = uIm - tIm;
+        const nRe = cRe * wRe - cIm * wIm;
+        cIm = cRe * wIm + cIm * wRe;
+        cRe = nRe;
+      }
+    }
+  }
+}
