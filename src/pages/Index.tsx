@@ -2,15 +2,11 @@ import { Link } from "react-router-dom";
 import { Sparkles } from "lucide-react";
 import Layout from "@/components/Layout";
 import HomeWidgets from "@/components/HomeWidgets";
-import PublicLanding from "@/components/PublicLanding";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
 
 export default function Index() {
-  const { user, loading } = useAuth();
-
   const { data: count = 0, isLoading } = useQuery({
     queryKey: ["home-active-widgets-count"],
     queryFn: async () => {
@@ -20,13 +16,8 @@ export default function Index() {
         .eq("is_active", true);
       return count ?? 0;
     },
-    enabled: !loading && !!user,
   });
 
-  // Visiteur non-loggé → landing publique inspirée Fuvi (capture email → signup)
-  if (!loading && !user) {
-    return <PublicLanding />;
-  }
 
   return (
     <Layout>
