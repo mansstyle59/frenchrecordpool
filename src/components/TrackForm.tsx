@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import FileDropzone from "@/components/FileDropzone";
 import RemixerPicker from "@/components/RemixerPicker";
 import CoverPicker from "@/components/CoverPicker";
-import { extractAudioMetadataFast, needsBpmAnalysis, analyzeBpmAsync } from "@/lib/audioMetadata";
+import { extractAudioMetadataFast, needsBpmAnalysis, analyzeBpmAsync, analyzeAudioFeaturesAsync } from "@/lib/audioMetadata";
 import { generateAudioPreview, type PreviewStartMode } from "@/lib/audioPreview";
 import { trackSchema, validateAudioFile, validateImageFile } from "@/lib/trackSchema";
 import { parseFilenameMeta } from "@/lib/filenameMeta";
@@ -281,6 +281,15 @@ export default function TrackForm({ initialData, saving, onSubmit, existingGenre
             })
             .finally(() => !cancelled && setAnalyzingBpm(false));
         }
+        // Analyse SoundCloud-like: clé musicale, énergie, ambiance
+        analyzeAudioFeaturesAsync(audioFile).then((feat) => {
+          if (cancelled) return;
+          let any = false;
+          if (feat.key)    { setMusicalKey((v) => v || feat.key!); any = true; }
+          if (feat.energy) { setEnergy((v) => v || String(feat.energy)); any = true; }
+          if (feat.mood)   { setMood((v) => v || feat.mood!); any = true; }
+          if (any) toast({ title: "Caractéristiques détectées", description: `${feat.key ?? "—"} · Énergie ${feat.energy ?? "—"} · ${feat.mood ?? "—"}` });
+        });
       })
       .catch(() => !cancelled && setExtracting(false));
     return () => { cancelled = true; };

@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Trash2, Upload, Loader2, CheckCircle2, AlertCircle, Music, RotateCcw } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
-import { extractAudioMetadataFast, needsBpmAnalysis, analyzeBpmAsync } from "@/lib/audioMetadata";
+import { extractAudioMetadataFast, needsBpmAnalysis, analyzeBpmAsync, analyzeAudioFeaturesAsync } from "@/lib/audioMetadata";
 import { generateAudioPreview, type PreviewStartMode } from "@/lib/audioPreview";
 import { validateAudioFile } from "@/lib/trackSchema";
 import { supabase } from "@/integrations/supabase/client";
@@ -116,6 +116,13 @@ export default function BulkUploadDialog({ open, onOpenChange, userId }: BulkUpl
             );
           });
         }
+        // Détection clé musicale en tâche de fond (sans bloquer)
+        analyzeAudioFeaturesAsync(row.file).then((feat) => {
+          if (!feat.key) return;
+          setRows((prev) =>
+            prev.map((r) => (r.id === row.id ? { ...r, musicalKey: r.musicalKey || feat.key! } : r))
+          );
+        });
       });
     }
   };
