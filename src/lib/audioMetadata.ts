@@ -11,10 +11,19 @@ export interface AudioMetadata {
   genre?: string;
   bpm?: number;
   key?: string;
+  energy?: number;  // 1..10
+  mood?: string;    // FR label
   comment?: string;
   version?: string;
   pictureFile?: File;
 }
+
+export interface AudioFeatures {
+  key?: string;
+  energy?: number;
+  mood?: string;
+}
+
 
 function formatDuration(sec: number): string {
   const m = Math.floor(sec / 60);
