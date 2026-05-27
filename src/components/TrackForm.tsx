@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import FileDropzone from "@/components/FileDropzone";
 import RemixerPicker from "@/components/RemixerPicker";
 import CoverPicker from "@/components/CoverPicker";
-import { extractAudioMetadataFast, needsBpmAnalysis, analyzeBpmAsync } from "@/lib/audioMetadata";
+import { extractAudioMetadataFast, needsBpmAnalysis, analyzeBpmAsync, analyzeAudioFeaturesAsync } from "@/lib/audioMetadata";
 import { generateAudioPreview, type PreviewStartMode } from "@/lib/audioPreview";
 import { trackSchema, validateAudioFile, validateImageFile } from "@/lib/trackSchema";
 import { parseFilenameMeta } from "@/lib/filenameMeta";
