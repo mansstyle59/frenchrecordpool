@@ -20,6 +20,7 @@ import { useFavorites } from "@/hooks/useFavorites";
 import { toast } from "sonner";
 import { resolveCover } from "@/lib/trackCover";
 import TrackRow, { TrackListHeader } from "@/components/TrackRow";
+import TrackWaveform from "@/components/TrackWaveform";
 
 function inferFormat(url: string | null | undefined): string {
   if (!url) return "—";
@@ -236,6 +237,13 @@ export default function TrackDetail() {
                 <p className="text-xs text-muted-foreground mt-3 font-mono">
                   🔒 Connectez-vous avec un abonnement actif pour télécharger le titre complet.
                 </p>
+              )}
+
+              {/* Waveform — SoundCloud-style */}
+              {playbackSrc && (
+                <div className="mt-5 rounded-xl border border-border bg-background/40 p-3 md:p-4">
+                  <TrackWaveform trackId={track.id} onSeekIfNotCurrent={handlePlay} />
+                </div>
               )}
 
               {/* Metadata grid */}
