@@ -116,6 +116,13 @@ export default function BulkUploadDialog({ open, onOpenChange, userId }: BulkUpl
             );
           });
         }
+        // Détection clé musicale en tâche de fond (sans bloquer)
+        analyzeAudioFeaturesAsync(row.file).then((feat) => {
+          if (!feat.key) return;
+          setRows((prev) =>
+            prev.map((r) => (r.id === row.id ? { ...r, musicalKey: r.musicalKey || feat.key! } : r))
+          );
+        });
       });
     }
   };
