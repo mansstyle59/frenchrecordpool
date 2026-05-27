@@ -281,6 +281,15 @@ export default function TrackForm({ initialData, saving, onSubmit, existingGenre
             })
             .finally(() => !cancelled && setAnalyzingBpm(false));
         }
+        // Analyse SoundCloud-like: clé musicale, énergie, ambiance
+        analyzeAudioFeaturesAsync(audioFile).then((feat) => {
+          if (cancelled) return;
+          let any = false;
+          if (feat.key)    { setMusicalKey((v) => v || feat.key!); any = true; }
+          if (feat.energy) { setEnergy((v) => v || String(feat.energy)); any = true; }
+          if (feat.mood)   { setMood((v) => v || feat.mood!); any = true; }
+          if (any) toast({ title: "Caractéristiques détectées", description: `${feat.key ?? "—"} · Énergie ${feat.energy ?? "—"} · ${feat.mood ?? "—"}` });
+        });
       })
       .catch(() => !cancelled && setExtracting(false));
     return () => { cancelled = true; };
