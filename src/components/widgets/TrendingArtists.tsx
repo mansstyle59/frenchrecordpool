@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { Flame } from "lucide-react";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
-import { titleStyle } from "@/lib/widgetTypography";
+import { titleStyle, bodyStyle } from "@/lib/widgetTypography";
 import HCarousel from "./HCarousel";
 import WidgetSkeleton from "./WidgetSkeleton";
 
