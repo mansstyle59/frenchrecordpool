@@ -774,6 +774,16 @@ function Editor({ widget, onCancel, onSave, saving }: { widget: Widget; onCancel
 
         <TypeFields w={w} setC={setC} />
 
+        {TYPES_WITH_HEADER.has(w.type) && (
+          <Field label="Sous-titre / accroche (optionnel)">
+            <Input
+              value={w.config.subtitle ?? ""}
+              placeholder="Court texte affiché sous le titre du widget"
+              onChange={(e) => setC("subtitle", e.target.value)}
+            />
+          </Field>
+        )}
+
         {TYPES_WITH_TYPOGRAPHY.has(w.type) && (
           <TypographyEditor value={w.config.typo ?? {}} onChange={(v) => setC("typo", v)} />
         )}
