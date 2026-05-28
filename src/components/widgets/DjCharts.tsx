@@ -61,6 +61,7 @@ export default function DjCharts({ config }: { config: any }) {
         icon={Trophy}
         eyebrow="Cette semaine"
         title={config.title || "DJ Charts"}
+        subtitle={config.subtitle}
         seeAllUrl={config.see_all_url || "/popular"}
         typo={config.typo}
       />
