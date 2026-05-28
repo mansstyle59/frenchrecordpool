@@ -2,12 +2,14 @@ import { useEffect, useState } from "react";
 import { MessageCircle, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { usePlayer } from "@/contexts/PlayerContext";
 import { Button } from "@/components/ui/button";
 import SupportChat from "./SupportChat";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function SupportLauncher() {
   const { user, realIsAdmin } = useAuth();
+  const { currentTrack } = usePlayer();
   const [open, setOpen] = useState(false);
   const [unread, setUnread] = useState(0);
 
