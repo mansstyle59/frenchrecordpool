@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import HCarousel from "./HCarousel";
 import PlaylistCard, { type PlaylistCardData } from "./PlaylistCard";
-import { titleStyle } from "@/lib/widgetTypography";
+import { titleStyle, bodyStyle } from "@/lib/widgetTypography";
 
 interface Config {
   title?: string;
