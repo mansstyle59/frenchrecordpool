@@ -343,13 +343,10 @@ function SimilarTracksList({ tracks, label }: { tracks: DbTrack[]; label: string
         </h2>
         <span className="text-xs text-muted-foreground tabular-nums">{tracks.length} titres</span>
       </div>
-      <div className="rounded-2xl border border-border bg-card/40 backdrop-blur-xl overflow-hidden">
-        <TrackListHeader />
-        <div className="divide-y divide-border/60">
-          {tracks.map((t) => (
-            <TrackRow key={t.id} track={t as any} />
-          ))}
-        </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+        {tracks.map((t) => (
+          <TrackCard key={t.id} track={t as any} />
+        ))}
       </div>
     </section>
   );
