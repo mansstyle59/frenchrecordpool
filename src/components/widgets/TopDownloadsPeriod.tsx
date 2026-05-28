@@ -4,7 +4,7 @@ import { TrendingUp, ArrowRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import TrackRow, { TrackListHeader } from "@/components/TrackRow";
-import { titleStyle } from "@/lib/widgetTypography";
+import { titleStyle, bodyStyle } from "@/lib/widgetTypography";
 import WidgetSkeleton from "./WidgetSkeleton";
 
 type Period = "7d" | "30d" | "all";
