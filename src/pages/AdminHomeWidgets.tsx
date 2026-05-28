@@ -660,6 +660,19 @@ const TYPES_WITH_TYPOGRAPHY = new Set([
   "hero", "cta", "rich_text", "two_columns", "stats", "featured_track",
   "testimonials", "faq", "newsletter", "countdown", "promo_banner",
   "track_grid", "artist_carousel", "genres_cloud", "video_embed", "logos_strip",
+  "top_downloads", "new_releases", "top_label", "top_artists", "top_downloads_period",
+  "trending_artists", "featured_genres", "playlists_carousel", "dj_charts",
+  "most_favorited", "recently_played", "dj_shorts",
+]);
+
+/** Widgets qui exposent un en-tête (titre + sous-titre admin-customisable). */
+const TYPES_WITH_HEADER = new Set([
+  "track_grid", "artist_carousel", "genres_cloud", "top_downloads", "new_releases",
+  "top_label", "top_artists", "top_downloads_period", "trending_artists",
+  "featured_genres", "playlists_carousel", "dj_charts", "most_favorited",
+  "recently_played", "dj_shorts", "rich_text", "newsletter", "countdown",
+  "promo_banner", "stats", "faq", "testimonials", "logos_strip", "blog_cards",
+  "team_grid", "instagram_feed", "image_gallery", "features_grid", "plans_compare",
 ]);
 
 const FONT_OPTIONS = [
