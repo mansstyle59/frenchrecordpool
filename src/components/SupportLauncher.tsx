@@ -64,6 +64,10 @@ export default function SupportLauncher() {
 
   if (!user || realIsAdmin) return null;
 
+  // Lift above the global MiniPlayer when a track is loaded so nothing is hidden.
+  const liftPanel = currentTrack ? "bottom-[calc(env(safe-area-inset-bottom,0px)+8rem+88px)]" : "bottom-24";
+  const liftBtn = currentTrack ? "bottom-[calc(env(safe-area-inset-bottom,0px)+1.5rem+88px)]" : "bottom-6";
+
   return (
     <>
       <AnimatePresence>
@@ -73,7 +77,7 @@ export default function SupportLauncher() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
             transition={{ duration: 0.2 }}
-            className="fixed bottom-24 right-4 sm:right-6 z-50 w-[min(380px,calc(100vw-2rem))] shadow-2xl rounded-2xl overflow-hidden"
+            className={`fixed ${liftPanel} right-4 sm:right-6 z-50 w-[min(380px,calc(100vw-2rem))] shadow-2xl rounded-2xl overflow-hidden`}
           >
             <SupportChat className="h-[520px]" />
           </motion.div>
@@ -84,7 +88,7 @@ export default function SupportLauncher() {
         onClick={() => setOpen((o) => !o)}
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
-        className="fixed bottom-6 right-4 sm:right-6 z-50 h-14 w-14 rounded-full bg-primary text-primary-foreground shadow-elegant flex items-center justify-center hover:bg-primary/90 transition-colors"
+        className={`fixed ${liftBtn} right-4 sm:right-6 z-50 h-14 w-14 rounded-full bg-primary text-primary-foreground shadow-elegant flex items-center justify-center hover:bg-primary/90 transition-colors`}
         aria-label={open ? "Fermer le chat" : "Ouvrir le chat support"}
       >
         {open ? <X className="h-6 w-6" /> : <MessageCircle className="h-6 w-6" />}
