@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import HCarousel from "./HCarousel";
 import PlaylistCard, { type PlaylistCardData } from "./PlaylistCard";
-import { titleStyle } from "@/lib/widgetTypography";
+import { titleStyle, bodyStyle } from "@/lib/widgetTypography";
 
 interface Config {
   title?: string;
@@ -54,12 +54,19 @@ export default function PlaylistsCarousel({ config }: { config: any }) {
   return (
     <div>
       <div className="flex items-end justify-between mb-4 gap-4">
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="w-1 h-9 rounded-full bg-gradient-to-b from-primary to-accent shrink-0" />
-          <h2 className="font-display text-2xl md:text-3xl font-bold flex items-center gap-2 truncate" style={titleStyle(config.typo)}>
-            <ListMusic className="h-5 w-5 text-primary shrink-0" />
-            {config.title || "Playlists"}
-          </h2>
+        <div className="flex items-start gap-3 min-w-0">
+          <div className="w-1 h-9 rounded-full bg-gradient-to-b from-primary to-accent shrink-0 mt-0.5" />
+          <div className="min-w-0">
+            <h2 className="font-display text-2xl md:text-3xl font-bold flex items-center gap-2 truncate" style={titleStyle(config.typo)}>
+              <ListMusic className="h-5 w-5 text-primary shrink-0" />
+              {config.title || "Playlists"}
+            </h2>
+            {config.subtitle && (
+              <p className="text-sm text-muted-foreground mt-1 max-w-2xl" style={bodyStyle(config.typo)}>
+                {config.subtitle}
+              </p>
+            )}
+          </div>
         </div>
         <Button asChild variant="ghost" size="sm">
           <Link to={config.see_all_url || "/playlists"}>

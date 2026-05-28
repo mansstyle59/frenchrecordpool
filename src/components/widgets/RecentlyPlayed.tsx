@@ -45,6 +45,7 @@ export default function RecentlyPlayed({ config }: { config: any }) {
         icon={History}
         eyebrow="Ton historique"
         title={config.title || "Écoutés récemment"}
+        subtitle={config.subtitle}
         typo={config.typo}
         right={
           ids.length > 0 && (
