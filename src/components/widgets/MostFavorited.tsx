@@ -24,6 +24,7 @@ export default function MostFavorited({ config }: { config: any }) {
         icon={Heart}
         eyebrow="Communauté"
         title={config.title || "Les + likés"}
+        subtitle={config.subtitle}
         seeAllUrl={config.see_all_url}
         typo={config.typo}
       />
