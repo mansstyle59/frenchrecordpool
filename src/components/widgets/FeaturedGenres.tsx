@@ -80,7 +80,9 @@ export default function FeaturedGenres({ config }: { config: any }) {
       });
   }, [auto, limit, JSON.stringify(manual)]);
 
+  return (
     <div>
+
       <WidgetHeader
         icon={Tag}
         eyebrow="Explorer"
