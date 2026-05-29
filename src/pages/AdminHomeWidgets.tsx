@@ -682,84 +682,237 @@ const FONT_OPTIONS = [
   { value: "mono", label: "Mono (JetBrains)" },
 ];
 
+/** Token presets users can apply with a single click (HSL tokens). */
+const COLOR_PRESETS: { label: string; value: string }[] = [
+  { label: "Primary",     value: "var(--primary)" },
+  { label: "Accent",      value: "var(--accent)"  },
+  { label: "Foreground",  value: "var(--foreground)" },
+  { label: "Muted",       value: "var(--muted-foreground)" },
+  { label: "Destructive", value: "var(--destructive)" },
+];
+
+function tokenToCss(v?: string) {
+  if (!v) return "transparent";
+  const t = v.trim();
+  if (t.startsWith("var(")) return `hsl(${t})`;
+  if (/^\d+\s+\d+%\s+\d+%$/.test(t)) return `hsl(${t})`;
+  return t;
+}
+
+function ColorField({
+  label, value, onChange, placeholder,
+}: { label: string; value?: string; onChange: (v: string) => void; placeholder?: string }) {
+  const isHex = !!value && /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(value);
+  return (
+    <div className="space-y-1.5">
+      <Label className="text-[11px] uppercase tracking-wider text-muted-foreground">{label}</Label>
+      <div className="flex items-center gap-2">
+        <div
+          className="h-9 w-9 rounded-md border border-border shrink-0 relative overflow-hidden"
+          style={{ background: tokenToCss(value) }}
+        >
+          <input
+            type="color"
+            value={isHex ? value! : "#3b82f6"}
+            onChange={(e) => onChange(e.target.value)}
+            className="absolute inset-0 opacity-0 cursor-pointer"
+            aria-label={`${label} (picker)`}
+          />
+        </div>
+        <Input
+          value={value ?? ""}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={placeholder || "var(--primary) | #hex | 220 80% 58%"}
+          className="font-mono text-xs"
+        />
+        {value && (
+          <Button type="button" variant="ghost" size="icon" className="h-9 w-9" onClick={() => onChange("")} aria-label="Réinitialiser">
+            <X className="h-3.5 w-3.5" />
+          </Button>
+        )}
+      </div>
+      <div className="flex flex-wrap gap-1">
+        {COLOR_PRESETS.map((p) => (
+          <button
+            key={p.value}
+            type="button"
+            onClick={() => onChange(p.value)}
+            className="inline-flex items-center gap-1.5 h-6 px-2 rounded-full border border-border bg-background hover:border-primary/60 text-[10px] font-bold uppercase tracking-wider"
+            title={p.label}
+          >
+            <span className="h-2.5 w-2.5 rounded-full" style={{ background: tokenToCss(p.value) }} />
+            {p.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function TypographyEditor({ value, onChange }: { value: any; onChange: (v: any) => void }) {
   const v = value || {};
   const set = (k: string, val: any) => onChange({ ...v, [k]: val });
   return (
     <details className="rounded-xl border border-border bg-background/60 overflow-hidden group" open>
       <summary className="cursor-pointer px-4 py-3 text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center justify-between hover:bg-muted/30">
-        <span className="flex items-center gap-2"><Type className="h-3.5 w-3.5 text-primary" /> Typographie</span>
+        <span className="flex items-center gap-2"><Type className="h-3.5 w-3.5 text-primary" /> Typographie & couleurs</span>
         <span className="text-[10px] normal-case opacity-60 group-open:hidden">Cliquer pour ouvrir</span>
       </summary>
-      <div className="p-4 space-y-3 border-t border-border">
-        <div className="grid grid-cols-2 gap-3">
-          <Field label={`Taille titre (${v.title_size ?? "auto"} px)`}>
-            <Input type="number" min={12} max={120} value={v.title_size ?? ""} placeholder="auto"
-              onChange={(e) => set("title_size", e.target.value ? parseInt(e.target.value) : undefined)} />
-          </Field>
-          <Field label="Police titre">
-            <Select value={v.title_font ?? "display"} onValueChange={(x) => set("title_font", x)}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>{FONT_OPTIONS.map((f) => <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>)}</SelectContent>
-            </Select>
-          </Field>
-          <Field label="Graisse titre">
-            <Select value={String(v.title_weight ?? 800)} onValueChange={(x) => set("title_weight", parseInt(x))}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {[400, 500, 600, 700, 800, 900].map((w) => <SelectItem key={w} value={String(w)}>{w}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </Field>
-          <Field label="Couleur titre (HSL ou #hex)">
-            <Input value={v.title_color ?? ""} onChange={(e) => set("title_color", e.target.value)} placeholder="220 80% 58%" />
-          </Field>
-        </div>
+      <div className="p-4 space-y-5 border-t border-border">
 
-        <div className="grid grid-cols-2 gap-3">
-          <Field label={`Taille texte (${v.body_size ?? "auto"} px)`}>
-            <Input type="number" min={10} max={48} value={v.body_size ?? ""} placeholder="auto"
-              onChange={(e) => set("body_size", e.target.value ? parseInt(e.target.value) : undefined)} />
-          </Field>
-          <Field label="Police texte">
-            <Select value={v.body_font ?? "body"} onValueChange={(x) => set("body_font", x)}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>{FONT_OPTIONS.map((f) => <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>)}</SelectContent>
-            </Select>
-          </Field>
-          <Field label="Couleur texte">
-            <Input value={v.body_color ?? ""} onChange={(e) => set("body_color", e.target.value)} placeholder="ex: #ccc" />
-          </Field>
-          <Field label="Alignement">
-            <Select value={v.align ?? "center"} onValueChange={(x) => set("align", x)}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="left">Gauche</SelectItem>
-                <SelectItem value="center">Centre</SelectItem>
-                <SelectItem value="right">Droite</SelectItem>
-              </SelectContent>
-            </Select>
-          </Field>
-        </div>
-
-        <div className="grid grid-cols-2 gap-3 items-center">
-          <div className="flex items-center gap-2">
-            <Switch checked={!!v.uppercase} onCheckedChange={(x) => set("uppercase", x)} />
-            <span className="text-sm">Tout en MAJUSCULES</span>
+        {/* ─── Live preview ─── */}
+        <div className="rounded-lg border border-dashed border-border bg-card/40 p-4">
+          <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2">Aperçu</div>
+          <div className="flex items-start gap-3">
+            <div
+              className="w-1 h-9 rounded-full bg-gradient-to-b from-primary to-accent mt-0.5"
+              style={v.accent_color ? { background: tokenToCss(v.accent_color) } : undefined}
+              hidden={v.accent_hidden}
+            />
+            <div>
+              {!v.eyebrow_hidden && (v.eyebrow_text || "Eyebrow") && (
+                <div className="text-[10px] uppercase tracking-[0.2em] font-mono mb-0.5" style={{ color: tokenToCss(v.eyebrow_color) || undefined }}>
+                  {v.eyebrow_text || "Eyebrow"}
+                </div>
+              )}
+              <h3 className="font-display text-2xl font-bold leading-none" style={{
+                fontSize: v.title_size ? `${v.title_size}px` : undefined,
+                fontWeight: v.title_weight,
+                textTransform: v.uppercase ? "uppercase" : undefined,
+                letterSpacing: v.letter_spacing != null ? `${v.letter_spacing/100}em` : undefined,
+                ...(v.title_gradient
+                  ? {
+                      backgroundImage: `linear-gradient(135deg, ${tokenToCss(v.title_gradient_from) || "hsl(var(--primary))"}, ${tokenToCss(v.title_gradient_to) || "hsl(var(--accent))"})`,
+                      WebkitBackgroundClip: "text",
+                      backgroundClip: "text",
+                      color: "transparent",
+                    }
+                  : { color: tokenToCss(v.title_color) || undefined }),
+              }}>
+                Titre exemple
+              </h3>
+              <p className="text-sm mt-1" style={{ color: tokenToCss(v.body_color) || "hsl(var(--muted-foreground))", fontSize: v.body_size ? `${v.body_size}px` : undefined }}>
+                Sous-titre d'exemple pour visualiser le rendu.
+              </p>
+            </div>
           </div>
-          <Field label={`Espacement lettres (${v.letter_spacing ?? 0})`}>
-            <Input type="number" min={-5} max={30} value={v.letter_spacing ?? 0}
-              onChange={(e) => set("letter_spacing", parseInt(e.target.value) || 0)} />
-          </Field>
+        </div>
+
+        {/* ─── Eyebrow ─── */}
+        <div className="space-y-3">
+          <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Eyebrow (petit label)</div>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Texte (laisser vide = défaut)">
+              <Input value={v.eyebrow_text ?? ""} onChange={(e) => set("eyebrow_text", e.target.value)} placeholder="ex: Communauté" />
+            </Field>
+            <div className="flex items-center gap-2 pt-5">
+              <Switch checked={!!v.eyebrow_hidden} onCheckedChange={(x) => set("eyebrow_hidden", x)} />
+              <span className="text-sm">Masquer l'eyebrow</span>
+            </div>
+          </div>
+          {!v.eyebrow_hidden && (
+            <ColorField label="Couleur eyebrow" value={v.eyebrow_color} onChange={(x) => set("eyebrow_color", x)} />
+          )}
+        </div>
+
+        {/* ─── Titre ─── */}
+        <div className="space-y-3">
+          <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Titre</div>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label={`Taille (${v.title_size ?? "auto"} px)`}>
+              <Input type="number" min={12} max={120} value={v.title_size ?? ""} placeholder="auto"
+                onChange={(e) => set("title_size", e.target.value ? parseInt(e.target.value) : undefined)} />
+            </Field>
+            <Field label="Police">
+              <Select value={v.title_font ?? "display"} onValueChange={(x) => set("title_font", x)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>{FONT_OPTIONS.map((f) => <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>)}</SelectContent>
+              </Select>
+            </Field>
+            <Field label="Graisse">
+              <Select value={String(v.title_weight ?? 800)} onValueChange={(x) => set("title_weight", parseInt(x))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {[400, 500, 600, 700, 800, 900].map((w) => <SelectItem key={w} value={String(w)}>{w}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </Field>
+            <Field label="Alignement">
+              <Select value={v.align ?? "left"} onValueChange={(x) => set("align", x)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="left">Gauche</SelectItem>
+                  <SelectItem value="center">Centre</SelectItem>
+                  <SelectItem value="right">Droite</SelectItem>
+                </SelectContent>
+              </Select>
+            </Field>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Switch checked={!!v.title_gradient} onCheckedChange={(x) => set("title_gradient", x)} />
+            <span className="text-sm">Titre en dégradé</span>
+          </div>
+
+          {v.title_gradient ? (
+            <div className="grid grid-cols-2 gap-3">
+              <ColorField label="Dégradé — début" value={v.title_gradient_from} onChange={(x) => set("title_gradient_from", x)} placeholder="var(--primary)" />
+              <ColorField label="Dégradé — fin" value={v.title_gradient_to} onChange={(x) => set("title_gradient_to", x)} placeholder="var(--accent)" />
+            </div>
+          ) : (
+            <ColorField label="Couleur titre" value={v.title_color} onChange={(x) => set("title_color", x)} />
+          )}
+
+          <div className="grid grid-cols-2 gap-3 items-center">
+            <div className="flex items-center gap-2">
+              <Switch checked={!!v.uppercase} onCheckedChange={(x) => set("uppercase", x)} />
+              <span className="text-sm">Tout en MAJUSCULES</span>
+            </div>
+            <Field label={`Espacement lettres (${v.letter_spacing ?? 0})`}>
+              <Input type="number" min={-5} max={30} value={v.letter_spacing ?? 0}
+                onChange={(e) => set("letter_spacing", parseInt(e.target.value) || 0)} />
+            </Field>
+          </div>
+        </div>
+
+        {/* ─── Sous-titre ─── */}
+        <div className="space-y-3">
+          <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Sous-titre / corps</div>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label={`Taille (${v.body_size ?? "auto"} px)`}>
+              <Input type="number" min={10} max={48} value={v.body_size ?? ""} placeholder="auto"
+                onChange={(e) => set("body_size", e.target.value ? parseInt(e.target.value) : undefined)} />
+            </Field>
+            <Field label="Police">
+              <Select value={v.body_font ?? "body"} onValueChange={(x) => set("body_font", x)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>{FONT_OPTIONS.map((f) => <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>)}</SelectContent>
+              </Select>
+            </Field>
+          </div>
+          <ColorField label="Couleur texte" value={v.body_color} onChange={(x) => set("body_color", x)} />
+        </div>
+
+        {/* ─── Barre d'accent ─── */}
+        <div className="space-y-3">
+          <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Barre d'accent (à gauche du titre)</div>
+          <div className="flex items-center gap-2">
+            <Switch checked={!!v.accent_hidden} onCheckedChange={(x) => set("accent_hidden", x)} />
+            <span className="text-sm">Masquer la barre</span>
+          </div>
+          {!v.accent_hidden && (
+            <ColorField label="Couleur barre" value={v.accent_color} onChange={(x) => set("accent_color", x)} />
+          )}
         </div>
 
         <Button variant="ghost" size="sm" className="text-xs h-7" onClick={() => onChange({})}>
-          Réinitialiser
+          Réinitialiser toute la typographie
         </Button>
       </div>
     </details>
   );
 }
+
 
 /* ─── Editor ─── */
 function Editor({ widget, onCancel, onSave, saving }: { widget: Widget; onCancel: () => void; onSave: (w: Widget) => void; saving: boolean }) {
