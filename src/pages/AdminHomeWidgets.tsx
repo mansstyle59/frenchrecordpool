@@ -749,9 +749,41 @@ function ColorField({
   );
 }
 
+const TYPO_PRESETS: { id: string; label: string; desc: string; value: any }[] = [
+  {
+    id: "default", label: "Défaut", desc: "Display Bebas, accent dégradé",
+    value: {},
+  },
+  {
+    id: "bold-xl", label: "Bold XL", desc: "Très gros titre, sous-titre clair",
+    value: { title_size: 44, title_weight: 900, title_font: "display", uppercase: true, letter_spacing: 1, body_size: 15 },
+  },
+  {
+    id: "gradient", label: "Gradient", desc: "Titre dégradé primary → accent",
+    value: { title_size: 36, title_weight: 800, title_gradient: true, eyebrow_color: "var(--accent)" },
+  },
+  {
+    id: "editorial", label: "Éditorial", desc: "Serif élégant, contraste doux",
+    value: { title_font: "serif", title_size: 38, title_weight: 600, body_font: "body", body_size: 14, align: "left" },
+  },
+  {
+    id: "neon", label: "Néon", desc: "Accent rouge vif, titre majuscule",
+    value: { title_color: "var(--accent)", title_weight: 900, uppercase: true, letter_spacing: 3, accent_color: "var(--accent)", eyebrow_color: "var(--accent)" },
+  },
+  {
+    id: "minimal", label: "Minimal", desc: "Petit titre net, eyebrow masqué",
+    value: { title_size: 22, title_weight: 600, eyebrow_hidden: true, accent_hidden: true, body_size: 13 },
+  },
+  {
+    id: "mono", label: "Mono tech", desc: "JetBrains Mono, ambiance code",
+    value: { title_font: "mono", title_size: 24, title_weight: 700, body_font: "mono", body_size: 12, uppercase: true, letter_spacing: 2 },
+  },
+];
+
 function TypographyEditor({ value, onChange }: { value: any; onChange: (v: any) => void }) {
   const v = value || {};
   const set = (k: string, val: any) => onChange({ ...v, [k]: val });
+  const applyPreset = (preset: any) => onChange({ ...preset });
   return (
     <details className="rounded-xl border border-border bg-background/60 overflow-hidden group" open>
       <summary className="cursor-pointer px-4 py-3 text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center justify-between hover:bg-muted/30">
@@ -759,6 +791,31 @@ function TypographyEditor({ value, onChange }: { value: any; onChange: (v: any) 
         <span className="text-[10px] normal-case opacity-60 group-open:hidden">Cliquer pour ouvrir</span>
       </summary>
       <div className="p-4 space-y-5 border-t border-border">
+
+        {/* ─── Style presets ─── */}
+        <div className="space-y-2">
+          <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+            <Wand2 className="h-3 w-3" /> Styles prêts à l'emploi
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            {TYPO_PRESETS.map((p) => (
+              <button
+                key={p.id}
+                type="button"
+                onClick={() => applyPreset(p.value)}
+                className="text-left rounded-lg border border-border bg-card/60 hover:border-primary/60 hover:bg-primary/5 p-2.5 transition group/preset"
+                title={p.desc}
+              >
+                <div className="text-xs font-bold leading-none mb-1 group-hover/preset:text-primary">
+                  {p.label}
+                </div>
+                <div className="text-[10px] text-muted-foreground leading-tight">{p.desc}</div>
+              </button>
+            ))}
+          </div>
+        </div>
+
+
 
         {/* ─── Live preview ─── */}
         <div className="rounded-lg border border-dashed border-border bg-card/40 p-4">
