@@ -2,7 +2,7 @@ import { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { titleStyle, bodyStyle } from "@/lib/widgetTypography";
+import { titleStyle, bodyStyle, eyebrowStyle, accentBarStyle } from "@/lib/widgetTypography";
 
 interface Props {
   icon?: LucideIcon;
@@ -17,32 +17,48 @@ interface Props {
 }
 
 /**
- * Shared header for home widgets:
- * - gradient bar (primary → accent)
- * - optional icon + eyebrow
- * - Bebas-style display title (admin-themed via `typo`)
- * - optional subtitle/baseline (themed via the same `typo.body_*` tokens)
- * - right slot for tabs / filters
- * - optional "Tout voir" CTA
+ * Shared header for home widgets — fully admin-themable via `typo`:
+ *   - accent bar color/visibility
+ *   - eyebrow text/color/visibility
+ *   - title (size, font, weight, color OR gradient, uppercase, tracking)
+ *   - subtitle (size, font, color)
+ *   - alignment
  */
 export default function WidgetHeader({
-  icon: Icon, title, eyebrow, subtitle, seeAllUrl, seeAllLabel = "Tout voir", typo, right, preview,
+  icon: Icon, title, eyebrow, subtitle, seeAllUrl, seeAllLabel = "Tout voir", typo = {}, right, preview,
 }: Props) {
+  const eyebrowText = typo.eyebrow_text ?? eyebrow;
+  const showEyebrow = !typo.eyebrow_hidden && eyebrowText;
+  const align = typo.align ?? "left";
+  const alignWrap =
+    align === "center" ? "items-center text-center mx-auto" :
+    align === "right"  ? "items-end text-right ml-auto" :
+    "items-start text-left";
+
   return (
     <div className="flex items-end justify-between mb-4 gap-4 flex-wrap">
-      <div className="flex items-start gap-3 min-w-0">
-        <div className="w-1 h-9 rounded-full bg-gradient-to-b from-primary to-accent shrink-0 mt-0.5" />
-        <div className="min-w-0">
-          {eyebrow && (
-            <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-mono mb-0.5">
-              {eyebrow}
+      <div className="flex items-start gap-3 min-w-0 flex-1">
+        {!typo.accent_hidden && (
+          <div
+            className="w-1 h-9 rounded-full bg-gradient-to-b from-primary to-accent shrink-0 mt-0.5 shadow-[0_0_12px_hsl(var(--primary)/0.45)]"
+            style={accentBarStyle(typo)}
+            aria-hidden
+          />
+        )}
+        <div className={`min-w-0 flex flex-col ${alignWrap}`}>
+          {showEyebrow && (
+            <div
+              className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-mono mb-0.5"
+              style={eyebrowStyle(typo)}
+            >
+              {eyebrowText}
             </div>
           )}
           <h2
             className="font-display text-2xl md:text-3xl font-bold flex items-center gap-2 truncate leading-none"
             style={titleStyle(typo)}
           >
-            {Icon && <Icon className="h-5 w-5 text-primary shrink-0" />}
+            {Icon && !typo.title_gradient && <Icon className="h-5 w-5 text-primary shrink-0" />}
             {title}
           </h2>
           {subtitle && (
@@ -55,7 +71,7 @@ export default function WidgetHeader({
           )}
         </div>
       </div>
-      <div className="flex items-center gap-2 flex-wrap">
+      <div className="flex items-center gap-2 flex-wrap shrink-0">
         {right}
         {seeAllUrl && !preview && (
           <Button asChild variant="ghost" size="sm">
