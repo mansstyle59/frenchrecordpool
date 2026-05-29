@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { Tag } from "lucide-react";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
-import { titleStyle, bodyStyle } from "@/lib/widgetTypography";
+import WidgetHeader from "./WidgetHeader";
 import WidgetSkeleton from "./WidgetSkeleton";
 
 interface ManualGenre {
@@ -82,23 +82,15 @@ export default function FeaturedGenres({ config }: { config: any }) {
 
   return (
     <div>
-      <div className="flex items-start gap-3 mb-4">
-        <div className="w-1 h-9 rounded-full bg-gradient-to-b from-primary to-accent mt-0.5" />
-        <div className="min-w-0">
-          <h2
-            className="font-display text-2xl md:text-3xl font-bold flex items-center gap-2"
-            style={titleStyle(config.typo)}
-          >
-            <Tag className="h-5 w-5 text-primary" />
-            {config.title || "Genres en vedette"}
-          </h2>
-          {config.subtitle && (
-            <p className="text-sm text-muted-foreground mt-1 max-w-2xl" style={bodyStyle(config.typo)}>
-              {config.subtitle}
-            </p>
-          )}
-        </div>
-      </div>
+
+      <WidgetHeader
+        icon={Tag}
+        eyebrow="Explorer"
+        title={config.title || "Genres en vedette"}
+        subtitle={config.subtitle}
+        typo={config.typo}
+      />
+
       {!tiles ? (
         <WidgetSkeleton variant="grid" count={8} />
       ) : tiles.length === 0 ? (
