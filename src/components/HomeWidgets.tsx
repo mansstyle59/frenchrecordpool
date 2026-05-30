@@ -268,76 +268,233 @@ function WidgetRenderer({ widget, preview }: { widget: Widget; preview: boolean 
 }
 
 
-/* ─── HERO ─── */
+/* ─── HERO (Éditorial haut contraste) ─── */
 function HeroWidget({ config, preview }: { config: any; preview: boolean }) {
   const layout = config.layout || "center";
-  const height = config.height === "compact" ? "py-8 md:py-12" : config.height === "full" ? "py-20 md:py-48" : "py-12 md:py-32";
+  const height =
+    config.height === "compact"
+      ? "py-16 md:py-20"
+      : config.height === "full"
+      ? "py-28 md:py-40"
+      : "py-20 md:py-32";
   const overlay = config.overlay_opacity ?? 75;
+  const isCenter = layout === "center";
+
   return (
-    <div className="relative overflow-hidden rounded-none">
+    <div className="relative overflow-hidden bg-background selection:bg-accent selection:text-accent-foreground">
+      {/* Optional background image */}
       {config.bg_url && (
-        <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${config.bg_url})` }} />
+        <div
+          className="absolute inset-0 bg-cover bg-center"
+          style={{ backgroundImage: `url(${config.bg_url})` }}
+          aria-hidden
+        />
       )}
-      {/* Dégradé qui se fond dans le background du site (haut translucide → background plein en bas) */}
+
+      {/* Background fade → site background */}
       <div
         className="absolute inset-0 pointer-events-none"
+        aria-hidden
         style={{
-          background: `linear-gradient(to bottom, hsl(var(--background) / ${Math.max(0, overlay - 30) / 100}) 0%, hsl(var(--background) / ${overlay / 100}) 55%, hsl(var(--background)) 100%)`,
+          background: `linear-gradient(to bottom, hsl(var(--background) / ${Math.max(
+            0,
+            overlay - 30,
+          ) / 100}) 0%, hsl(var(--background) / ${overlay / 100}) 55%, hsl(var(--background)) 100%)`,
         }}
       />
-      <motion.div className="absolute -top-32 -left-32 w-[28rem] h-[28rem] rounded-full bg-primary/20 blur-3xl"
-        animate={{ scale: [1, 1.15, 1] }} transition={{ duration: 8, repeat: Infinity }} />
-      <motion.div className="absolute -bottom-32 -right-32 w-[28rem] h-[28rem] rounded-full bg-accent/20 blur-3xl"
-        animate={{ scale: [1.1, 1, 1.1] }} transition={{ duration: 10, repeat: Infinity }} />
 
-      <div className={`relative container ${preview ? "py-10" : height} ${layout === "left" ? "text-left" : layout === "split" ? "grid md:grid-cols-2 gap-10 items-center text-left" : "text-center"}`}>
-        <div className={layout === "left" || layout === "split" ? "max-w-2xl" : "max-w-3xl mx-auto"}>
-          {config.eyebrow && (
-            <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/15 text-primary text-xs font-bold uppercase tracking-wider mb-5">
-              <Sparkles className="h-3 w-3" /> {config.eyebrow}
-            </span>
-          )}
-          {(config.title || config.highlight) && (
-            <h1 className={`font-display font-black tracking-tight ${preview ? "text-3xl" : "text-3xl sm:text-5xl md:text-7xl"} mb-4 break-words`} style={titleStyle(config.typo)}>
-              {config.title}
-              {config.title && config.highlight && " "}
-              {config.highlight && <span className="gradient-text">{config.highlight}</span>}
-            </h1>
-          )}
-          {config.subtitle && (
-            <p className={`text-muted-foreground ${layout === "center" ? "mx-auto" : ""} ${preview ? "text-sm max-w-xl" : "text-base sm:text-lg md:text-xl max-w-2xl"} mb-6 md:mb-8`} style={bodyStyle(config.typo)}>
-              {config.subtitle}
-            </p>
-          )}
+      {/* Ambient gradient blobs */}
+      <motion.div
+        aria-hidden
+        className="absolute -top-32 -left-24 h-[28rem] w-[28rem] rounded-full bg-primary/30 blur-[160px]"
+        animate={{ scale: [1, 1.1, 1], opacity: [0.3, 0.4, 0.3] }}
+        transition={{ duration: 9, repeat: Infinity, ease: "easeInOut" }}
+      />
+      <motion.div
+        aria-hidden
+        className="absolute -bottom-32 -right-24 h-[26rem] w-[26rem] rounded-full bg-accent/15 blur-[160px]"
+        animate={{ scale: [1.1, 1, 1.1], opacity: [0.15, 0.25, 0.15] }}
+        transition={{ duration: 11, repeat: Infinity, ease: "easeInOut" }}
+      />
 
-          <div className={`flex flex-wrap gap-3 ${layout === "center" ? "justify-center" : ""}`}>
-            {config.cta_primary_label && (
-              <Button asChild size={preview ? "default" : "lg"} variant="default">
-                <Link to={config.cta_primary_url || "/new"}>
-                  {config.cta_primary_label} <ArrowRight className="ml-1 h-4 w-4" />
-                </Link>
-              </Button>
-            )}
-            {config.cta_secondary_label && (
-              <Button asChild size={preview ? "default" : "lg"} variant="ghost">
-                <Link to={config.cta_secondary_url || "/pricing"}>{config.cta_secondary_label}</Link>
-              </Button>
-            )}
+      {/* Dot grid overlay */}
+      <div
+        aria-hidden
+        className="absolute inset-0 pointer-events-none opacity-[0.04]"
+        style={{
+          backgroundImage:
+            "radial-gradient(hsl(var(--foreground)) 1px, transparent 1px)",
+          backgroundSize: "40px 40px",
+        }}
+      />
+
+      {/* Decorative side wordmarks (only when centered + non-preview) */}
+      {isCenter && !preview && (
+        <>
+          <div
+            aria-hidden
+            className="hidden xl:block absolute right-[-3rem] top-1/2 -rotate-90 origin-center pointer-events-none font-display text-foreground/[0.04] text-9xl tracking-[0.5em] select-none"
+          >
+            POOL
           </div>
+          <div
+            aria-hidden
+            className="hidden xl:block absolute left-[-3rem] top-1/2 rotate-90 origin-center pointer-events-none font-display text-foreground/[0.04] text-9xl tracking-[0.5em] select-none"
+          >
+            FRANCE
+          </div>
+        </>
+      )}
 
+      <div
+        className={`relative container ${preview ? "py-12" : height} ${
+          layout === "left"
+            ? "text-left"
+            : layout === "split"
+            ? "grid md:grid-cols-2 gap-12 items-center text-left"
+            : "text-center flex flex-col items-center"
+        }`}
+      >
+        <div
+          className={
+            layout === "left"
+              ? "max-w-3xl"
+              : layout === "split"
+              ? "max-w-2xl"
+              : "max-w-5xl mx-auto flex flex-col items-center"
+          }
+        >
+          {/* Eyebrow chip — glass pill with pulse dot */}
+          {config.eyebrow && (
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              className={`mb-8 inline-flex items-center gap-3 px-4 py-1.5 rounded-full border border-foreground/10 bg-foreground/[0.04] backdrop-blur-md ${
+                isCenter ? "" : ""
+              }`}
+            >
+              <span className="flex h-2 w-2 rounded-full bg-accent animate-pulse" />
+              <span className="font-sans text-[10px] uppercase tracking-[0.3em] font-bold text-foreground/80">
+                {config.eyebrow}
+              </span>
+            </motion.div>
+          )}
+
+          {/* Headline — massive Bebas with accent line crossing */}
+          {(config.title || config.highlight) && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 0.1 }}
+              className="relative"
+            >
+              <h1
+                className={`font-display font-black tracking-tight uppercase leading-[0.85] break-words ${
+                  preview
+                    ? "text-5xl"
+                    : "text-6xl sm:text-8xl md:text-[9rem] lg:text-[12rem] xl:text-[14rem]"
+                }`}
+                style={titleStyle(config.typo)}
+              >
+                <span className="bg-clip-text text-transparent bg-gradient-to-b from-foreground via-foreground to-foreground/20 drop-shadow-2xl">
+                  {config.title}
+                  {config.title && config.highlight && " "}
+                  {config.highlight}
+                </span>
+              </h1>
+              <div
+                aria-hidden
+                className="absolute top-1/2 left-0 w-full h-px bg-gradient-to-r from-transparent via-accent/40 to-transparent"
+              />
+            </motion.div>
+          )}
+
+          {/* Sub copy */}
+          {config.subtitle && (
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.7, delay: 0.3 }}
+              className={`${preview ? "mt-6 text-base" : "mt-10 md:mt-12 text-lg md:text-2xl"} font-light leading-relaxed text-foreground/70 max-w-xl ${
+                isCenter ? "mx-auto" : ""
+              }`}
+              style={bodyStyle(config.typo)}
+            >
+              {config.subtitle}
+            </motion.p>
+          )}
+
+          {/* CTAs — square primary with accent corner */}
+          {(config.cta_primary_label || config.cta_secondary_label) && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.45 }}
+              className={`mt-10 flex flex-wrap items-center gap-4 ${
+                isCenter ? "justify-center" : ""
+              }`}
+            >
+              {config.cta_primary_label && (
+                <Link
+                  to={config.cta_primary_url || "/new"}
+                  className="group relative inline-flex items-center gap-3 px-10 py-5 bg-primary text-primary-foreground font-bold uppercase tracking-[0.2em] text-sm transition-all duration-300 hover:bg-primary/90 hover:scale-[1.02] active:scale-95 shadow-[0_20px_50px_hsl(var(--primary)/0.35)]"
+                >
+                  <span>{config.cta_primary_label}</span>
+                  <ArrowRight className="h-5 w-5 transition-transform duration-300 group-hover:translate-x-1.5" />
+                  <span
+                    aria-hidden
+                    className="absolute -top-1 -right-1 h-2 w-2 bg-accent"
+                  />
+                </Link>
+              )}
+              {config.cta_secondary_label && (
+                <Link
+                  to={config.cta_secondary_url || "/pricing"}
+                  className="group inline-flex items-center gap-2 px-6 py-5 text-foreground/80 hover:text-foreground font-bold uppercase tracking-[0.2em] text-sm transition-colors"
+                >
+                  <span className="relative after:absolute after:left-0 after:-bottom-0.5 after:h-px after:w-full after:origin-right after:scale-x-0 after:bg-foreground after:transition-transform after:duration-300 group-hover:after:origin-left group-hover:after:scale-x-100">
+                    {config.cta_secondary_label}
+                  </span>
+                </Link>
+              )}
+            </motion.div>
+          )}
+
+          {/* Trust badges */}
           {config.trust_badges?.length ? (
-            <div className={`flex flex-wrap gap-4 mt-8 text-xs text-muted-foreground ${layout === "center" ? "justify-center" : ""}`}>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.6, delay: 0.6 }}
+              className={`flex flex-wrap gap-x-6 gap-y-2 mt-10 text-xs uppercase tracking-[0.2em] text-foreground/50 font-semibold ${
+                isCenter ? "justify-center" : ""
+              }`}
+            >
               {config.trust_badges.map((b: string, i: number) => (
-                <span key={i} className="flex items-center gap-1.5"><Check className="h-3.5 w-3.5 text-primary" /> {b}</span>
+                <span key={i} className="flex items-center gap-1.5">
+                  <Check className="h-3.5 w-3.5 text-accent" /> {b}
+                </span>
               ))}
-            </div>
+            </motion.div>
           ) : null}
         </div>
 
         {layout === "split" && config.bg_url && (
-          <div className="hidden md:block relative">
-            <img src={config.bg_url} alt="" className="rounded-3xl shadow-2xl w-full aspect-[4/5] object-cover" />
-          </div>
+          <motion.div
+            initial={{ opacity: 0, x: 30 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.7, delay: 0.2 }}
+            className="hidden md:block relative"
+          >
+            <div className="absolute -inset-4 bg-gradient-to-br from-primary/30 to-accent/20 blur-2xl" aria-hidden />
+            <img
+              src={config.bg_url}
+              alt=""
+              className="relative w-full aspect-[4/5] object-cover shadow-2xl"
+            />
+            <span aria-hidden className="absolute -top-2 -right-2 h-3 w-3 bg-accent" />
+          </motion.div>
         )}
       </div>
     </div>
