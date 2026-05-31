@@ -108,6 +108,6 @@ export default function TopDownloadsPeriod({ config }: { config: any }) {
           ))}
         </div>
       )}
-    </div>
+    </EditorialFrame>
   );
 }
