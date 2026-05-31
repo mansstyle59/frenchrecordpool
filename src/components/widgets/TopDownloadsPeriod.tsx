@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import TrackRow, { TrackListHeader } from "@/components/TrackRow";
 import { titleStyle, bodyStyle } from "@/lib/widgetTypography";
 import WidgetSkeleton from "./WidgetSkeleton";
+import EditorialFrame from "./EditorialFrame";
 
 type Period = "7d" | "30d" | "all";
 const PERIODS: { id: Period; label: string; days: number | null }[] = [
