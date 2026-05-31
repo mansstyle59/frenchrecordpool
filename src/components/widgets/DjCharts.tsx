@@ -57,7 +57,7 @@ export default function DjCharts({ config }: { config: any }) {
   }, [limit]);
 
   return (
-    <div>
+    <EditorialFrame wordmark="CHARTS">
       <WidgetHeader
         icon={Trophy}
         eyebrow="Cette semaine"
