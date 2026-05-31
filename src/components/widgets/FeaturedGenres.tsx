@@ -110,7 +110,8 @@ export default function FeaturedGenres({ config }: { config: any }) {
             >
               <Link
                 to={t.url}
-                className="group relative block aspect-[4/3] rounded-2xl overflow-hidden border border-border hover:border-primary/60 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                aria-label={`Explorer le genre ${t.name}`}
+                className="group relative block aspect-[4/3] rounded-2xl overflow-hidden border border-border hover:border-primary/60 transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary hover:-translate-y-0.5 hover:shadow-[0_20px_40px_-20px_hsl(var(--primary)/0.5)]"
               >
                 {t.cover ? (
                   <img
@@ -130,6 +131,11 @@ export default function FeaturedGenres({ config }: { config: any }) {
                       : "linear-gradient(135deg, hsl(var(--primary) / 0.3), hsl(var(--background) / 0.85))",
                   }}
                 />
+                {/* Editorial accent corner — appears on hover */}
+                <span
+                  aria-hidden
+                  className="absolute top-2 right-2 h-2 w-2 bg-accent opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                />
                 <div className="relative h-full flex flex-col items-center justify-center p-4 text-center">
                   <p className="font-display font-black text-lg md:text-2xl tracking-tight text-foreground drop-shadow">
                     {t.name}
@@ -139,6 +145,9 @@ export default function FeaturedGenres({ config }: { config: any }) {
                       {t.count} dl
                     </p>
                   )}
+                  <span className="mt-2 inline-flex items-center gap-1 text-[10px] uppercase tracking-[0.2em] text-foreground/80 opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">
+                    Explorer →
+                  </span>
                 </div>
               </Link>
             </motion.div>
