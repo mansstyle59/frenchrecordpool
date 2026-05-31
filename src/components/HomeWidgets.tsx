@@ -539,8 +539,9 @@ function TrackGridWidget({ config, preview }: { config: any; preview: boolean })
   }, [config.sort_by, config.genre, config.tag, config.label, config.limit, activeGenre, tabsEnabled]);
 
   const Icon = config.sort_by === "popular" ? Headphones : Music2;
+  const wordmark = config.sort_by === "popular" ? "TOP" : config.sort_by === "alphabetical" ? "A→Z" : "NEW";
   return (
-    <div>
+    <EditorialFrame wordmark={wordmark}>
       <div className="flex items-end justify-between mb-4 gap-4">
         <div className="flex items-center gap-3 min-w-0">
           <div className="w-1 h-9 rounded-full bg-gradient-to-b from-primary to-accent shrink-0" />
