@@ -82,7 +82,8 @@ export default function FeaturedGenres({ config }: { config: any }) {
   }, [auto, limit, JSON.stringify(manual)]);
 
   return (
-    <div>
+    <EditorialFrame wordmark="GENRES">
+
 
       <WidgetHeader
         icon={Tag}
