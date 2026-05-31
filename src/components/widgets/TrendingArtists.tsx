@@ -93,13 +93,13 @@ export default function TrendingArtists({ config }: { config: any }) {
                 to={`/artists/${a.slug}`}
                 className="block group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-2xl"
               >
-                <div className="relative aspect-square rounded-2xl overflow-hidden border border-border bg-card hover:border-primary/60 transition-all group-hover:scale-[1.03]">
+                <div className="relative aspect-square rounded-2xl overflow-hidden border border-border bg-card hover:border-primary/60 transition-all duration-300 group-hover:scale-[1.03] group-hover:-translate-y-0.5 group-hover:shadow-[0_20px_40px_-20px_hsl(var(--accent)/0.5)]">
                   {a.photo_url ? (
                     <img
                       src={a.photo_url}
                       alt={a.name}
                       loading="lazy"
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                     />
                   ) : (
                     <div className="w-full h-full bg-gradient-to-br from-primary/30 to-accent/30 flex items-center justify-center text-3xl font-bold text-foreground/40">
@@ -107,15 +107,23 @@ export default function TrendingArtists({ config }: { config: any }) {
                     </div>
                   )}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent" />
+                  {/* Editorial accent corner on hover */}
+                  <span
+                    aria-hidden
+                    className="absolute top-2 right-2 h-2 w-2 bg-accent opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                  />
                   <div className="absolute top-2 left-2 w-7 h-7 rounded-full bg-accent text-accent-foreground flex items-center justify-center font-bold text-xs shadow">
                     {i + 1}
                   </div>
-                  <div className="absolute top-2 right-2 inline-flex items-center gap-1 px-1.5 h-6 rounded-full bg-accent/90 text-accent-foreground text-[10px] font-bold uppercase tracking-wider">
+                  <div className="absolute top-2 right-5 inline-flex items-center gap-1 px-1.5 h-6 rounded-full bg-accent/90 text-accent-foreground text-[10px] font-bold uppercase tracking-wider">
                     <Flame className="h-3 w-3" />
                     {a.downloads_count}
                   </div>
-                  <div className="absolute inset-0 p-3 flex items-end">
-                    <p className="text-white font-semibold text-sm truncate w-full">{a.name}</p>
+                  <div className="absolute inset-0 p-3 flex flex-col justify-end gap-1">
+                    <p className="text-white font-semibold text-sm truncate">{a.name}</p>
+                    <span className="text-[9px] uppercase tracking-[0.2em] text-white/70 opacity-0 -translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">
+                      Voir profil →
+                    </span>
                   </div>
                 </div>
               </Link>
