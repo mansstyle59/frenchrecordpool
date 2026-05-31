@@ -131,6 +131,6 @@ export default function DjCharts({ config }: { config: any }) {
           })}
         </div>
       )}
-    </div>
+    </EditorialFrame>
   );
 }
