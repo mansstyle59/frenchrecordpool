@@ -615,7 +615,7 @@ function TrackGridWidget({ config, preview }: { config: any; preview: boolean })
           </>
         )}
       </div>
-    </div>
+    </EditorialFrame>
   );
 }
 
