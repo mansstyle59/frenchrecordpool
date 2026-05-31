@@ -145,6 +145,6 @@ export default function FeaturedGenres({ config }: { config: any }) {
           ))}
         </div>
       )}
-    </div>
+    </EditorialFrame>
   );
 }
