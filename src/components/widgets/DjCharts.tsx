@@ -7,6 +7,7 @@ import { resolveCover } from "@/lib/trackCover";
 import { usePlayer } from "@/contexts/PlayerContext";
 import WidgetHeader from "./WidgetHeader";
 import WidgetSkeleton from "./WidgetSkeleton";
+import EditorialFrame from "./EditorialFrame";
 
 type Row = {
   id: string; title: string; artist: string; genre: string;
