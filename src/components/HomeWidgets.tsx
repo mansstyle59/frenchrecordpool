@@ -50,6 +50,7 @@ import PlaylistsCarousel from "@/components/widgets/PlaylistsCarousel";
 import DjCharts from "@/components/widgets/DjCharts";
 import MostFavorited from "@/components/widgets/MostFavorited";
 import RecentlyPlayed from "@/components/widgets/RecentlyPlayed";
+import EditorialFrame from "@/components/widgets/EditorialFrame";
 import { useAuth } from "@/contexts/AuthContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import ArtistCredit from "@/components/ArtistCredit";
