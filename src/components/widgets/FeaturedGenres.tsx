@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import WidgetHeader from "./WidgetHeader";
 import WidgetSkeleton from "./WidgetSkeleton";
+import EditorialFrame from "./EditorialFrame";
 
 interface ManualGenre {
   name: string;
@@ -81,7 +82,8 @@ export default function FeaturedGenres({ config }: { config: any }) {
   }, [auto, limit, JSON.stringify(manual)]);
 
   return (
-    <div>
+    <EditorialFrame wordmark="GENRES">
+
 
       <WidgetHeader
         icon={Tag}
@@ -143,6 +145,6 @@ export default function FeaturedGenres({ config }: { config: any }) {
           ))}
         </div>
       )}
-    </div>
+    </EditorialFrame>
   );
 }

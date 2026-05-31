@@ -7,6 +7,7 @@ import { resolveCover } from "@/lib/trackCover";
 import { usePlayer } from "@/contexts/PlayerContext";
 import WidgetHeader from "./WidgetHeader";
 import WidgetSkeleton from "./WidgetSkeleton";
+import EditorialFrame from "./EditorialFrame";
 
 type Row = {
   id: string; title: string; artist: string; genre: string;
@@ -56,7 +57,7 @@ export default function DjCharts({ config }: { config: any }) {
   }, [limit]);
 
   return (
-    <div>
+    <EditorialFrame wordmark="CHARTS">
       <WidgetHeader
         icon={Trophy}
         eyebrow="Cette semaine"
@@ -130,6 +131,6 @@ export default function DjCharts({ config }: { config: any }) {
           })}
         </div>
       )}
-    </div>
+    </EditorialFrame>
   );
 }

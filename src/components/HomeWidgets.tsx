@@ -50,6 +50,7 @@ import PlaylistsCarousel from "@/components/widgets/PlaylistsCarousel";
 import DjCharts from "@/components/widgets/DjCharts";
 import MostFavorited from "@/components/widgets/MostFavorited";
 import RecentlyPlayed from "@/components/widgets/RecentlyPlayed";
+import EditorialFrame from "@/components/widgets/EditorialFrame";
 import { useAuth } from "@/contexts/AuthContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import ArtistCredit from "@/components/ArtistCredit";
@@ -538,8 +539,9 @@ function TrackGridWidget({ config, preview }: { config: any; preview: boolean })
   }, [config.sort_by, config.genre, config.tag, config.label, config.limit, activeGenre, tabsEnabled]);
 
   const Icon = config.sort_by === "popular" ? Headphones : Music2;
+  const wordmark = config.sort_by === "popular" ? "TOP" : config.sort_by === "alphabetical" ? "A→Z" : "NEW";
   return (
-    <div>
+    <EditorialFrame wordmark={wordmark}>
       <div className="flex items-end justify-between mb-4 gap-4">
         <div className="flex items-center gap-3 min-w-0">
           <div className="w-1 h-9 rounded-full bg-gradient-to-b from-primary to-accent shrink-0" />
@@ -613,7 +615,7 @@ function TrackGridWidget({ config, preview }: { config: any; preview: boolean })
           </>
         )}
       </div>
-    </div>
+    </EditorialFrame>
   );
 }
 

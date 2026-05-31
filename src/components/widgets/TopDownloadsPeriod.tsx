@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import TrackRow, { TrackListHeader } from "@/components/TrackRow";
 import { titleStyle, bodyStyle } from "@/lib/widgetTypography";
 import WidgetSkeleton from "./WidgetSkeleton";
+import EditorialFrame from "./EditorialFrame";
 
 type Period = "7d" | "30d" | "all";
 const PERIODS: { id: Period; label: string; days: number | null }[] = [
@@ -46,7 +47,7 @@ export default function TopDownloadsPeriod({ config }: { config: any }) {
   }, [period, limit]);
 
   return (
-    <div>
+    <EditorialFrame wordmark="TOP DL">
       <div className="flex items-end justify-between mb-4 gap-4 flex-wrap">
         <div className="flex items-start gap-3 min-w-0">
           <div className="w-1 h-9 rounded-full bg-gradient-to-b from-primary to-accent shrink-0 mt-0.5" />
@@ -107,6 +108,6 @@ export default function TopDownloadsPeriod({ config }: { config: any }) {
           ))}
         </div>
       )}
-    </div>
+    </EditorialFrame>
   );
 }
