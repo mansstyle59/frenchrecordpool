@@ -51,6 +51,8 @@ import DjCharts from "@/components/widgets/DjCharts";
 import MostFavorited from "@/components/widgets/MostFavorited";
 import RecentlyPlayed from "@/components/widgets/RecentlyPlayed";
 import EditorialFrame from "@/components/widgets/EditorialFrame";
+import WidgetSkeleton from "@/components/widgets/WidgetSkeleton";
+import WidgetEmptyState from "@/components/widgets/WidgetEmptyState";
 import { useAuth } from "@/contexts/AuthContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import ArtistCredit from "@/components/ArtistCredit";
@@ -592,30 +594,26 @@ function TrackGridWidget({ config, preview }: { config: any; preview: boolean })
         </div>
       )}
 
-      <div className="rounded-2xl border border-border bg-card/40 backdrop-blur-sm overflow-hidden min-h-[120px]">
-        {loading ? (
-          <div className="divide-y divide-border/40">
-            {Array.from({ length: Math.min(config.limit || 8, 6) }).map((_, i) => (
-              <div key={i} className="flex items-center gap-3 px-4 py-3 animate-pulse">
-                <div className="h-14 w-14 rounded-lg bg-muted/50 shrink-0" />
-                <div className="flex-1 space-y-2">
-                  <div className="h-3 w-1/3 bg-muted/50 rounded" />
-                  <div className="h-2.5 w-1/4 bg-muted/40 rounded" />
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : tracks.length === 0 ? (
-          <div className="p-8 text-center text-sm text-muted-foreground">
-            Aucun titre {activeGenre ? `pour le genre "${activeGenre}"` : "à afficher"}.
-          </div>
-        ) : (
-          <>
-            <TrackListHeader />
-            {tracks.map((t, i) => <TrackRow key={t.id} track={t} index={i} />)}
-          </>
-        )}
-      </div>
+      {loading ? (
+        <WidgetSkeleton variant="list" count={Math.min(config.limit || 8, 6)} />
+      ) : tracks.length === 0 ? (
+        <WidgetEmptyState
+          icon={Icon}
+          title={activeGenre ? `Aucun titre en « ${activeGenre} »` : "Aucun titre à afficher"}
+          message={
+            activeGenre
+              ? "Essaie un autre genre ou explore l'intégralité du catalogue."
+              : "Les morceaux apparaîtront ici dès qu'ils seront publiés."
+          }
+          ctaLabel="Voir tout le catalogue"
+          ctaUrl={config.see_all_url || "/new"}
+        />
+      ) : (
+        <div className="rounded-2xl border border-border bg-card/40 backdrop-blur-sm overflow-hidden">
+          <TrackListHeader />
+          {tracks.map((t, i) => <TrackRow key={t.id} track={t} index={i} />)}
+        </div>
+      )}
     </EditorialFrame>
   );
 }
