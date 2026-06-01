@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import WidgetHeader from "./WidgetHeader";
 import WidgetSkeleton from "./WidgetSkeleton";
+import WidgetEmptyState from "./WidgetEmptyState";
 import EditorialFrame from "./EditorialFrame";
 
 interface ManualGenre {
@@ -96,9 +97,13 @@ export default function FeaturedGenres({ config }: { config: any }) {
       {!tiles ? (
         <WidgetSkeleton variant="grid" count={8} />
       ) : tiles.length === 0 ? (
-        <div className="rounded-2xl border border-border bg-card/40 p-8 text-center text-sm text-muted-foreground">
-          Aucun genre disponible.
-        </div>
+        <WidgetEmptyState
+          icon={Tag}
+          title="Aucun genre disponible"
+          message="Les genres apparaîtront dès que des morceaux seront catalogués avec des tags."
+          ctaLabel="Voir le catalogue"
+          ctaUrl="/new"
+        />
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
           {tiles.map((t, i) => (
