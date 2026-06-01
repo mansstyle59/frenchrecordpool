@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import TrackRow, { TrackListHeader } from "@/components/TrackRow";
 import { titleStyle, bodyStyle } from "@/lib/widgetTypography";
 import WidgetSkeleton from "./WidgetSkeleton";
+import WidgetEmptyState from "./WidgetEmptyState";
 import EditorialFrame from "./EditorialFrame";
 
 type Period = "7d" | "30d" | "all";
@@ -97,9 +98,13 @@ export default function TopDownloadsPeriod({ config }: { config: any }) {
       {loading ? (
         <WidgetSkeleton variant="list" count={Math.min(limit, 6)} />
       ) : tracks.length === 0 ? (
-        <div className="rounded-2xl border border-border bg-card/40 p-8 text-center text-sm text-muted-foreground">
-          Aucun téléchargement sur cette période.
-        </div>
+        <WidgetEmptyState
+          icon={TrendingUp}
+          title="Aucun téléchargement sur cette période"
+          message="Change l'intervalle ou explore les sorties récentes pour découvrir ce qui tourne."
+          ctaLabel="Voir les nouveautés"
+          ctaUrl="/new"
+        />
       ) : (
         <div className="rounded-2xl border border-border bg-card/40 backdrop-blur-sm overflow-hidden">
           <TrackListHeader />

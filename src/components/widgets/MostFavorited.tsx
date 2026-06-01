@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import TrackRow, { TrackListHeader } from "@/components/TrackRow";
 import WidgetHeader from "./WidgetHeader";
 import WidgetSkeleton from "./WidgetSkeleton";
+import WidgetEmptyState from "./WidgetEmptyState";
 
 export default function MostFavorited({ config }: { config: any }) {
   const [tracks, setTracks] = useState<any[]>([]);
@@ -31,9 +32,13 @@ export default function MostFavorited({ config }: { config: any }) {
       {loading ? (
         <WidgetSkeleton variant="list" count={Math.min(limit, 6)} />
       ) : tracks.length === 0 ? (
-        <div className="rounded-2xl border border-border bg-card/40 p-8 text-center text-sm text-muted-foreground">
-          Aucun favori pour l'instant — sois le premier !
-        </div>
+        <WidgetEmptyState
+          icon={Heart}
+          title="Aucun favori pour l'instant"
+          message="Sois le premier à ajouter un coup de cœur — un clic sur le cœur d'un titre suffit."
+          ctaLabel="Parcourir le catalogue"
+          ctaUrl="/new"
+        />
       ) : (
         <div className="rounded-2xl border border-border bg-card/40 backdrop-blur-xl overflow-hidden">
           <TrackListHeader />

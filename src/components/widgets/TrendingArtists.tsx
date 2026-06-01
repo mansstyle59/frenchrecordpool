@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { titleStyle, bodyStyle } from "@/lib/widgetTypography";
 import HCarousel from "./HCarousel";
 import WidgetSkeleton from "./WidgetSkeleton";
+import WidgetEmptyState from "./WidgetEmptyState";
 
 type Period = "7d" | "30d" | "all";
 const DAYS: Record<Period, number | null> = { "7d": 7, "30d": 30, all: null };
@@ -74,11 +75,15 @@ export default function TrendingArtists({ config }: { config: any }) {
       </div>
 
       {loading ? (
-        <WidgetSkeleton variant="carousel" count={8} />
+        <WidgetSkeleton variant="artists" count={8} />
       ) : rows.length === 0 ? (
-        <div className="rounded-2xl border border-border bg-card/40 p-8 text-center text-sm text-muted-foreground">
-          Pas encore de données sur cette période.
-        </div>
+        <WidgetEmptyState
+          icon={Flame}
+          title="Aucune tendance sur cette période"
+          message="Les artistes qui décollent apparaîtront ici dès qu'ils auront du momentum."
+          ctaLabel="Voir tous les artistes"
+          ctaUrl="/artists"
+        />
       ) : (
         <HCarousel ariaLabel="Artistes en hausse">
           {rows.map((a, i) => (

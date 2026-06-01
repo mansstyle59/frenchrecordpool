@@ -7,6 +7,7 @@ import { resolveCover } from "@/lib/trackCover";
 import { usePlayer } from "@/contexts/PlayerContext";
 import WidgetHeader from "./WidgetHeader";
 import WidgetSkeleton from "./WidgetSkeleton";
+import WidgetEmptyState from "./WidgetEmptyState";
 import EditorialFrame from "./EditorialFrame";
 
 type Row = {
@@ -68,11 +69,15 @@ export default function DjCharts({ config }: { config: any }) {
       />
 
       {loading ? (
-        <WidgetSkeleton variant="list" count={Math.min(limit, 6)} />
+        <WidgetSkeleton variant="charts" count={Math.min(limit, 6)} />
       ) : rows.length === 0 ? (
-        <div className="rounded-2xl border border-border bg-card/40 p-8 text-center text-sm text-muted-foreground">
-          Pas encore de téléchargements cette semaine.
-        </div>
+        <WidgetEmptyState
+          icon={Trophy}
+          title="Aucun classement cette semaine"
+          message="Les premiers téléchargements de la semaine alimenteront ce top dès qu'ils seront enregistrés."
+          ctaLabel="Explorer les nouveautés"
+          ctaUrl="/new"
+        />
       ) : (
         <div className="rounded-2xl border border-border bg-card/40 backdrop-blur-xl overflow-hidden divide-y divide-border/40">
           {rows.map((r, i) => {

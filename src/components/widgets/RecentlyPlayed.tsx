@@ -6,6 +6,7 @@ import TrackRow, { TrackListHeader } from "@/components/TrackRow";
 import { Button } from "@/components/ui/button";
 import WidgetHeader from "./WidgetHeader";
 import WidgetSkeleton from "./WidgetSkeleton";
+import WidgetEmptyState from "./WidgetEmptyState";
 
 export default function RecentlyPlayed({ config }: { config: any }) {
   const { ids, clear } = useRecentlyPlayed();
@@ -63,9 +64,11 @@ export default function RecentlyPlayed({ config }: { config: any }) {
       {loading ? (
         <WidgetSkeleton variant="list" count={Math.min(limit, 4)} />
       ) : tracks.length === 0 ? (
-        <div className="rounded-2xl border border-border bg-card/40 p-8 text-center text-sm text-muted-foreground">
-          Lance un preview pour voir ton historique apparaître ici.
-        </div>
+        <WidgetEmptyState
+          icon={History}
+          title="Ton historique est vide"
+          message="Lance un preview pour voir tes derniers titres écoutés apparaître ici."
+        />
       ) : (
         <div className="rounded-2xl border border-border bg-card/40 backdrop-blur-xl overflow-hidden">
           <TrackListHeader />
