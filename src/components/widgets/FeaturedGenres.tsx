@@ -82,7 +82,7 @@ export default function FeaturedGenres({ config }: { config: any }) {
   }, [auto, limit, JSON.stringify(manual)]);
 
   return (
-    <EditorialFrame wordmark="GENRES">
+    <EditorialFrame wordmark="GENRES" kicker="STYLES">
 
 
       <WidgetHeader

@@ -47,7 +47,7 @@ export default function TopDownloadsPeriod({ config }: { config: any }) {
   }, [period, limit]);
 
   return (
-    <EditorialFrame wordmark="TOP DL">
+    <EditorialFrame wordmark="TOP DL" kicker="TÉLÉCHARGEMENTS">
       <div className="flex items-end justify-between mb-4 gap-4 flex-wrap">
         <div className="flex items-start gap-3 min-w-0">
           <div className="w-1 h-9 rounded-full bg-gradient-to-b from-primary to-accent shrink-0 mt-0.5" />
