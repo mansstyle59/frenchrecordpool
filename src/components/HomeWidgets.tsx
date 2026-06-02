@@ -67,6 +67,10 @@ export interface Widget {
   devices?: string | null;
   starts_at?: string | null;
   ends_at?: string | null;
+  /** Parent dans la hiérarchie Section → Colonne → Widget (NULL = racine). */
+  parent_id?: string | null;
+  /** 0 = racine, 1 = colonne, 2 = widget enfant (informatif, indexé en DB). */
+  depth?: number;
 }
 
 interface Props {
