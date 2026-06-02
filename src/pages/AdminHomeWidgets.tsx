@@ -631,24 +631,44 @@ function SortableItem({
   const SpanIcon = colSpan === 2 ? LayoutTemplate : colSpan === 1 ? Columns : Columns3;
   const nextLabel = nextSpan === 2 ? "pleine largeur" : nextSpan === 1 ? "1/2 (2 colonnes)" : "1/3 (3 colonnes)";
 
+  // Indicateur visuel : section / colonne / widget enfant
+  const isStructure = widget.type === "section" || widget.type === "column";
+  const isChild = !!widget.parent_id;
+
   return (
     <div
       ref={setNodeRef} style={style}
-      className={`flex items-center gap-3 rounded-xl border bg-card p-3 transition ${isDragging ? "opacity-50 ring-2 ring-primary" : "hover:border-primary/40"}`}
+      className={`flex items-center gap-3 rounded-xl border bg-card p-3 transition ${isDragging ? "opacity-50 ring-2 ring-primary" : "hover:border-primary/40"} ${
+        widget.type === "section" ? "border-primary/40 bg-primary/[0.03]" :
+        widget.type === "column" ? "border-accent/40 bg-accent/[0.03] ml-4" :
+        isChild ? "ml-8" : ""
+      }`}
     >
       <button {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground p-1" aria-label="Déplacer">
         <GripVertical className="h-4 w-4" />
       </button>
-      <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-        <Icon className="h-4 w-4 text-primary" />
+      <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${isStructure ? "bg-accent/15" : "bg-primary/10"}`}>
+        <Icon className={`h-4 w-4 ${isStructure ? "text-accent" : "text-primary"}`} />
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
           <h3 className="font-semibold text-sm truncate">{meta?.label || widget.type}</h3>
+          {widget.type === "section" && (
+            <Badge variant="outline" className="text-[10px] h-4 px-1 border-primary/40 text-primary uppercase">
+              {widget.config?.layout || "1"}
+            </Badge>
+          )}
+          {isChild && widget.type !== "section" && widget.type !== "column" && (
+            <Badge variant="outline" className="text-[10px] h-4 px-1 text-muted-foreground">
+              dans colonne
+            </Badge>
+          )}
           {!widget.is_active && <Badge variant="secondary" className="text-[10px] h-4 px-1">Masqué</Badge>}
-          <Badge variant="outline" className="text-[10px] h-4 px-1 gap-1">
-            <SpanIcon className="h-2.5 w-2.5" /> {spanLabel}
-          </Badge>
+          {!isStructure && (
+            <Badge variant="outline" className="text-[10px] h-4 px-1 gap-1">
+              <SpanIcon className="h-2.5 w-2.5" /> {spanLabel}
+            </Badge>
+          )}
         </div>
         <p className="text-xs text-muted-foreground truncate">{widget.config.title || meta?.desc}</p>
       </div>
