@@ -993,6 +993,45 @@ function Editor({ widget, onCancel, onSave, saving }: { widget: Widget; onCancel
   const setCommon = (k: string, v: any) =>
     setW((s) => ({ ...s, config: { ...s.config, common: { ...(s.config.common || {}), [k]: v } } }));
 
+  // Liste des parents possibles (sections + colonnes), pour le sélecteur de hiérarchie
+  const { data: hierarchyOptions = [] } = useQuery({
+    queryKey: ["admin-home-hierarchy"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("home_widgets")
+        .select("id,type,config,position,parent_id")
+        .in("type", ["section", "column"])
+        .order("position", { ascending: true });
+      return (data ?? []) as Widget[];
+    },
+  });
+
+  // Construit des labels lisibles : "Section 1 › Colonne 2" pour chaque colonne
+  const parentLabel = (id: string): string => {
+    const node = hierarchyOptions.find((n) => n.id === id);
+    if (!node) return "—";
+    if (node.type === "section") {
+      const idx = hierarchyOptions.filter((n) => n.type === "section").findIndex((n) => n.id === id) + 1;
+      return `Section ${idx} (${node.config?.layout || "1"})`;
+    }
+    // Colonne
+    const parent = node.parent_id ? hierarchyOptions.find((n) => n.id === node.parent_id) : null;
+    const siblings = hierarchyOptions.filter((n) => n.type === "column" && n.parent_id === node.parent_id);
+    const colIdx = siblings.findIndex((n) => n.id === id) + 1;
+    const sectionLabel = parent ? parentLabel(parent.id!) : "Section ?";
+    return `${sectionLabel} › Colonne ${colIdx}`;
+  };
+
+  // Les widgets peuvent être enfants de colonnes uniquement.
+  // Les colonnes peuvent être enfants de sections uniquement.
+  // Les sections n'ont pas de parent.
+  const parentChoices: Widget[] = w.type === "section"
+    ? []
+    : w.type === "column"
+      ? hierarchyOptions.filter((n) => n.type === "section")
+      : hierarchyOptions.filter((n) => n.type === "column");
+
+
   return (
     <div className="grid lg:grid-cols-[480px_1fr] gap-6">
       <div className="space-y-4 rounded-2xl border bg-card p-5">
