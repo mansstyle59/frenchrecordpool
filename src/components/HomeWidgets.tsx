@@ -132,16 +132,72 @@ export default function HomeWidgets({ widgets: propWidgets, preview = false }: P
 
   if (visible.length === 0) return null;
 
-  // Group consecutive partial-width widgets (halves → 2-col, thirds → 3-col).
+  /* ─── Tree-aware rendering : Section → Colonne → Widget ───
+     - Si un widget racine est de type "section", il rend ses colonnes
+       enfants en grid (via SectionShell), et chaque colonne empile ses
+       widgets enfants verticalement.
+     - Les widgets racine "classiques" (parent_id = null, type ≠ section)
+       restent compatibles à 100 % : on conserve l'ancien groupement par
+       col_span pour ne rien casser sur les homepages existantes.        */
+
+  // Index par id pour lookup rapide
+  const byId = new Map<string, Widget>();
+  for (const w of visible) byId.set(w.id, w);
+
+  // Enfants par parent (triés par position)
+  const childrenOf = new Map<string | null, Widget[]>();
+  for (const w of visible) {
+    const key = w.parent_id ?? null;
+    const arr = childrenOf.get(key) ?? [];
+    arr.push(w);
+    childrenOf.set(key, arr);
+  }
+  for (const arr of childrenOf.values()) {
+    arr.sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
+  }
+
+  const roots = (childrenOf.get(null) ?? []).filter((w) => {
+    // Une colonne orpheline ne se rend pas seule
+    return w.type !== "column";
+  });
+
+  // Helper : rend un noeud (section, widget standard ou colonne)
+  const renderNode = (w: Widget): React.ReactNode => {
+    if (w.type === "section") {
+      const cfg = (w.config ?? {}) as any;
+      const columns = (childrenOf.get(w.id) ?? []).filter((c) => c.type === "column");
+      const renderedCols = columns.map((col) => {
+        const colChildren = (childrenOf.get(col.id) ?? []).filter((c) => c.type !== "column");
+        return (
+          <React.Fragment key={col.id}>
+            {colChildren.map((child) => (
+              <WidgetWrapper key={child.id} widget={child} preview={preview} />
+            ))}
+          </React.Fragment>
+        );
+      });
+      return (
+        <SectionShell key={w.id} config={cfg} columns={renderedCols} preview={preview} />
+      );
+    }
+    // Widget orphelin racine : ancien rendu
+    return <WidgetWrapper key={w.id} widget={w} preview={preview} />;
+  };
+
+  // Pour les racines non-section, conserver le legacy col_span grouping.
   type Row =
-    | { kind: "full"; w: Widget }
+    | { kind: "node"; w: Widget }
     | { kind: "group"; span: 1 | 3; items: Widget[] };
   const rows: Row[] = [];
-  for (const w of visible) {
+  for (const w of roots) {
+    if (w.type === "section") {
+      rows.push({ kind: "node", w });
+      continue;
+    }
     const raw = (w.config as any)?.col_span;
     const span: 1 | 2 | 3 = raw === 1 ? 1 : raw === 3 ? 3 : 2;
     if (span === 2) {
-      rows.push({ kind: "full", w });
+      rows.push({ kind: "node", w });
     } else {
       const max = span === 1 ? 2 : 3;
       const last = rows[rows.length - 1];
@@ -156,8 +212,8 @@ export default function HomeWidgets({ widgets: propWidgets, preview = false }: P
   return (
     <div className={preview ? "space-y-4" : "space-y-4 md:space-y-6"}>
       {rows.map((row, i) =>
-        row.kind === "full" ? (
-          <WidgetWrapper key={row.w.id} widget={row.w} preview={preview} />
+        row.kind === "node" ? (
+          renderNode(row.w)
         ) : (
           <div
             key={`grp-${i}`}
