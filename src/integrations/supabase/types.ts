@@ -318,10 +318,12 @@ export type Database = {
           config: Json
           created_at: string
           created_by: string | null
+          depth: number
           devices: string
           ends_at: string | null
           id: string
           is_active: boolean
+          parent_id: string | null
           position: number
           starts_at: string | null
           type: string
@@ -332,10 +334,12 @@ export type Database = {
           config?: Json
           created_at?: string
           created_by?: string | null
+          depth?: number
           devices?: string
           ends_at?: string | null
           id?: string
           is_active?: boolean
+          parent_id?: string | null
           position?: number
           starts_at?: string | null
           type: string
@@ -346,16 +350,26 @@ export type Database = {
           config?: Json
           created_at?: string
           created_by?: string | null
+          depth?: number
           devices?: string
           ends_at?: string | null
           id?: string
           is_active?: boolean
+          parent_id?: string | null
           position?: number
           starts_at?: string | null
           type?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "home_widgets_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "home_widgets"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       notifications: {
         Row: {

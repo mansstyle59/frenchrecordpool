@@ -45,9 +45,22 @@ interface Widget {
   devices?: string | null;
   starts_at?: string | null;
   ends_at?: string | null;
+  parent_id?: string | null;
+  depth?: number;
 }
 
 const TYPE_META: Record<string, { label: string; icon: any; desc: string; defaults: any; group: string }> = {
+  /* ─── Structure (Page Builder hiérarchique) ─── */
+  section: {
+    label: "Section", icon: LayoutTemplate, group: "Structure",
+    desc: "Conteneur racine avec colonnes (1, 2, 3, 4… ou layouts mixtes 2-1, 1-2)",
+    defaults: { layout: "1-1", gap: "md", stack_at: "md" },
+  },
+  column: {
+    label: "Colonne", icon: Columns, group: "Structure",
+    desc: "Cellule d'une section. Les widgets glissés dedans s'empilent verticalement.",
+    defaults: {},
+  },
   hero: {
     label: "Hero / Bannière", icon: Sparkles, group: "Mise en avant",
     desc: "Bannière principale avec titre, sous-titre, CTAs",
@@ -333,6 +346,7 @@ export default function AdminHomeWidgets() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["admin-home-widgets"] });
+      qc.invalidateQueries({ queryKey: ["admin-home-hierarchy"] });
       toast.success("Widget enregistré");
       setEditing(null);
     },
@@ -617,35 +631,57 @@ function SortableItem({
   const SpanIcon = colSpan === 2 ? LayoutTemplate : colSpan === 1 ? Columns : Columns3;
   const nextLabel = nextSpan === 2 ? "pleine largeur" : nextSpan === 1 ? "1/2 (2 colonnes)" : "1/3 (3 colonnes)";
 
+  // Indicateur visuel : section / colonne / widget enfant
+  const isStructure = widget.type === "section" || widget.type === "column";
+  const isChild = !!widget.parent_id;
+
   return (
     <div
       ref={setNodeRef} style={style}
-      className={`flex items-center gap-3 rounded-xl border bg-card p-3 transition ${isDragging ? "opacity-50 ring-2 ring-primary" : "hover:border-primary/40"}`}
+      className={`flex items-center gap-3 rounded-xl border bg-card p-3 transition ${isDragging ? "opacity-50 ring-2 ring-primary" : "hover:border-primary/40"} ${
+        widget.type === "section" ? "border-primary/40 bg-primary/[0.03]" :
+        widget.type === "column" ? "border-accent/40 bg-accent/[0.03] ml-4" :
+        isChild ? "ml-8" : ""
+      }`}
     >
       <button {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground p-1" aria-label="Déplacer">
         <GripVertical className="h-4 w-4" />
       </button>
-      <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-        <Icon className="h-4 w-4 text-primary" />
+      <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${isStructure ? "bg-accent/15" : "bg-primary/10"}`}>
+        <Icon className={`h-4 w-4 ${isStructure ? "text-accent" : "text-primary"}`} />
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
           <h3 className="font-semibold text-sm truncate">{meta?.label || widget.type}</h3>
+          {widget.type === "section" && (
+            <Badge variant="outline" className="text-[10px] h-4 px-1 border-primary/40 text-primary uppercase">
+              {widget.config?.layout || "1"}
+            </Badge>
+          )}
+          {isChild && widget.type !== "section" && widget.type !== "column" && (
+            <Badge variant="outline" className="text-[10px] h-4 px-1 text-muted-foreground">
+              dans colonne
+            </Badge>
+          )}
           {!widget.is_active && <Badge variant="secondary" className="text-[10px] h-4 px-1">Masqué</Badge>}
-          <Badge variant="outline" className="text-[10px] h-4 px-1 gap-1">
-            <SpanIcon className="h-2.5 w-2.5" /> {spanLabel}
-          </Badge>
+          {!isStructure && (
+            <Badge variant="outline" className="text-[10px] h-4 px-1 gap-1">
+              <SpanIcon className="h-2.5 w-2.5" /> {spanLabel}
+            </Badge>
+          )}
         </div>
         <p className="text-xs text-muted-foreground truncate">{widget.config.title || meta?.desc}</p>
       </div>
-      <button
-        type="button"
-        onClick={() => onSpanChange(nextSpan)}
-        title={`Passer en ${nextLabel}`}
-        className="inline-flex items-center gap-1 h-7 px-2 rounded-md border border-border bg-background hover:border-primary/60 hover:bg-primary/5 text-[10px] font-bold uppercase tracking-wider"
-      >
-        <SpanIcon className="h-3 w-3" /> {spanLabel}
-      </button>
+      {!isStructure && (
+        <button
+          type="button"
+          onClick={() => onSpanChange(nextSpan)}
+          title={`Passer en ${nextLabel}`}
+          className="inline-flex items-center gap-1 h-7 px-2 rounded-md border border-border bg-background hover:border-primary/60 hover:bg-primary/5 text-[10px] font-bold uppercase tracking-wider"
+        >
+          <SpanIcon className="h-3 w-3" /> {spanLabel}
+        </button>
+      )}
       <Switch checked={widget.is_active} onCheckedChange={onToggle} />
       <Button variant="outline" size="sm" onClick={onEdit}>Modifier</Button>
       <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onRemove} aria-label="Supprimer le widget">
@@ -980,6 +1016,45 @@ function Editor({ widget, onCancel, onSave, saving }: { widget: Widget; onCancel
   const setCommon = (k: string, v: any) =>
     setW((s) => ({ ...s, config: { ...s.config, common: { ...(s.config.common || {}), [k]: v } } }));
 
+  // Liste des parents possibles (sections + colonnes), pour le sélecteur de hiérarchie
+  const { data: hierarchyOptions = [] } = useQuery({
+    queryKey: ["admin-home-hierarchy"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("home_widgets")
+        .select("id,type,config,position,parent_id")
+        .in("type", ["section", "column"])
+        .order("position", { ascending: true });
+      return (data ?? []) as Widget[];
+    },
+  });
+
+  // Construit des labels lisibles : "Section 1 › Colonne 2" pour chaque colonne
+  const parentLabel = (id: string): string => {
+    const node = hierarchyOptions.find((n) => n.id === id);
+    if (!node) return "—";
+    if (node.type === "section") {
+      const idx = hierarchyOptions.filter((n) => n.type === "section").findIndex((n) => n.id === id) + 1;
+      return `Section ${idx} (${node.config?.layout || "1"})`;
+    }
+    // Colonne
+    const parent = node.parent_id ? hierarchyOptions.find((n) => n.id === node.parent_id) : null;
+    const siblings = hierarchyOptions.filter((n) => n.type === "column" && n.parent_id === node.parent_id);
+    const colIdx = siblings.findIndex((n) => n.id === id) + 1;
+    const sectionLabel = parent ? parentLabel(parent.id!) : "Section ?";
+    return `${sectionLabel} › Colonne ${colIdx}`;
+  };
+
+  // Les widgets peuvent être enfants de colonnes uniquement.
+  // Les colonnes peuvent être enfants de sections uniquement.
+  // Les sections n'ont pas de parent.
+  const parentChoices: Widget[] = w.type === "section"
+    ? []
+    : w.type === "column"
+      ? hierarchyOptions.filter((n) => n.type === "section")
+      : hierarchyOptions.filter((n) => n.type === "column");
+
+
   return (
     <div className="grid lg:grid-cols-[480px_1fr] gap-6">
       <div className="space-y-4 rounded-2xl border bg-card p-5">
@@ -996,6 +1071,25 @@ function Editor({ widget, onCancel, onSave, saving }: { widget: Widget; onCancel
         </div>
 
         <TypeFields w={w} setC={setC} />
+
+        {/* ─── Parent dans la hiérarchie Section/Colonne ─── */}
+        {w.type !== "section" && parentChoices.length > 0 && (
+          <Field label={w.type === "column" ? "Section parente" : "Colonne parente (optionnel)"}>
+            <Select
+              value={w.parent_id ?? "__root__"}
+              onValueChange={(v) => setW((s) => ({ ...s, parent_id: v === "__root__" ? null : v }))}
+            >
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__root__">— Racine (rendu autonome) —</SelectItem>
+                {parentChoices.map((p) => (
+                  <SelectItem key={p.id} value={p.id!}>{parentLabel(p.id!)}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </Field>
+        )}
+
 
         {TYPES_WITH_HEADER.has(w.type) && (
           <Field label="Sous-titre / accroche (optionnel)">
@@ -1049,6 +1143,58 @@ function Editor({ widget, onCancel, onSave, saving }: { widget: Widget; onCancel
 function TypeFields({ w, setC }: { w: Widget; setC: (k: string, v: any) => void }) {
   const c = w.config;
   switch (w.type) {
+    case "section":
+      return (
+        <>
+          <Field label="Layout de la section">
+            <Select value={c.layout ?? "1-1"} onValueChange={(v) => setC("layout", v)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="1">1 colonne (pleine largeur)</SelectItem>
+                <SelectItem value="1-1">2 colonnes égales (1/1)</SelectItem>
+                <SelectItem value="1-1-1">3 colonnes égales (1/1/1)</SelectItem>
+                <SelectItem value="1-1-1-1">4 colonnes égales</SelectItem>
+                <SelectItem value="2-1">2/3 + 1/3</SelectItem>
+                <SelectItem value="1-2">1/3 + 2/3</SelectItem>
+                <SelectItem value="1-1-2">1/4 + 1/4 + 2/4</SelectItem>
+                <SelectItem value="2-1-1">2/4 + 1/4 + 1/4</SelectItem>
+              </SelectContent>
+            </Select>
+          </Field>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Espacement entre colonnes">
+              <Select value={c.gap ?? "md"} onValueChange={(v) => setC("gap", v)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Aucun</SelectItem>
+                  <SelectItem value="sm">Petit</SelectItem>
+                  <SelectItem value="md">Moyen</SelectItem>
+                  <SelectItem value="lg">Grand</SelectItem>
+                  <SelectItem value="xl">Très grand</SelectItem>
+                </SelectContent>
+              </Select>
+            </Field>
+            <Field label="Empiler à partir de">
+              <Select value={c.stack_at ?? "md"} onValueChange={(v) => setC("stack_at", v)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="md">Tablette (≤ 768 px)</SelectItem>
+                  <SelectItem value="lg">Desktop (≤ 1024 px)</SelectItem>
+                </SelectContent>
+              </Select>
+            </Field>
+          </div>
+          <p className="text-[11px] text-muted-foreground border-l-2 border-primary/50 pl-3">
+            Crée des colonnes enfants depuis le bouton « + Ajouter une colonne » dans la liste, puis assigne chaque widget à une colonne via le champ « Parent » de son éditeur.
+          </p>
+        </>
+      );
+    case "column":
+      return (
+        <p className="text-[11px] text-muted-foreground border-l-2 border-primary/50 pl-3">
+          Une colonne n'a pas de réglages propres : elle hérite du layout de sa section parente. Glisse des widgets dedans (ou choisis cette colonne comme « Parent » dans l'éditeur d'un widget).
+        </p>
+      );
     case "hero":
       return (
         <>
