@@ -1049,6 +1049,25 @@ function Editor({ widget, onCancel, onSave, saving }: { widget: Widget; onCancel
 
         <TypeFields w={w} setC={setC} />
 
+        {/* ─── Parent dans la hiérarchie Section/Colonne ─── */}
+        {w.type !== "section" && parentChoices.length > 0 && (
+          <Field label={w.type === "column" ? "Section parente" : "Colonne parente (optionnel)"}>
+            <Select
+              value={w.parent_id ?? "__root__"}
+              onValueChange={(v) => setW((s) => ({ ...s, parent_id: v === "__root__" ? null : v }))}
+            >
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__root__">— Racine (rendu autonome) —</SelectItem>
+                {parentChoices.map((p) => (
+                  <SelectItem key={p.id} value={p.id!}>{parentLabel(p.id!)}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </Field>
+        )}
+
+
         {TYPES_WITH_HEADER.has(w.type) && (
           <Field label="Sous-titre / accroche (optionnel)">
             <Input
