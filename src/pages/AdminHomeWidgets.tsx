@@ -45,6 +45,8 @@ interface Widget {
   devices?: string | null;
   starts_at?: string | null;
   ends_at?: string | null;
+  parent_id?: string | null;
+  depth?: number;
 }
 
 const TYPE_META: Record<string, { label: string; icon: any; desc: string; defaults: any; group: string }> = {
