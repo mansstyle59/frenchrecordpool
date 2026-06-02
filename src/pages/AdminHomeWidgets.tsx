@@ -672,14 +672,16 @@ function SortableItem({
         </div>
         <p className="text-xs text-muted-foreground truncate">{widget.config.title || meta?.desc}</p>
       </div>
-      <button
-        type="button"
-        onClick={() => onSpanChange(nextSpan)}
-        title={`Passer en ${nextLabel}`}
-        className="inline-flex items-center gap-1 h-7 px-2 rounded-md border border-border bg-background hover:border-primary/60 hover:bg-primary/5 text-[10px] font-bold uppercase tracking-wider"
-      >
-        <SpanIcon className="h-3 w-3" /> {spanLabel}
-      </button>
+      {!isStructure && (
+        <button
+          type="button"
+          onClick={() => onSpanChange(nextSpan)}
+          title={`Passer en ${nextLabel}`}
+          className="inline-flex items-center gap-1 h-7 px-2 rounded-md border border-border bg-background hover:border-primary/60 hover:bg-primary/5 text-[10px] font-bold uppercase tracking-wider"
+        >
+          <SpanIcon className="h-3 w-3" /> {spanLabel}
+        </button>
+      )}
       <Switch checked={widget.is_active} onCheckedChange={onToggle} />
       <Button variant="outline" size="sm" onClick={onEdit}>Modifier</Button>
       <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onRemove} aria-label="Supprimer le widget">
