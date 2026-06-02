@@ -346,6 +346,7 @@ export default function AdminHomeWidgets() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["admin-home-widgets"] });
+      qc.invalidateQueries({ queryKey: ["admin-home-hierarchy"] });
       toast.success("Widget enregistré");
       setEditing(null);
     },
