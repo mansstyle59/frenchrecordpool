@@ -50,6 +50,17 @@ interface Widget {
 }
 
 const TYPE_META: Record<string, { label: string; icon: any; desc: string; defaults: any; group: string }> = {
+  /* ─── Structure (Page Builder hiérarchique) ─── */
+  section: {
+    label: "Section", icon: LayoutTemplate, group: "Structure",
+    desc: "Conteneur racine avec colonnes (1, 2, 3, 4… ou layouts mixtes 2-1, 1-2)",
+    defaults: { layout: "1-1", gap: "md", stack_at: "md" },
+  },
+  column: {
+    label: "Colonne", icon: Columns, group: "Structure",
+    desc: "Cellule d'une section. Les widgets glissés dedans s'empilent verticalement.",
+    defaults: {},
+  },
   hero: {
     label: "Hero / Bannière", icon: Sparkles, group: "Mise en avant",
     desc: "Bannière principale avec titre, sous-titre, CTAs",
