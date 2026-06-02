@@ -1062,6 +1062,58 @@ function Editor({ widget, onCancel, onSave, saving }: { widget: Widget; onCancel
 function TypeFields({ w, setC }: { w: Widget; setC: (k: string, v: any) => void }) {
   const c = w.config;
   switch (w.type) {
+    case "section":
+      return (
+        <>
+          <Field label="Layout de la section">
+            <Select value={c.layout ?? "1-1"} onValueChange={(v) => setC("layout", v)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="1">1 colonne (pleine largeur)</SelectItem>
+                <SelectItem value="1-1">2 colonnes égales (1/1)</SelectItem>
+                <SelectItem value="1-1-1">3 colonnes égales (1/1/1)</SelectItem>
+                <SelectItem value="1-1-1-1">4 colonnes égales</SelectItem>
+                <SelectItem value="2-1">2/3 + 1/3</SelectItem>
+                <SelectItem value="1-2">1/3 + 2/3</SelectItem>
+                <SelectItem value="1-1-2">1/4 + 1/4 + 2/4</SelectItem>
+                <SelectItem value="2-1-1">2/4 + 1/4 + 1/4</SelectItem>
+              </SelectContent>
+            </Select>
+          </Field>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Espacement entre colonnes">
+              <Select value={c.gap ?? "md"} onValueChange={(v) => setC("gap", v)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Aucun</SelectItem>
+                  <SelectItem value="sm">Petit</SelectItem>
+                  <SelectItem value="md">Moyen</SelectItem>
+                  <SelectItem value="lg">Grand</SelectItem>
+                  <SelectItem value="xl">Très grand</SelectItem>
+                </SelectContent>
+              </Select>
+            </Field>
+            <Field label="Empiler à partir de">
+              <Select value={c.stack_at ?? "md"} onValueChange={(v) => setC("stack_at", v)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="md">Tablette (≤ 768 px)</SelectItem>
+                  <SelectItem value="lg">Desktop (≤ 1024 px)</SelectItem>
+                </SelectContent>
+              </Select>
+            </Field>
+          </div>
+          <p className="text-[11px] text-muted-foreground border-l-2 border-primary/50 pl-3">
+            Crée des colonnes enfants depuis le bouton « + Ajouter une colonne » dans la liste, puis assigne chaque widget à une colonne via le champ « Parent » de son éditeur.
+          </p>
+        </>
+      );
+    case "column":
+      return (
+        <p className="text-[11px] text-muted-foreground border-l-2 border-primary/50 pl-3">
+          Une colonne n'a pas de réglages propres : elle hérite du layout de sa section parente. Glisse des widgets dedans (ou choisis cette colonne comme « Parent » dans l'éditeur d'un widget).
+        </p>
+      );
     case "hero":
       return (
         <>
