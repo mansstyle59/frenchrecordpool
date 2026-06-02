@@ -53,6 +53,7 @@ import RecentlyPlayed from "@/components/widgets/RecentlyPlayed";
 import EditorialFrame from "@/components/widgets/EditorialFrame";
 import WidgetSkeleton from "@/components/widgets/WidgetSkeleton";
 import WidgetEmptyState from "@/components/widgets/WidgetEmptyState";
+import SectionShell from "@/components/widgets/SectionShell";
 import { useAuth } from "@/contexts/AuthContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import ArtistCredit from "@/components/ArtistCredit";
