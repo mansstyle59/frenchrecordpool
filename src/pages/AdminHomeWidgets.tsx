@@ -806,13 +806,15 @@ export default function AdminHomeWidgets() {
 
 /* ─── Sortable item ─── */
 function SortableItem({
-  widget, onEdit, onRemove, onToggle, onSpanChange,
+  widget, allWidgets, onEdit, onRemove, onToggle, onSpanChange, onMoveToParent,
 }: {
   widget: Widget;
+  allWidgets?: Widget[];
   onEdit: () => void;
   onRemove: () => void;
   onToggle: (v: boolean) => void;
   onSpanChange: (span: 1 | 2 | 3) => void;
+  onMoveToParent?: (parentId: string | null) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: widget.id! });
   const meta = TYPE_META[widget.type];
@@ -835,6 +837,20 @@ function SortableItem({
   // Indicateur visuel : section / colonne / widget enfant
   const isStructure = widget.type === "section" || widget.type === "column";
   const isChild = !!widget.parent_id;
+
+  // Construit la liste des colonnes disponibles avec un label lisible
+  const columnOptions = (() => {
+    if (!allWidgets || isStructure) return [];
+    const sections = allWidgets.filter((x) => x.type === "section");
+    const cols = allWidgets.filter((x) => x.type === "column");
+    return cols.map((c) => {
+      const secIdx = sections.findIndex((s) => s.id === c.parent_id);
+      const sibCols = cols.filter((x) => x.parent_id === c.parent_id);
+      const colIdx = sibCols.findIndex((x) => x.id === c.id) + 1;
+      const secLabel = secIdx >= 0 ? `S${secIdx + 1}` : "S?";
+      return { id: c.id!, label: `${secLabel} › Colonne ${colIdx}` };
+    });
+  })();
 
   return (
     <div
@@ -873,6 +889,22 @@ function SortableItem({
         </div>
         <p className="text-xs text-muted-foreground truncate">{widget.config.title || meta?.desc}</p>
       </div>
+      {!isStructure && onMoveToParent && columnOptions.length > 0 && (
+        <Select
+          value={widget.parent_id ?? "__root__"}
+          onValueChange={(v) => onMoveToParent(v === "__root__" ? null : v)}
+        >
+          <SelectTrigger className="h-7 w-[150px] text-[11px]" title="Déplacer dans une colonne">
+            <SelectValue placeholder="Déplacer…" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__root__" className="text-[11px]">— Racine —</SelectItem>
+            {columnOptions.map((o) => (
+              <SelectItem key={o.id} value={o.id} className="text-[11px]">{o.label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )}
       {!isStructure && (
         <button
           type="button"
@@ -891,6 +923,7 @@ function SortableItem({
     </div>
   );
 }
+
 
 /* ─── Typography editor (shared) ─── */
 const TYPES_WITH_TYPOGRAPHY = new Set([
