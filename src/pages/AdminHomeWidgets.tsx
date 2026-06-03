@@ -365,6 +365,150 @@ export default function AdminHomeWidgets() {
     },
   });
 
+  /* ─── Phase 1.2 : crée une Section + ses Colonnes en une transaction ─── */
+  const createSectionPreset = useMutation({
+    mutationFn: async (layout: "1" | "1-1" | "1-1-1" | "1-1-1-1" | "2-1" | "1-2") => {
+      const colsCount = layout.split("-").length;
+      const basePosition = widgets.length;
+      // 1) Section
+      const { data: section, error: sErr } = await supabase
+        .from("home_widgets")
+        .insert({
+          type: "section",
+          position: basePosition,
+          depth: 0,
+          parent_id: null,
+          is_active: true,
+          config: { layout, gap: "md", stack_at: "md" } as any,
+        })
+        .select()
+        .single();
+      if (sErr) throw sErr;
+      // 2) Colonnes enfants
+      const colRows = Array.from({ length: colsCount }, (_, i) => ({
+        type: "column",
+        position: i,
+        depth: 1,
+        parent_id: section.id,
+        is_active: true,
+        config: {} as any,
+      }));
+      const { error: cErr } = await supabase.from("home_widgets").insert(colRows);
+      if (cErr) throw cErr;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin-home-widgets"] });
+      qc.invalidateQueries({ queryKey: ["admin-home-hierarchy"] });
+      toast.success("Section ajoutée");
+    },
+    onError: (e: any) => toast.error(e?.message || "Erreur"),
+  });
+
+  /* ─── Phase 1.2 : « Déplacer vers » — assigne un widget à une colonne ─── */
+  const moveToParent = useMutation({
+    mutationFn: async ({ id, parent_id }: { id: string; parent_id: string | null }) => {
+      const { error } = await supabase
+        .from("home_widgets")
+        .update({ parent_id, depth: parent_id ? 2 : 0 })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin-home-widgets"] });
+      qc.invalidateQueries({ queryKey: ["admin-home-hierarchy"] });
+      toast.success("Widget déplacé");
+    },
+    onError: (e: any) => toast.error(e?.message || "Erreur"),
+  });
+
+  /* ─── Phase 1.2 : Convertit le flat legacy en sections/colonnes ─── */
+  const convertToSections = useMutation({
+    mutationFn: async () => {
+      // On groupe les widgets racine non-structure par "lignes" basées sur col_span (somme = 1).
+      // col_span: 2 = pleine (1/1), 1 = 1/2, 3 = 1/3.
+      const orphans = widgets
+        .filter((w) => !w.parent_id && w.type !== "section" && w.type !== "column")
+        .sort((a, b) => a.position - b.position);
+      if (orphans.length === 0) {
+        toast.info("Rien à convertir : pas de widget racine");
+        return;
+      }
+      type Row = { layout: string; widgets: typeof orphans };
+      const rows: Row[] = [];
+      let buf: typeof orphans = [];
+      let sum = 0;
+      const fracOf = (w: typeof orphans[number]) => {
+        const cs = (w.config as any)?.col_span;
+        return cs === 1 ? 1 / 2 : cs === 3 ? 1 / 3 : 1;
+      };
+      const layoutFor = (chunk: typeof orphans): string => {
+        if (chunk.length === 1) return "1";
+        if (chunk.length === 2) return "1-1";
+        if (chunk.length === 3) return "1-1-1";
+        return "1-1-1-1";
+      };
+      for (const w of orphans) {
+        const f = fracOf(w);
+        if (sum + f > 1 + 1e-6) {
+          if (buf.length) rows.push({ layout: layoutFor(buf), widgets: buf });
+          buf = [w];
+          sum = f;
+        } else {
+          buf.push(w);
+          sum += f;
+        }
+        if (sum >= 1 - 1e-6) {
+          rows.push({ layout: layoutFor(buf), widgets: buf });
+          buf = [];
+          sum = 0;
+        }
+      }
+      if (buf.length) rows.push({ layout: layoutFor(buf), widgets: buf });
+
+      let pos = widgets.length; // append after existing
+      for (const row of rows) {
+        const { data: section, error: sErr } = await supabase
+          .from("home_widgets")
+          .insert({
+            type: "section", position: pos++, depth: 0, parent_id: null, is_active: true,
+            config: { layout: row.layout, gap: "md", stack_at: "md" } as any,
+          })
+          .select()
+          .single();
+        if (sErr) throw sErr;
+
+        // Colonnes
+        const colsCount = row.layout.split("-").length;
+        const { data: cols, error: cErr } = await supabase
+          .from("home_widgets")
+          .insert(
+            Array.from({ length: colsCount }, (_, i) => ({
+              type: "column", position: i, depth: 1, parent_id: section.id, is_active: true, config: {} as any,
+            }))
+          )
+          .select();
+        if (cErr) throw cErr;
+        const colIds = (cols ?? []).sort((a, b) => a.position - b.position).map((c) => c.id);
+
+        // Réaffecte chaque widget à sa colonne
+        await Promise.all(
+          row.widgets.map((w, i) =>
+            supabase
+              .from("home_widgets")
+              .update({ parent_id: colIds[Math.min(i, colIds.length - 1)], depth: 2, position: i })
+              .eq("id", w.id!)
+          )
+        );
+      }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin-home-widgets"] });
+      qc.invalidateQueries({ queryKey: ["admin-home-hierarchy"] });
+      toast.success("Composition convertie en sections");
+    },
+    onError: (e: any) => toast.error(e?.message || "Erreur de conversion"),
+  });
+
   const publishDraft = useMutation({
     mutationFn: async (items: Widget[]) => {
       await Promise.all(items.map((w) =>
@@ -515,6 +659,60 @@ export default function AdminHomeWidgets() {
         <div className="grid lg:grid-cols-[1fr_1fr] gap-6 min-h-[700px]">
           {/* LEFT: List + add */}
           <div className="space-y-6">
+            {/* ─── Sections : presets de layout 1 clic ─── */}
+            <div className="rounded-2xl border border-primary/30 bg-primary/[0.04] p-4">
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <div>
+                  <Label className="text-xs uppercase tracking-wider text-primary">
+                    <LayoutTemplate className="h-3.5 w-3.5 inline -mt-0.5 mr-1" />
+                    Sections (page builder)
+                  </Label>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">
+                    Crée une rangée multi-colonnes puis assigne tes widgets dedans.
+                  </p>
+                </div>
+                <Button
+                  size="sm" variant="outline"
+                  onClick={() => {
+                    if (confirm("Convertir tous les widgets racine en sections multi-colonnes ? L'ordre et les largeurs (col_span) seront préservés.")) {
+                      convertToSections.mutate();
+                    }
+                  }}
+                  disabled={convertToSections.isPending}
+                >
+                  <Wand2 className="h-3.5 w-3.5 mr-1" />
+                  Convertir l'existant
+                </Button>
+              </div>
+              <div className="mt-3 grid grid-cols-2 md:grid-cols-3 gap-2">
+                {([
+                  { layout: "1", label: "1 colonne", spans: [12] },
+                  { layout: "1-1", label: "2 colonnes", spans: [6, 6] },
+                  { layout: "1-1-1", label: "3 colonnes", spans: [4, 4, 4] },
+                  { layout: "1-1-1-1", label: "4 colonnes", spans: [3, 3, 3, 3] },
+                  { layout: "2-1", label: "2/3 + 1/3", spans: [8, 4] },
+                  { layout: "1-2", label: "1/3 + 2/3", spans: [4, 8] },
+                ] as const).map((p) => (
+                  <button
+                    key={p.layout}
+                    onClick={() => createSectionPreset.mutate(p.layout as any)}
+                    disabled={createSectionPreset.isPending}
+                    className="group flex flex-col items-stretch gap-1.5 p-2.5 rounded-lg border border-border bg-background hover:border-primary hover:bg-primary/5 transition disabled:opacity-50"
+                    title={`Ajouter une section ${p.label}`}
+                  >
+                    <div className="grid grid-cols-12 gap-1 h-6">
+                      {p.spans.map((s, i) => (
+                        <div key={i} className={`col-span-${s} rounded bg-primary/20 group-hover:bg-primary/40 transition`} style={{ gridColumn: `span ${s} / span ${s}` }} />
+                      ))}
+                    </div>
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-foreground/80 group-hover:text-primary text-left">
+                      {p.label}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <div className="rounded-2xl border bg-card p-4">
               <Label className="text-xs uppercase tracking-wider text-muted-foreground">Ajouter un widget</Label>
               <div className="mt-3 space-y-3">
@@ -522,7 +720,7 @@ export default function AdminHomeWidgets() {
                   <div key={group}>
                     <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">{group}</p>
                     <div className="flex flex-wrap gap-2">
-                      {items.map(([key, meta]) => {
+                      {items.filter(([key]) => key !== "section" && key !== "column").map(([key, meta]) => {
                         const Icon = meta.icon;
                         return (
                           <button
@@ -548,7 +746,7 @@ export default function AdminHomeWidgets() {
                 <Label className="text-xs uppercase tracking-wider text-muted-foreground">
                   Composition ({list.length})
                 </Label>
-                <p className="text-[10px] text-muted-foreground">Glisse pour réorganiser · clique sur le badge pour passer en 1 ou 2 colonnes</p>
+                <p className="text-[10px] text-muted-foreground">Glisse pour réorganiser · « Déplacer » assigne à une colonne</p>
               </div>
               {isLoading ? (
                 <p className="text-muted-foreground text-sm">Chargement…</p>
@@ -564,10 +762,12 @@ export default function AdminHomeWidgets() {
                         <SortableItem
                           key={w.id}
                           widget={w}
+                          allWidgets={list}
                           onEdit={() => setEditing(w)}
                           onRemove={() => confirm("Supprimer ce widget ?") && remove.mutate(w.id!)}
                           onToggle={(v) => toggleActiveLocal(w.id!, v)}
                           onSpanChange={(span) => setColSpanLocal(w.id!, span)}
+                          onMoveToParent={(pid) => moveToParent.mutate({ id: w.id!, parent_id: pid })}
                         />
                       ))}
                     </div>
@@ -576,6 +776,7 @@ export default function AdminHomeWidgets() {
               )}
             </div>
           </div>
+
 
           {/* RIGHT: Live preview */}
           <div className="lg:sticky lg:top-24 lg:h-[calc(100vh-180px)]">
@@ -605,13 +806,15 @@ export default function AdminHomeWidgets() {
 
 /* ─── Sortable item ─── */
 function SortableItem({
-  widget, onEdit, onRemove, onToggle, onSpanChange,
+  widget, allWidgets, onEdit, onRemove, onToggle, onSpanChange, onMoveToParent,
 }: {
   widget: Widget;
+  allWidgets?: Widget[];
   onEdit: () => void;
   onRemove: () => void;
   onToggle: (v: boolean) => void;
   onSpanChange: (span: 1 | 2 | 3) => void;
+  onMoveToParent?: (parentId: string | null) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: widget.id! });
   const meta = TYPE_META[widget.type];
@@ -634,6 +837,20 @@ function SortableItem({
   // Indicateur visuel : section / colonne / widget enfant
   const isStructure = widget.type === "section" || widget.type === "column";
   const isChild = !!widget.parent_id;
+
+  // Construit la liste des colonnes disponibles avec un label lisible
+  const columnOptions = (() => {
+    if (!allWidgets || isStructure) return [];
+    const sections = allWidgets.filter((x) => x.type === "section");
+    const cols = allWidgets.filter((x) => x.type === "column");
+    return cols.map((c) => {
+      const secIdx = sections.findIndex((s) => s.id === c.parent_id);
+      const sibCols = cols.filter((x) => x.parent_id === c.parent_id);
+      const colIdx = sibCols.findIndex((x) => x.id === c.id) + 1;
+      const secLabel = secIdx >= 0 ? `S${secIdx + 1}` : "S?";
+      return { id: c.id!, label: `${secLabel} › Colonne ${colIdx}` };
+    });
+  })();
 
   return (
     <div
@@ -672,6 +889,22 @@ function SortableItem({
         </div>
         <p className="text-xs text-muted-foreground truncate">{widget.config.title || meta?.desc}</p>
       </div>
+      {!isStructure && onMoveToParent && columnOptions.length > 0 && (
+        <Select
+          value={widget.parent_id ?? "__root__"}
+          onValueChange={(v) => onMoveToParent(v === "__root__" ? null : v)}
+        >
+          <SelectTrigger className="h-7 w-[150px] text-[11px]" title="Déplacer dans une colonne">
+            <SelectValue placeholder="Déplacer…" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__root__" className="text-[11px]">— Racine —</SelectItem>
+            {columnOptions.map((o) => (
+              <SelectItem key={o.id} value={o.id} className="text-[11px]">{o.label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )}
       {!isStructure && (
         <button
           type="button"
@@ -690,6 +923,7 @@ function SortableItem({
     </div>
   );
 }
+
 
 /* ─── Typography editor (shared) ─── */
 const TYPES_WITH_TYPOGRAPHY = new Set([
