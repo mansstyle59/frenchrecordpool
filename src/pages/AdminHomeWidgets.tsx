@@ -365,6 +365,150 @@ export default function AdminHomeWidgets() {
     },
   });
 
+  /* ─── Phase 1.2 : crée une Section + ses Colonnes en une transaction ─── */
+  const createSectionPreset = useMutation({
+    mutationFn: async (layout: "1" | "1-1" | "1-1-1" | "1-1-1-1" | "2-1" | "1-2") => {
+      const colsCount = layout.split("-").length;
+      const basePosition = widgets.length;
+      // 1) Section
+      const { data: section, error: sErr } = await supabase
+        .from("home_widgets")
+        .insert({
+          type: "section",
+          position: basePosition,
+          depth: 0,
+          parent_id: null,
+          is_active: true,
+          config: { layout, gap: "md", stack_at: "md" } as any,
+        })
+        .select()
+        .single();
+      if (sErr) throw sErr;
+      // 2) Colonnes enfants
+      const colRows = Array.from({ length: colsCount }, (_, i) => ({
+        type: "column",
+        position: i,
+        depth: 1,
+        parent_id: section.id,
+        is_active: true,
+        config: {} as any,
+      }));
+      const { error: cErr } = await supabase.from("home_widgets").insert(colRows);
+      if (cErr) throw cErr;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin-home-widgets"] });
+      qc.invalidateQueries({ queryKey: ["admin-home-hierarchy"] });
+      toast.success("Section ajoutée");
+    },
+    onError: (e: any) => toast.error(e?.message || "Erreur"),
+  });
+
+  /* ─── Phase 1.2 : « Déplacer vers » — assigne un widget à une colonne ─── */
+  const moveToParent = useMutation({
+    mutationFn: async ({ id, parent_id }: { id: string; parent_id: string | null }) => {
+      const { error } = await supabase
+        .from("home_widgets")
+        .update({ parent_id, depth: parent_id ? 2 : 0 })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin-home-widgets"] });
+      qc.invalidateQueries({ queryKey: ["admin-home-hierarchy"] });
+      toast.success("Widget déplacé");
+    },
+    onError: (e: any) => toast.error(e?.message || "Erreur"),
+  });
+
+  /* ─── Phase 1.2 : Convertit le flat legacy en sections/colonnes ─── */
+  const convertToSections = useMutation({
+    mutationFn: async () => {
+      // On groupe les widgets racine non-structure par "lignes" basées sur col_span (somme = 1).
+      // col_span: 2 = pleine (1/1), 1 = 1/2, 3 = 1/3.
+      const orphans = widgets
+        .filter((w) => !w.parent_id && w.type !== "section" && w.type !== "column")
+        .sort((a, b) => a.position - b.position);
+      if (orphans.length === 0) {
+        toast.info("Rien à convertir : pas de widget racine");
+        return;
+      }
+      type Row = { layout: string; widgets: typeof orphans };
+      const rows: Row[] = [];
+      let buf: typeof orphans = [];
+      let sum = 0;
+      const fracOf = (w: typeof orphans[number]) => {
+        const cs = (w.config as any)?.col_span;
+        return cs === 1 ? 1 / 2 : cs === 3 ? 1 / 3 : 1;
+      };
+      const layoutFor = (chunk: typeof orphans): string => {
+        if (chunk.length === 1) return "1";
+        if (chunk.length === 2) return "1-1";
+        if (chunk.length === 3) return "1-1-1";
+        return "1-1-1-1";
+      };
+      for (const w of orphans) {
+        const f = fracOf(w);
+        if (sum + f > 1 + 1e-6) {
+          if (buf.length) rows.push({ layout: layoutFor(buf), widgets: buf });
+          buf = [w];
+          sum = f;
+        } else {
+          buf.push(w);
+          sum += f;
+        }
+        if (sum >= 1 - 1e-6) {
+          rows.push({ layout: layoutFor(buf), widgets: buf });
+          buf = [];
+          sum = 0;
+        }
+      }
+      if (buf.length) rows.push({ layout: layoutFor(buf), widgets: buf });
+
+      let pos = widgets.length; // append after existing
+      for (const row of rows) {
+        const { data: section, error: sErr } = await supabase
+          .from("home_widgets")
+          .insert({
+            type: "section", position: pos++, depth: 0, parent_id: null, is_active: true,
+            config: { layout: row.layout, gap: "md", stack_at: "md" } as any,
+          })
+          .select()
+          .single();
+        if (sErr) throw sErr;
+
+        // Colonnes
+        const colsCount = row.layout.split("-").length;
+        const { data: cols, error: cErr } = await supabase
+          .from("home_widgets")
+          .insert(
+            Array.from({ length: colsCount }, (_, i) => ({
+              type: "column", position: i, depth: 1, parent_id: section.id, is_active: true, config: {} as any,
+            }))
+          )
+          .select();
+        if (cErr) throw cErr;
+        const colIds = (cols ?? []).sort((a, b) => a.position - b.position).map((c) => c.id);
+
+        // Réaffecte chaque widget à sa colonne
+        await Promise.all(
+          row.widgets.map((w, i) =>
+            supabase
+              .from("home_widgets")
+              .update({ parent_id: colIds[Math.min(i, colIds.length - 1)], depth: 2, position: i })
+              .eq("id", w.id!)
+          )
+        );
+      }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin-home-widgets"] });
+      qc.invalidateQueries({ queryKey: ["admin-home-hierarchy"] });
+      toast.success("Composition convertie en sections");
+    },
+    onError: (e: any) => toast.error(e?.message || "Erreur de conversion"),
+  });
+
   const publishDraft = useMutation({
     mutationFn: async (items: Widget[]) => {
       await Promise.all(items.map((w) =>
