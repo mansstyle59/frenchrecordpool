@@ -659,6 +659,60 @@ export default function AdminHomeWidgets() {
         <div className="grid lg:grid-cols-[1fr_1fr] gap-6 min-h-[700px]">
           {/* LEFT: List + add */}
           <div className="space-y-6">
+            {/* ─── Sections : presets de layout 1 clic ─── */}
+            <div className="rounded-2xl border border-primary/30 bg-primary/[0.04] p-4">
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <div>
+                  <Label className="text-xs uppercase tracking-wider text-primary">
+                    <LayoutTemplate className="h-3.5 w-3.5 inline -mt-0.5 mr-1" />
+                    Sections (page builder)
+                  </Label>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">
+                    Crée une rangée multi-colonnes puis assigne tes widgets dedans.
+                  </p>
+                </div>
+                <Button
+                  size="sm" variant="outline"
+                  onClick={() => {
+                    if (confirm("Convertir tous les widgets racine en sections multi-colonnes ? L'ordre et les largeurs (col_span) seront préservés.")) {
+                      convertToSections.mutate();
+                    }
+                  }}
+                  disabled={convertToSections.isPending}
+                >
+                  <Wand2 className="h-3.5 w-3.5 mr-1" />
+                  Convertir l'existant
+                </Button>
+              </div>
+              <div className="mt-3 grid grid-cols-2 md:grid-cols-3 gap-2">
+                {([
+                  { layout: "1", label: "1 colonne", spans: [12] },
+                  { layout: "1-1", label: "2 colonnes", spans: [6, 6] },
+                  { layout: "1-1-1", label: "3 colonnes", spans: [4, 4, 4] },
+                  { layout: "1-1-1-1", label: "4 colonnes", spans: [3, 3, 3, 3] },
+                  { layout: "2-1", label: "2/3 + 1/3", spans: [8, 4] },
+                  { layout: "1-2", label: "1/3 + 2/3", spans: [4, 8] },
+                ] as const).map((p) => (
+                  <button
+                    key={p.layout}
+                    onClick={() => createSectionPreset.mutate(p.layout as any)}
+                    disabled={createSectionPreset.isPending}
+                    className="group flex flex-col items-stretch gap-1.5 p-2.5 rounded-lg border border-border bg-background hover:border-primary hover:bg-primary/5 transition disabled:opacity-50"
+                    title={`Ajouter une section ${p.label}`}
+                  >
+                    <div className="grid grid-cols-12 gap-1 h-6">
+                      {p.spans.map((s, i) => (
+                        <div key={i} className={`col-span-${s} rounded bg-primary/20 group-hover:bg-primary/40 transition`} style={{ gridColumn: `span ${s} / span ${s}` }} />
+                      ))}
+                    </div>
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-foreground/80 group-hover:text-primary text-left">
+                      {p.label}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <div className="rounded-2xl border bg-card p-4">
               <Label className="text-xs uppercase tracking-wider text-muted-foreground">Ajouter un widget</Label>
               <div className="mt-3 space-y-3">
@@ -666,7 +720,7 @@ export default function AdminHomeWidgets() {
                   <div key={group}>
                     <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">{group}</p>
                     <div className="flex flex-wrap gap-2">
-                      {items.map(([key, meta]) => {
+                      {items.filter(([key]) => key !== "section" && key !== "column").map(([key, meta]) => {
                         const Icon = meta.icon;
                         return (
                           <button
@@ -692,7 +746,7 @@ export default function AdminHomeWidgets() {
                 <Label className="text-xs uppercase tracking-wider text-muted-foreground">
                   Composition ({list.length})
                 </Label>
-                <p className="text-[10px] text-muted-foreground">Glisse pour réorganiser · clique sur le badge pour passer en 1 ou 2 colonnes</p>
+                <p className="text-[10px] text-muted-foreground">Glisse pour réorganiser · « Déplacer » assigne à une colonne</p>
               </div>
               {isLoading ? (
                 <p className="text-muted-foreground text-sm">Chargement…</p>
@@ -708,10 +762,12 @@ export default function AdminHomeWidgets() {
                         <SortableItem
                           key={w.id}
                           widget={w}
+                          allWidgets={list}
                           onEdit={() => setEditing(w)}
                           onRemove={() => confirm("Supprimer ce widget ?") && remove.mutate(w.id!)}
                           onToggle={(v) => toggleActiveLocal(w.id!, v)}
                           onSpanChange={(span) => setColSpanLocal(w.id!, span)}
+                          onMoveToParent={(pid) => moveToParent.mutate({ id: w.id!, parent_id: pid })}
                         />
                       ))}
                     </div>
@@ -720,6 +776,7 @@ export default function AdminHomeWidgets() {
               )}
             </div>
           </div>
+
 
           {/* RIGHT: Live preview */}
           <div className="lg:sticky lg:top-24 lg:h-[calc(100vh-180px)]">
