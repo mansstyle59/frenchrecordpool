@@ -793,6 +793,7 @@ export default function AdminHomeWidgets() {
                         />
                       ))}
                     </div>
+                    <RootDropZone />
                   </SortableContext>
                 </DndContext>
               )}
