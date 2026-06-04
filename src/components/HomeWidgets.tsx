@@ -119,32 +119,40 @@ export default function HomeWidgets({ widgets: propWidgets, preview = false }: P
     return () => { cancelled = true; };
   }, [propWidgets]);
 
-  const visible = useMemo(
-    () =>
-      widgets.filter((w) =>
-        matchesTargeting(w, {
-          isMobile,
-          isLogged: !!user,
-          hasSub: hasActiveSubscription,
-          preview,
-        })
-      ),
-    [widgets, isMobile, user, hasActiveSubscription, preview]
-  );
+  // Visibilité ancêtre-aware : un widget n'est visible que si lui ET tous
+  // ses ancêtres (colonne, section) passent le ciblage. Ainsi désactiver
+  // une section masque automatiquement ses colonnes/widgets enfants.
+  const visible = useMemo(() => {
+    const all = widgets;
+    const byIdAll = new Map<string, Widget>();
+    for (const w of all) byIdAll.set(w.id, w);
+    const ctx = {
+      isMobile,
+      isLogged: !!user,
+      hasSub: hasActiveSubscription,
+      preview,
+    };
+    const cache = new Map<string, boolean>();
+    const passes = (w: Widget): boolean => {
+      if (cache.has(w.id)) return cache.get(w.id)!;
+      if (!w.is_active) { cache.set(w.id, false); return false; }
+      if (!matchesTargeting(w, ctx)) { cache.set(w.id, false); return false; }
+      if (w.parent_id) {
+        const parent = byIdAll.get(w.parent_id);
+        if (!parent) { cache.set(w.id, false); return false; }
+        const ok = passes(parent);
+        cache.set(w.id, ok);
+        return ok;
+      }
+      cache.set(w.id, true);
+      return true;
+    };
+    return all.filter(passes);
+  }, [widgets, isMobile, user, hasActiveSubscription, preview]);
 
   if (visible.length === 0) return null;
 
-  /* ─── Tree-aware rendering : Section → Colonne → Widget ───
-     - Si un widget racine est de type "section", il rend ses colonnes
-       enfants en grid (via SectionShell), et chaque colonne empile ses
-       widgets enfants verticalement.
-     - Les widgets racine "classiques" (parent_id = null, type ≠ section)
-       restent compatibles à 100 % : on conserve l'ancien groupement par
-       col_span pour ne rien casser sur les homepages existantes.        */
-
-  // Index par id pour lookup rapide
-  const byId = new Map<string, Widget>();
-  for (const w of visible) byId.set(w.id, w);
+  /* ─── Tree-aware rendering : Section → Colonne → Widget ─── */
 
   // Enfants par parent (triés par position)
   const childrenOf = new Map<string | null, Widget[]>();
@@ -158,42 +166,79 @@ export default function HomeWidgets({ widgets: propWidgets, preview = false }: P
     arr.sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
   }
 
-  const roots = (childrenOf.get(null) ?? []).filter((w) => {
-    // Une colonne orpheline ne se rend pas seule
-    return w.type !== "column";
-  });
+  // Racines = parent_id null, hors colonnes orphelines
+  const roots = (childrenOf.get(null) ?? []).filter((w) => w.type !== "column");
 
-  // Helper : rend un noeud (section, widget standard ou colonne)
-  const renderNode = (w: Widget): React.ReactNode => {
-    if (w.type === "section") {
-      const cfg = (w.config ?? {}) as any;
-      const columns = (childrenOf.get(w.id) ?? []).filter((c) => c.type === "column");
-      const renderedCols = columns.map((col) => {
-        const colChildren = (childrenOf.get(col.id) ?? []).filter((c) => c.type !== "column");
-        return (
-          <React.Fragment key={col.id}>
-            {colChildren.map((child) => (
-              <WidgetWrapper key={child.id} widget={child} preview={preview} />
-            ))}
-          </React.Fragment>
-        );
-      });
+  // Rend les widgets enfants d'une colonne (ou directs d'une section).
+  const renderLeafChildren = (parent: Widget): React.ReactNode[] => {
+    const kids = (childrenOf.get(parent.id) ?? []).filter(
+      (c) => c.type !== "column" && c.type !== "section"
+    );
+    return kids.map((child) => (
+      <WidgetWrapper key={child.id} widget={child} preview={preview} />
+    ));
+  };
+
+  const renderSection = (section: Widget): React.ReactNode => {
+    const cfg = (section.config ?? {}) as any;
+    const layout: SectionLayout = (cfg.layout ?? "1") as SectionLayout;
+    const stackAt: "md" | "lg" = cfg.stack_at ?? "md";
+    const { spans } = gridClassesForLayout(layout, stackAt);
+
+    const cols = (childrenOf.get(section.id) ?? []).filter((c) => c.type === "column");
+    const orphanChildren = (childrenOf.get(section.id) ?? []).filter(
+      (c) => c.type !== "column" && c.type !== "section"
+    );
+
+    const renderedCols: React.ReactNode[] = cols.map((col, idx) => {
+      const colCfg = (col.config ?? {}) as any;
+      const spanOverride: number | undefined = colCfg.span;
+      const baseSpan = spans[idx] ?? spans[spans.length - 1] ?? "col-span-1";
+      const spanClass =
+        spanOverride && spanOverride >= 1 && spanOverride <= 4
+          ? `col-span-1 ${stackAt}:col-span-${spanOverride}`
+          : baseSpan;
+      const children = renderLeafChildren(col);
+      if (children.length === 0) return null;
       return (
-        <SectionShell key={w.id} config={cfg} columns={renderedCols} preview={preview} />
+        <ColumnShell key={col.id} config={colCfg} spanClass={spanClass} preview={preview}>
+          {children}
+        </ColumnShell>
+      );
+    });
+
+    // Fallback : widgets posés directement dans la section (sans colonne) →
+    // empilés dans une colonne implicite pleine largeur en fin de grille.
+    if (orphanChildren.length > 0) {
+      const fallbackSpan = `col-span-1 ${stackAt}:col-span-full`;
+      renderedCols.push(
+        <ColumnShell
+          key={`${section.id}-implicit`}
+          config={{}}
+          spanClass={fallbackSpan}
+          preview={preview}
+        >
+          {orphanChildren.map((c) => (
+            <WidgetWrapper key={c.id} widget={c} preview={preview} />
+          ))}
+        </ColumnShell>
       );
     }
-    // Widget orphelin racine : ancien rendu
-    return <WidgetWrapper key={w.id} widget={w} preview={preview} />;
+
+    return (
+      <SectionShell key={section.id} config={cfg} columns={renderedCols} preview={preview} />
+    );
   };
 
   // Pour les racines non-section, conserver le legacy col_span grouping.
   type Row =
+    | { kind: "section"; w: Widget }
     | { kind: "node"; w: Widget }
     | { kind: "group"; span: 1 | 3; items: Widget[] };
   const rows: Row[] = [];
   for (const w of roots) {
     if (w.type === "section") {
-      rows.push({ kind: "node", w });
+      rows.push({ kind: "section", w });
       continue;
     }
     const raw = (w.config as any)?.col_span;
@@ -213,10 +258,12 @@ export default function HomeWidgets({ widgets: propWidgets, preview = false }: P
 
   return (
     <div className={preview ? "space-y-4" : "space-y-4 md:space-y-6"}>
-      {rows.map((row, i) =>
-        row.kind === "node" ? (
-          renderNode(row.w)
-        ) : (
+      {rows.map((row, i) => {
+        if (row.kind === "section") return renderSection(row.w);
+        if (row.kind === "node") {
+          return <WidgetWrapper key={row.w.id} widget={row.w} preview={preview} />;
+        }
+        return (
           <div
             key={`grp-${i}`}
             className={`grid gap-4 md:gap-6 grid-cols-1 ${
@@ -227,11 +274,12 @@ export default function HomeWidgets({ widgets: propWidgets, preview = false }: P
               <WidgetWrapper key={w.id} widget={w} preview={preview} />
             ))}
           </div>
-        )
-      )}
+        );
+      })}
     </div>
   );
 }
+
 
 /* ─── Shared shell : container + bg + entrance animation ─── */
 function WidgetWrapper({ widget, preview }: { widget: Widget; preview: boolean }) {
