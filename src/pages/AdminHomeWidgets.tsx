@@ -768,7 +768,7 @@ export default function AdminHomeWidgets() {
                 <Label className="text-xs uppercase tracking-wider text-muted-foreground">
                   Composition ({list.length})
                 </Label>
-                <p className="text-[10px] text-muted-foreground">Glisse pour réorganiser · « Déplacer » assigne à une colonne</p>
+                <p className="text-[10px] text-muted-foreground">Glisse un widget sur une colonne pour l'y déposer · ou sur la zone « Racine » pour l'en sortir</p>
               </div>
               {isLoading ? (
                 <p className="text-muted-foreground text-sm">Chargement…</p>
