@@ -2368,7 +2368,7 @@ function RootDropZone() {
   return (
     <div
       ref={setNodeRef}
-      className={`col-span-6 mt-3 rounded-xl border border-dashed py-4 text-center text-[11px] uppercase tracking-wider transition ${
+      className={`mt-3 rounded-xl border border-dashed py-4 text-center text-[11px] uppercase tracking-wider transition ${
         isOver ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground"
       }`}
     >
