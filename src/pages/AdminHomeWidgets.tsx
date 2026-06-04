@@ -302,6 +302,20 @@ const TYPE_META: Record<string, { label: string; icon: any; desc: string; defaul
 };
 
 /* ─── Presets : ready-to-use widget recipes ─── */
+function RootDropZone() {
+  const { setNodeRef, isOver } = useDroppable({ id: "drop-root" });
+  return (
+    <div
+      ref={setNodeRef}
+      className={`mt-3 rounded-xl border border-dashed py-4 text-center text-[11px] uppercase tracking-wider transition ${
+        isOver ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground"
+      }`}
+    >
+      Déposer ici pour sortir le widget de sa colonne
+    </div>
+  );
+}
+
 const PRESETS: { id: string; label: string; desc: string; types: string[] }[] = [
   { id: "landing-classic", label: "Landing classique", desc: "Hero + stats + features + plans + FAQ + CTA", types: ["hero", "stats", "features_grid", "plans_compare", "faq", "cta"] },
   { id: "dj-home", label: "Home DJ", desc: "Hero + nouveautés + top + artistes + newsletter", types: ["hero", "new_releases", "top_downloads", "artist_carousel", "newsletter"] },
@@ -2362,17 +2376,3 @@ function TargetingEditor({
 
 
 
-/* ─── Phase 1.3 : zone de dépôt « Racine » (sortir un widget d'une colonne) ─── */
-function RootDropZone() {
-  const { setNodeRef, isOver } = useDroppable({ id: "drop-root" });
-  return (
-    <div
-      ref={setNodeRef}
-      className={`mt-3 rounded-xl border border-dashed py-4 text-center text-[11px] uppercase tracking-wider transition ${
-        isOver ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground"
-      }`}
-    >
-      Déposer ici pour sortir le widget de sa colonne
-    </div>
-  );
-}
