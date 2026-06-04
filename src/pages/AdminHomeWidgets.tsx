@@ -874,12 +874,19 @@ function SortableItem({
     });
   })();
 
+  // Phase 1.3 — zone de dépôt sur les colonnes pour drop-into-column
+  const { setNodeRef: setDropRef, isOver: isOverCol } = useDroppable({
+    id: widget.type === "column" ? `drop-col:${widget.id}` : `noop:${widget.id}`,
+    disabled: widget.type !== "column",
+  });
+
   return (
     <div
-      ref={setNodeRef} style={style}
+      ref={(node) => { setNodeRef(node); if (widget.type === "column") setDropRef(node); }}
+      style={style}
       className={`flex items-center gap-3 rounded-xl border bg-card p-3 transition ${isDragging ? "opacity-50 ring-2 ring-primary" : "hover:border-primary/40"} ${
         widget.type === "section" ? "border-primary/40 bg-primary/[0.03]" :
-        widget.type === "column" ? "border-accent/40 bg-accent/[0.03] ml-4" :
+        widget.type === "column" ? `border-accent/40 bg-accent/[0.03] ml-4 ${isOverCol ? "ring-2 ring-accent bg-accent/10" : ""}` :
         isChild ? "ml-8" : ""
       }`}
     >
