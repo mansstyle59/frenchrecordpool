@@ -534,6 +534,27 @@ export default function AdminHomeWidgets() {
   const onDragEnd = (e: DragEndEvent) => {
     const { active, over } = e;
     if (!over || active.id === over.id) return;
+
+    const activeWidget = list.find((w) => w.id === active.id);
+    const overId = String(over.id);
+
+    // Phase 1.3 — drop direct dans une colonne ou à la racine
+    if (activeWidget && activeWidget.type !== "section" && activeWidget.type !== "column") {
+      if (overId.startsWith("drop-col:")) {
+        const colId = overId.slice("drop-col:".length);
+        if (activeWidget.parent_id !== colId) {
+          moveToParent.mutate({ id: activeWidget.id!, parent_id: colId });
+        }
+        return;
+      }
+      if (overId === "drop-root") {
+        if (activeWidget.parent_id != null) {
+          moveToParent.mutate({ id: activeWidget.id!, parent_id: null });
+        }
+        return;
+      }
+    }
+
     const oldIdx = list.findIndex((w) => w.id === active.id);
     const newIdx = list.findIndex((w) => w.id === over.id);
     if (oldIdx < 0 || newIdx < 0) return;
