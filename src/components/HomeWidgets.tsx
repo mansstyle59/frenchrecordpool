@@ -194,9 +194,19 @@ export default function HomeWidgets({ widgets: propWidgets, preview = false }: P
       const colCfg = (col.config ?? {}) as any;
       const spanOverride: number | undefined = colCfg.span;
       const baseSpan = spans[idx] ?? spans[spans.length - 1] ?? "col-span-1";
+      const overrideMap: Record<string, string> = {
+        "md-1": "col-span-1 md:col-span-1",
+        "md-2": "col-span-1 md:col-span-2",
+        "md-3": "col-span-1 md:col-span-3",
+        "md-4": "col-span-1 md:col-span-4",
+        "lg-1": "col-span-1 lg:col-span-1",
+        "lg-2": "col-span-1 lg:col-span-2",
+        "lg-3": "col-span-1 lg:col-span-3",
+        "lg-4": "col-span-1 lg:col-span-4",
+      };
       const spanClass =
         spanOverride && spanOverride >= 1 && spanOverride <= 4
-          ? `col-span-1 ${stackAt}:col-span-${spanOverride}`
+          ? overrideMap[`${stackAt}-${spanOverride}`] ?? baseSpan
           : baseSpan;
       const children = renderLeafChildren(col);
       if (children.length === 0) return null;
@@ -210,7 +220,7 @@ export default function HomeWidgets({ widgets: propWidgets, preview = false }: P
     // Fallback : widgets posés directement dans la section (sans colonne) →
     // empilés dans une colonne implicite pleine largeur en fin de grille.
     if (orphanChildren.length > 0) {
-      const fallbackSpan = `col-span-1 ${stackAt}:col-span-full`;
+      const fallbackSpan = stackAt === "lg" ? "col-span-1 lg:col-span-full" : "col-span-1 md:col-span-full";
       renderedCols.push(
         <ColumnShell
           key={`${section.id}-implicit`}
