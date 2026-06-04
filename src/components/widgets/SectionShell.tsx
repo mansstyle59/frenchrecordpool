@@ -66,7 +66,11 @@ export function gridClassesForLayout(layout: SectionLayout, stackAt: "md" | "lg"
 
 interface SectionShellProps {
   config: SectionConfig;
-  /** Une entrée = le contenu d'une colonne (déjà rendu en JSX, empilé). */
+  /**
+   * Colonnes déjà rendues (idéalement via <ColumnShell />) — leur classe
+   * `col-span-*` est fournie par l'appelant pour respecter d'éventuels
+   * overrides de span. Si une entrée est `null`/`undefined`, le slot est ignoré.
+   */
   columns: ReactNode[];
   preview?: boolean;
 }
@@ -81,7 +85,7 @@ export default function SectionShell({ config, columns, preview = false }: Secti
   const layout = config.layout ?? "1";
   const gap = config.gap ?? "md";
   const stackAt = config.stack_at ?? "md";
-  const { cols, spans } = gridClassesForLayout(layout, stackAt);
+  const { cols } = gridClassesForLayout(layout, stackAt);
 
   const containerKey = (common.container ?? "default") as keyof typeof CONTAINER_CLASS;
   const padY = padYClasses(common);
@@ -91,10 +95,9 @@ export default function SectionShell({ config, columns, preview = false }: Secti
   const animKey = common.anim ?? "fade";
   const variants = ANIM_VARIANTS[animKey] || ANIM_VARIANTS.fade;
 
-  // S'assure d'avoir autant de slots que de colonnes attendues
-  const expected = spans.length;
-  const padded: ReactNode[] = [];
-  for (let i = 0; i < expected; i++) padded.push(columns[i] ?? null);
+  // Filtre les slots vides (colonnes invisibles ou sans contenu)
+  const renderable = columns.filter((c) => c !== null && c !== undefined && c !== false);
+  if (renderable.length === 0) return null;
 
   return (
     <motion.section
@@ -123,13 +126,10 @@ export default function SectionShell({ config, columns, preview = false }: Secti
         style={containerStyle(common)}
       >
         <div className={`grid ${cols} ${GAP_CLASS[gap]}`}>
-          {padded.map((col, i) => (
-            <div key={i} className={`${spans[i]} flex flex-col gap-4 md:gap-6 min-w-0`}>
-              {col}
-            </div>
-          ))}
+          {renderable}
         </div>
       </div>
     </motion.section>
   );
 }
+
