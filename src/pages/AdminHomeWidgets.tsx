@@ -27,6 +27,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import {
   DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors,
+  useDroppable,
   type DragEndEvent,
 } from "@dnd-kit/core";
 import {
@@ -533,6 +534,27 @@ export default function AdminHomeWidgets() {
   const onDragEnd = (e: DragEndEvent) => {
     const { active, over } = e;
     if (!over || active.id === over.id) return;
+
+    const activeWidget = list.find((w) => w.id === active.id);
+    const overId = String(over.id);
+
+    // Phase 1.3 — drop direct dans une colonne ou à la racine
+    if (activeWidget && activeWidget.type !== "section" && activeWidget.type !== "column") {
+      if (overId.startsWith("drop-col:")) {
+        const colId = overId.slice("drop-col:".length);
+        if (activeWidget.parent_id !== colId) {
+          moveToParent.mutate({ id: activeWidget.id!, parent_id: colId });
+        }
+        return;
+      }
+      if (overId === "drop-root") {
+        if (activeWidget.parent_id != null) {
+          moveToParent.mutate({ id: activeWidget.id!, parent_id: null });
+        }
+        return;
+      }
+    }
+
     const oldIdx = list.findIndex((w) => w.id === active.id);
     const newIdx = list.findIndex((w) => w.id === over.id);
     if (oldIdx < 0 || newIdx < 0) return;
@@ -746,7 +768,7 @@ export default function AdminHomeWidgets() {
                 <Label className="text-xs uppercase tracking-wider text-muted-foreground">
                   Composition ({list.length})
                 </Label>
-                <p className="text-[10px] text-muted-foreground">Glisse pour réorganiser · « Déplacer » assigne à une colonne</p>
+                <p className="text-[10px] text-muted-foreground">Glisse un widget sur une colonne pour l'y déposer · ou sur la zone « Racine » pour l'en sortir</p>
               </div>
               {isLoading ? (
                 <p className="text-muted-foreground text-sm">Chargement…</p>
@@ -771,6 +793,7 @@ export default function AdminHomeWidgets() {
                         />
                       ))}
                     </div>
+                    <RootDropZone />
                   </SortableContext>
                 </DndContext>
               )}
@@ -852,12 +875,19 @@ function SortableItem({
     });
   })();
 
+  // Phase 1.3 — zone de dépôt sur les colonnes pour drop-into-column
+  const { setNodeRef: setDropRef, isOver: isOverCol } = useDroppable({
+    id: widget.type === "column" ? `drop-col:${widget.id}` : `noop:${widget.id}`,
+    disabled: widget.type !== "column",
+  });
+
   return (
     <div
-      ref={setNodeRef} style={style}
+      ref={(node) => { setNodeRef(node); if (widget.type === "column") setDropRef(node); }}
+      style={style}
       className={`flex items-center gap-3 rounded-xl border bg-card p-3 transition ${isDragging ? "opacity-50 ring-2 ring-primary" : "hover:border-primary/40"} ${
         widget.type === "section" ? "border-primary/40 bg-primary/[0.03]" :
-        widget.type === "column" ? "border-accent/40 bg-accent/[0.03] ml-4" :
+        widget.type === "column" ? `border-accent/40 bg-accent/[0.03] ml-4 ${isOverCol ? "ring-2 ring-accent bg-accent/10" : ""}` :
         isChild ? "ml-8" : ""
       }`}
     >
@@ -2331,3 +2361,18 @@ function TargetingEditor({
 }
 
 
+
+/* ─── Phase 1.3 : zone de dépôt « Racine » (sortir un widget d'une colonne) ─── */
+function RootDropZone() {
+  const { setNodeRef, isOver } = useDroppable({ id: "drop-root" });
+  return (
+    <div
+      ref={setNodeRef}
+      className={`mt-3 rounded-xl border border-dashed py-4 text-center text-[11px] uppercase tracking-wider transition ${
+        isOver ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground"
+      }`}
+    >
+      Déposer ici pour sortir le widget de sa colonne
+    </div>
+  );
+}
