@@ -3,10 +3,10 @@ import { History, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useRecentlyPlayed } from "@/hooks/useRecentlyPlayed";
 import TrackRow, { TrackListHeader } from "@/components/TrackRow";
-import { Button } from "@/components/ui/button";
 import WidgetHeader from "./WidgetHeader";
 import WidgetSkeleton from "./WidgetSkeleton";
 import WidgetEmptyState from "./WidgetEmptyState";
+import { HeaderActions, ActionPill } from "./WidgetHeaderActions";
 
 export default function RecentlyPlayed({ config }: { config: any }) {
   const { ids, clear } = useRecentlyPlayed();
@@ -49,16 +49,13 @@ export default function RecentlyPlayed({ config }: { config: any }) {
         subtitle={config.subtitle}
         typo={config.typo}
         right={
-          ids.length > 0 && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={clear}
-              className="text-muted-foreground hover:text-destructive"
-            >
-              <Trash2 className="h-3.5 w-3.5 mr-1" /> Effacer
-            </Button>
-          )
+          ids.length > 0 ? (
+            <HeaderActions>
+              <ActionPill icon={Trash2} tone="danger" onClick={clear} ariaLabel="Effacer l'historique">
+                Effacer
+              </ActionPill>
+            </HeaderActions>
+          ) : undefined
         }
       />
       {loading ? (
