@@ -1,10 +1,8 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import { TrendingUp, ArrowRight } from "lucide-react";
+import { TrendingUp } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
 import TrackRow, { TrackListHeader } from "@/components/TrackRow";
-import { titleStyle, bodyStyle } from "@/lib/widgetTypography";
+import WidgetHeader from "./WidgetHeader";
 import WidgetSkeleton from "./WidgetSkeleton";
 import WidgetEmptyState from "./WidgetEmptyState";
 import EditorialFrame from "./EditorialFrame";
