@@ -47,26 +47,14 @@ export default function TopDownloadsPeriod({ config }: { config: any }) {
 
   return (
     <EditorialFrame wordmark="TOP DL" kicker="TÉLÉCHARGEMENTS">
-      <div className="flex items-end justify-between mb-4 gap-4 flex-wrap">
-        <div className="flex items-start gap-3 min-w-0">
-          <div className="w-1 h-9 rounded-full bg-gradient-to-b from-primary to-accent shrink-0 mt-0.5" />
-          <div className="min-w-0">
-            <h2
-              className="font-display text-2xl md:text-3xl font-bold flex items-center gap-2 truncate"
-              style={titleStyle(config.typo)}
-            >
-              <TrendingUp className="h-5 w-5 text-primary shrink-0" />
-              {config.title || "Top téléchargements"}
-            </h2>
-            {config.subtitle && (
-              <p className="text-sm text-muted-foreground mt-1 max-w-2xl" style={bodyStyle(config.typo)}>
-                {config.subtitle}
-              </p>
-            )}
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2">
+      <WidgetHeader
+        icon={TrendingUp}
+        eyebrow="Tendances"
+        title={config.title || "Top téléchargements"}
+        subtitle={config.subtitle}
+        seeAllUrl={config.see_all_url}
+        typo={config.typo}
+        right={
           <div className="inline-flex rounded-full border border-border bg-card/60 p-0.5">
             {PERIODS.map((p) => (
               <button
@@ -83,15 +71,8 @@ export default function TopDownloadsPeriod({ config }: { config: any }) {
               </button>
             ))}
           </div>
-          {config.see_all_url && (
-            <Button asChild variant="ghost" size="sm">
-              <Link to={config.see_all_url}>
-                Tout voir <ArrowRight className="ml-1 h-3.5 w-3.5" />
-              </Link>
-            </Button>
-          )}
-        </div>
-      </div>
+        }
+      />
 
       {loading ? (
         <WidgetSkeleton variant="list" count={Math.min(limit, 6)} />
