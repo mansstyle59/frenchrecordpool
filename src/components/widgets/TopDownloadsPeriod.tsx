@@ -6,6 +6,7 @@ import WidgetHeader from "./WidgetHeader";
 import WidgetSkeleton from "./WidgetSkeleton";
 import WidgetEmptyState from "./WidgetEmptyState";
 import EditorialFrame from "./EditorialFrame";
+import { HeaderActions, Segmented } from "./WidgetHeaderActions";
 
 type Period = "7d" | "30d" | "all";
 const PERIODS: { id: Period; label: string; days: number | null }[] = [
@@ -55,22 +56,14 @@ export default function TopDownloadsPeriod({ config }: { config: any }) {
         seeAllUrl={config.see_all_url}
         typo={config.typo}
         right={
-          <div className="inline-flex rounded-full border border-border bg-card/60 p-0.5">
-            {PERIODS.map((p) => (
-              <button
-                key={p.id}
-                onClick={() => setPeriod(p.id)}
-                className={`px-3 h-7 text-[11px] font-bold uppercase tracking-wider rounded-full transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
-                  period === p.id
-                    ? "bg-primary text-primary-foreground shadow"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-                aria-pressed={period === p.id}
-              >
-                {p.label}
-              </button>
-            ))}
-          </div>
+          <HeaderActions>
+            <Segmented<Period>
+              ariaLabel="Période"
+              value={period}
+              onChange={setPeriod}
+              options={PERIODS.map((p) => ({ id: p.id, label: p.label }))}
+            />
+          </HeaderActions>
         }
       />
 

@@ -7,6 +7,7 @@ import HCarousel from "./HCarousel";
 import WidgetHeader from "./WidgetHeader";
 import WidgetSkeleton from "./WidgetSkeleton";
 import WidgetEmptyState from "./WidgetEmptyState";
+import { HeaderActions, Segmented } from "./WidgetHeaderActions";
 
 type Period = "7d" | "30d" | "all";
 const DAYS: Record<Period, number | null> = { "7d": 7, "30d": 30, all: null };
@@ -46,22 +47,18 @@ export default function TrendingArtists({ config }: { config: any }) {
         seeAllUrl={config.see_all_url}
         typo={config.typo}
         right={
-          <div className="inline-flex rounded-full border border-border bg-card/60 p-0.5">
-            {(["7d", "30d", "all"] as Period[]).map((p) => (
-              <button
-                key={p}
-                onClick={() => setPeriod(p)}
-                className={`px-3 h-7 text-[11px] font-bold uppercase tracking-wider rounded-full transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
-                  period === p
-                    ? "bg-primary text-primary-foreground shadow"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-                aria-pressed={period === p}
-              >
-                {p === "all" ? "Tout" : p === "7d" ? "7 j" : "30 j"}
-              </button>
-            ))}
-          </div>
+          <HeaderActions>
+            <Segmented<Period>
+              ariaLabel="Période"
+              value={period}
+              onChange={setPeriod}
+              options={[
+                { id: "7d", label: "7 j" },
+                { id: "30d", label: "30 j" },
+                { id: "all", label: "Tout" },
+              ]}
+            />
+          </HeaderActions>
         }
       />
 

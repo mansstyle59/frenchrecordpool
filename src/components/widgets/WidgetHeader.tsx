@@ -70,14 +70,14 @@ export default function WidgetHeader({
             )}
           </div>
         </div>
-        <div className="flex items-center gap-2 flex-wrap shrink-0">
+        <div className="flex items-center gap-2 flex-wrap shrink-0 min-h-8">
           {right}
           {seeAllUrl && !preview && (
             <Button
               asChild
               variant="ghost"
               size="sm"
-              className="group/cta font-mono text-[11px] uppercase tracking-[0.2em] text-foreground hover:text-accent hover:bg-transparent"
+              className="group/cta h-8 px-3 font-mono text-[11px] uppercase tracking-[0.2em] text-foreground hover:text-accent hover:bg-transparent"
             >
               <Link to={seeAllUrl}>
                 {seeAllLabel}
