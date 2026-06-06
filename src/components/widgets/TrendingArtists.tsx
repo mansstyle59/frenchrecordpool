@@ -3,8 +3,8 @@ import { Link } from "react-router-dom";
 import { Flame } from "lucide-react";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
-import { titleStyle, bodyStyle } from "@/lib/widgetTypography";
 import HCarousel from "./HCarousel";
+import WidgetHeader from "./WidgetHeader";
 import WidgetSkeleton from "./WidgetSkeleton";
 import WidgetEmptyState from "./WidgetEmptyState";
 
@@ -38,41 +38,32 @@ export default function TrendingArtists({ config }: { config: any }) {
 
   return (
     <div>
-      <div className="flex items-end justify-between mb-4 gap-4 flex-wrap">
-        <div className="flex items-start gap-3 min-w-0">
-          <div className="w-1 h-9 rounded-full bg-gradient-to-b from-accent to-primary shrink-0 mt-0.5" />
-          <div className="min-w-0">
-            <h2
-              className="font-display text-2xl md:text-3xl font-bold flex items-center gap-2"
-              style={titleStyle(config.typo)}
-            >
-              <Flame className="h-5 w-5 text-accent" />
-              {config.title || "Artistes en hausse"}
-            </h2>
-            {config.subtitle && (
-              <p className="text-sm text-muted-foreground mt-1 max-w-2xl" style={bodyStyle(config.typo)}>
-                {config.subtitle}
-              </p>
-            )}
+      <WidgetHeader
+        icon={Flame}
+        eyebrow="Momentum"
+        title={config.title || "Artistes en hausse"}
+        subtitle={config.subtitle}
+        seeAllUrl={config.see_all_url}
+        typo={config.typo}
+        right={
+          <div className="inline-flex rounded-full border border-border bg-card/60 p-0.5">
+            {(["7d", "30d", "all"] as Period[]).map((p) => (
+              <button
+                key={p}
+                onClick={() => setPeriod(p)}
+                className={`px-3 h-7 text-[11px] font-bold uppercase tracking-wider rounded-full transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+                  period === p
+                    ? "bg-primary text-primary-foreground shadow"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+                aria-pressed={period === p}
+              >
+                {p === "all" ? "Tout" : p === "7d" ? "7 j" : "30 j"}
+              </button>
+            ))}
           </div>
-        </div>
-        <div className="inline-flex rounded-full border border-border bg-card/60 p-0.5">
-          {(["7d", "30d", "all"] as Period[]).map((p) => (
-            <button
-              key={p}
-              onClick={() => setPeriod(p)}
-              className={`px-3 h-7 text-[11px] font-bold uppercase tracking-wider rounded-full transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
-                period === p
-                  ? "bg-primary text-primary-foreground shadow"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-              aria-pressed={period === p}
-            >
-              {p === "all" ? "Tout" : p === "7d" ? "7 j" : "30 j"}
-            </button>
-          ))}
-        </div>
-      </div>
+        }
+      />
 
       {loading ? (
         <WidgetSkeleton variant="artists" count={8} />

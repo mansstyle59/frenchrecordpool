@@ -1,9 +1,9 @@
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Play, ArrowRight, Disc3, Instagram, Youtube } from "lucide-react";
+import { Play, Disc3, Instagram, Youtube } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
 import { shortThumbnail, type ShortProvider } from "@/lib/shorts";
+import WidgetHeader from "@/components/widgets/WidgetHeader";
 
 interface Props {
   config?: any;
@@ -29,19 +29,14 @@ export default function DjShortsWidget({ config = {} }: Props) {
 
   return (
     <section className="container">
-      <div className="flex items-end justify-between mb-3">
-        <div>
-          <p className="text-[10px] uppercase tracking-widest text-primary font-bold flex items-center gap-1.5">
-            <Disc3 className="h-3 w-3" /> Mode short
-          </p>
-          <h2 className="font-display text-xl sm:text-2xl font-black">{title}</h2>
-        </div>
-        <Link to={see_all_url}>
-          <Button size="sm" variant="ghost" className="gap-1">
-            Voir tout <ArrowRight className="h-3.5 w-3.5" />
-          </Button>
-        </Link>
-      </div>
+      <WidgetHeader
+        icon={Disc3}
+        eyebrow="Mode short"
+        title={title}
+        subtitle={config.subtitle}
+        seeAllUrl={see_all_url}
+        typo={config.typo}
+      />
 
       <div className="-mx-4 px-4 overflow-x-auto scrollbar-none">
         <div className="flex gap-3 w-max pb-2">
