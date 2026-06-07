@@ -743,20 +743,15 @@ function TopGenreWidget({ config, preview }: { config: any; preview: boolean }) 
   if (!genre || tracks.length === 0) return null;
   return (
     <div>
-      <div className="flex items-end justify-between mb-6 gap-4">
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="w-1 h-9 rounded-full bg-gradient-to-b from-primary to-accent shrink-0" />
-          <h2 className="font-display text-2xl md:text-3xl font-bold flex items-center gap-2 truncate" style={titleStyle(config.typo)}>
-            <TrendingUp className="h-5 w-5 text-primary shrink-0" />
-            {config.title || `Top ${genre}`}
-          </h2>
-        </div>
-        {!preview && (
-          <Button asChild variant="ghost" size="sm">
-            <Link to={`/tracks?genre=${encodeURIComponent(genre)}`}>Tout voir <ArrowRight className="ml-1 h-3.5 w-3.5" /></Link>
-          </Button>
-        )}
-      </div>
+      <WidgetHeader
+        icon={TrendingUp}
+        eyebrow="Genre populaire"
+        title={config.title || `Top ${genre}`}
+        subtitle={config.subtitle}
+        seeAllUrl={`/tracks?genre=${encodeURIComponent(genre)}`}
+        typo={config.typo}
+        preview={preview}
+      />
       <div className="rounded-2xl border border-border bg-card/40 backdrop-blur-sm overflow-hidden">
         <TrackListHeader />
         {tracks.map((t, i) => <TrackRow key={t.id} track={t} index={i} />)}
