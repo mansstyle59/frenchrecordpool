@@ -1537,49 +1537,72 @@ function Editor({ widget, onCancel, onSave, saving }: { widget: Widget; onCancel
           </div>
         </div>
 
-        <TypeFields w={w} setC={setC} />
+        <Tabs defaultValue="content" className="w-full">
+          <TabsList className="grid grid-cols-4 w-full h-9">
+            <TabsTrigger value="content" className="text-[11px] uppercase tracking-wider">Contenu</TabsTrigger>
+            <TabsTrigger value="style" className="text-[11px] uppercase tracking-wider">Style</TabsTrigger>
+            <TabsTrigger value="layout" className="text-[11px] uppercase tracking-wider">Layout</TabsTrigger>
+            <TabsTrigger value="advanced" className="text-[11px] uppercase tracking-wider">Avancé</TabsTrigger>
+          </TabsList>
 
-        {/* ─── Parent dans la hiérarchie Section/Colonne ─── */}
-        {w.type !== "section" && parentChoices.length > 0 && (
-          <Field label={w.type === "column" ? "Section parente" : "Colonne parente (optionnel)"}>
-            <Select
-              value={w.parent_id ?? "__root__"}
-              onValueChange={(v) => setW((s) => ({ ...s, parent_id: v === "__root__" ? null : v }))}
-            >
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__root__">— Racine (rendu autonome) —</SelectItem>
-                {parentChoices.map((p) => (
-                  <SelectItem key={p.id} value={p.id!}>{parentLabel(p.id!)}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </Field>
-        )}
+          {/* ─── Contenu ─── */}
+          <TabsContent value="content" className="space-y-4 mt-4">
+            <TypeFields w={w} setC={setC} />
 
+            {w.type !== "section" && parentChoices.length > 0 && (
+              <Field label={w.type === "column" ? "Section parente" : "Colonne parente (optionnel)"}>
+                <Select
+                  value={w.parent_id ?? "__root__"}
+                  onValueChange={(v) => setW((s) => ({ ...s, parent_id: v === "__root__" ? null : v }))}
+                >
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__root__">— Racine (rendu autonome) —</SelectItem>
+                    {parentChoices.map((p) => (
+                      <SelectItem key={p.id} value={p.id!}>{parentLabel(p.id!)}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </Field>
+            )}
 
-        {TYPES_WITH_HEADER.has(w.type) && (
-          <Field label="Sous-titre / accroche (optionnel)">
-            <Input
-              value={w.config.subtitle ?? ""}
-              placeholder="Court texte affiché sous le titre du widget"
-              onChange={(e) => setC("subtitle", e.target.value)}
+            {TYPES_WITH_HEADER.has(w.type) && (
+              <Field label="Sous-titre / accroche (optionnel)">
+                <Input
+                  value={w.config.subtitle ?? ""}
+                  placeholder="Court texte affiché sous le titre du widget"
+                  onChange={(e) => setC("subtitle", e.target.value)}
+                />
+              </Field>
+            )}
+          </TabsContent>
+
+          {/* ─── Style ─── */}
+          <TabsContent value="style" className="space-y-4 mt-4">
+            {TYPES_WITH_TYPOGRAPHY.has(w.type) ? (
+              <TypographyEditor value={w.config.typo ?? {}} onChange={(v) => setC("typo", v)} />
+            ) : (
+              <p className="text-xs text-muted-foreground italic">Pas d'en-tête éditorial pour ce widget.</p>
+            )}
+            <WidgetItemStyleEditor value={w.config.items ?? {}} onChange={(v) => setC("items", v)} />
+          </TabsContent>
+
+          {/* ─── Layout ─── */}
+          <TabsContent value="layout" className="space-y-4 mt-4">
+            <DimensionsEditor value={w.config.common ?? {}} onChange={setCommon} />
+            <SpacingEditor value={w.config.common ?? {}} onChange={setCommon} />
+            <WidgetLayoutEditor value={w.config.layout ?? {}} onChange={(v) => setC("layout", v)} />
+          </TabsContent>
+
+          {/* ─── Avancé ─── */}
+          <TabsContent value="advanced" className="space-y-4 mt-4">
+            <TargetingEditor
+              value={{ audience: w.audience, devices: w.devices, starts_at: w.starts_at, ends_at: w.ends_at }}
+              onChange={(patch) => setW((s) => ({ ...s, ...patch }))}
             />
-          </Field>
-        )}
+          </TabsContent>
+        </Tabs>
 
-        {TYPES_WITH_TYPOGRAPHY.has(w.type) && (
-          <TypographyEditor value={w.config.typo ?? {}} onChange={(v) => setC("typo", v)} />
-        )}
-
-        <DimensionsEditor value={w.config.common ?? {}} onChange={setCommon} />
-
-        <SpacingEditor value={w.config.common ?? {}} onChange={setCommon} />
-
-        <TargetingEditor
-          value={{ audience: w.audience, devices: w.devices, starts_at: w.starts_at, ends_at: w.ends_at }}
-          onChange={(patch) => setW((s) => ({ ...s, ...patch }))}
-        />
 
         <div className="flex items-center gap-2 pt-2 border-t border-border">
           <Switch checked={w.is_active} onCheckedChange={(v) => setW((s) => ({ ...s, is_active: v }))} />
