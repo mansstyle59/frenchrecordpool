@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import HCarousel from "./HCarousel";
 import PlaylistCard, { type PlaylistCardData } from "./PlaylistCard";
 import WidgetHeader from "./WidgetHeader";
+import { itemStyle, itemClasses, LAYOUT_ASPECT_CLASS } from "@/lib/widgetCommon";
 
 interface Config {
   title?: string;
