@@ -53,6 +53,8 @@ import RecentlyPlayed from "@/components/widgets/RecentlyPlayed";
 import EditorialFrame from "@/components/widgets/EditorialFrame";
 import WidgetSkeleton from "@/components/widgets/WidgetSkeleton";
 import WidgetEmptyState from "@/components/widgets/WidgetEmptyState";
+import WidgetHeader from "@/components/widgets/WidgetHeader";
+import { HeaderActions, Segmented } from "@/components/widgets/WidgetHeaderActions";
 import SectionShell, { gridClassesForLayout, type SectionLayout } from "@/components/widgets/SectionShell";
 import ColumnShell from "@/components/widgets/ColumnShell";
 import { useAuth } from "@/contexts/AuthContext";
