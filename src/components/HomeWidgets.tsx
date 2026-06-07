@@ -39,6 +39,7 @@ import { titleStyle, bodyStyle } from "@/lib/widgetTypography";
 import {
   ANIM_VARIANTS, CONTAINER_CLASS, PAD_X, padYClasses, bgStyle,
   containerStyle, shellStyle, alignYClass,
+  itemStyle, itemClasses, itemCssVars, LAYOUT_DENSITY_CLASS,
   type WidgetCommon,
 } from "@/lib/widgetCommon";
 import DjShortsWidget from "@/components/DjShortsWidget";
