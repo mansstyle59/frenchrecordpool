@@ -169,3 +169,181 @@ export const ANIM_VARIANTS: Record<string, Variants> = {
     show: { opacity: 1, scale: 1, transition: { duration: 0.5 } },
   },
 };
+
+/* ──────────────────────────────────────────────────────────────────────
+   WidgetItemStyle — apparence des items (cartes / lignes / vignettes)
+   à l'intérieur d'un widget. Tous les champs sont optionnels et
+   n'altèrent rien tant qu'ils ne sont pas définis (compat 100%).
+   ────────────────────────────────────────────────────────────────────── */
+
+export type ItemBgKind = "none" | "color" | "glass" | "gradient";
+export type ItemShadow = "none" | "sm" | "md" | "lg" | "xl";
+export type ItemHoverLift = "none" | "sm" | "md" | "lg";
+export type ItemPadding = "none" | "sm" | "md" | "lg";
+
+export interface WidgetItemStyle {
+  bg_kind?: ItemBgKind;
+  bg_color?: string;
+  bg_color_2?: string;
+  bg_opacity?: number;        // 0..100
+  border_color?: string;
+  border_width?: number;      // px (0..4)
+  radius?: number;            // px
+  text_color?: string;
+  muted_color?: string;
+  meta_color?: string;
+  hover_bg?: string;
+  hover_lift?: ItemHoverLift;
+  hover_glow?: boolean;
+  shadow?: ItemShadow;
+  padding?: ItemPadding;
+}
+
+function rawColor(v?: string) {
+  if (!v) return undefined;
+  const t = v.trim();
+  if (/^\d+\s+\d+%\s+\d+%$/.test(t)) return `hsl(${t})`;
+  return t;
+}
+
+const SHADOW_MAP: Record<ItemShadow, string> = {
+  none: "none",
+  sm: "0 1px 2px 0 hsl(0 0% 0% / 0.08)",
+  md: "0 4px 12px -2px hsl(0 0% 0% / 0.18)",
+  lg: "0 10px 24px -6px hsl(0 0% 0% / 0.28)",
+  xl: "0 20px 40px -10px hsl(0 0% 0% / 0.40)",
+};
+
+export const ITEM_PAD_CLASS: Record<ItemPadding, string> = {
+  none: "p-0",
+  sm: "p-2",
+  md: "p-3 md:p-4",
+  lg: "p-4 md:p-6",
+};
+
+export const ITEM_HOVER_LIFT_CLASS: Record<ItemHoverLift, string> = {
+  none: "",
+  sm: "hover:-translate-y-0.5",
+  md: "hover:-translate-y-1",
+  lg: "hover:-translate-y-1.5",
+};
+
+/** Build inline style for an item container from a WidgetItemStyle. */
+export function itemStyle(s: WidgetItemStyle = {}): React.CSSProperties {
+  const out: React.CSSProperties = {};
+  const op = s.bg_opacity != null ? Math.max(0, Math.min(100, s.bg_opacity)) / 100 : undefined;
+
+  if (s.bg_kind === "color") {
+    const c = rawColor(s.bg_color);
+    if (c) out.background = op != null ? `color-mix(in oklab, ${c} ${op * 100}%, transparent)` : c;
+  } else if (s.bg_kind === "gradient") {
+    const a = rawColor(s.bg_color) || "transparent";
+    const b = rawColor(s.bg_color_2) || a;
+    out.background = `linear-gradient(135deg, ${a}, ${b})`;
+    if (op != null) out.opacity = op;
+  } else if (s.bg_kind === "glass") {
+    out.background = `hsl(var(--card) / ${op ?? 0.4})`;
+    out.backdropFilter = "blur(14px)";
+    (out as any).WebkitBackdropFilter = "blur(14px)";
+  }
+
+  if (s.border_width != null) {
+    out.borderWidth = `${s.border_width}px`;
+    out.borderStyle = "solid";
+  }
+  const bc = rawColor(s.border_color);
+  if (bc) out.borderColor = bc;
+
+  if (s.radius != null) out.borderRadius = `${s.radius}px`;
+  const tc = rawColor(s.text_color);
+  if (tc) out.color = tc;
+  if (s.shadow && s.shadow !== "none") out.boxShadow = SHADOW_MAP[s.shadow];
+
+  return out;
+}
+
+/** Tailwind classes (hover lift, padding, transition) for an item. */
+export function itemClasses(s: WidgetItemStyle = {}): string {
+  const cls: string[] = ["transition-all duration-300"];
+  if (s.padding) cls.push(ITEM_PAD_CLASS[s.padding]);
+  if (s.hover_lift && s.hover_lift !== "none") cls.push(ITEM_HOVER_LIFT_CLASS[s.hover_lift]);
+  if (s.hover_glow) cls.push("hover:shadow-[0_0_24px_hsl(var(--accent)/0.35)]");
+  return cls.join(" ");
+}
+
+/** CSS vars exposing item palette tokens to children (text/muted/meta). */
+export function itemCssVars(s: WidgetItemStyle = {}): React.CSSProperties {
+  const v: Record<string, string> = {};
+  const t = rawColor(s.text_color);
+  const m = rawColor(s.muted_color);
+  const mt = rawColor(s.meta_color);
+  if (t) v["--w-item-fg"] = t;
+  if (m) v["--w-item-muted"] = m;
+  if (mt) v["--w-item-meta"] = mt;
+  return v as React.CSSProperties;
+}
+
+/* ──────────────────────────────────────────────────────────────────────
+   WidgetLayout — disposition interne d'un widget de listing.
+   ────────────────────────────────────────────────────────────────────── */
+
+export type WidgetLayoutMode = "auto" | "list" | "grid" | "carousel";
+export type LayoutGap = "none" | "sm" | "md" | "lg" | "xl";
+export type LayoutDensity = "compact" | "cozy" | "comfortable";
+export type LayoutAspect = "auto" | "square" | "4:3" | "16:9" | "portrait";
+
+export interface WidgetLayout {
+  mode?: WidgetLayoutMode;
+  columns_mobile?: number;   // 1..6
+  columns_tablet?: number;
+  columns_desktop?: number;
+  gap?: LayoutGap;
+  item_width_px?: number;    // carrousels
+  aspect?: LayoutAspect;
+  density?: LayoutDensity;
+  show_index?: boolean;
+  show_meta?: boolean;
+  show_actions?: boolean;
+}
+
+const COL_M: Record<number, string> = {
+  1: "grid-cols-1", 2: "grid-cols-2", 3: "grid-cols-3",
+  4: "grid-cols-4", 5: "grid-cols-5", 6: "grid-cols-6",
+};
+const COL_T: Record<number, string> = {
+  1: "md:grid-cols-1", 2: "md:grid-cols-2", 3: "md:grid-cols-3",
+  4: "md:grid-cols-4", 5: "md:grid-cols-5", 6: "md:grid-cols-6",
+};
+const COL_D: Record<number, string> = {
+  1: "lg:grid-cols-1", 2: "lg:grid-cols-2", 3: "lg:grid-cols-3",
+  4: "lg:grid-cols-4", 5: "lg:grid-cols-5", 6: "lg:grid-cols-6",
+};
+const GAP_CLASS: Record<LayoutGap, string> = {
+  none: "gap-0", sm: "gap-2", md: "gap-4", lg: "gap-6", xl: "gap-8",
+};
+
+export const LAYOUT_ASPECT_CLASS: Record<LayoutAspect, string> = {
+  auto: "",
+  square: "aspect-square",
+  "4:3": "aspect-[4/3]",
+  "16:9": "aspect-video",
+  portrait: "aspect-[3/4]",
+};
+
+export function gridClasses(l: WidgetLayout = {}, fallback = { m: 2, t: 3, d: 4 }): string {
+  const m = l.columns_mobile ?? fallback.m;
+  const t = l.columns_tablet ?? fallback.t;
+  const d = l.columns_desktop ?? fallback.d;
+  return `grid ${COL_M[m] || COL_M[fallback.m]} ${COL_T[t] || COL_T[fallback.t]} ${COL_D[d] || COL_D[fallback.d]} ${gapClass(l)}`;
+}
+
+export function gapClass(l: WidgetLayout = {}): string {
+  return GAP_CLASS[l.gap ?? "md"];
+}
+
+export const LAYOUT_DENSITY_CLASS: Record<LayoutDensity, string> = {
+  compact: "[--w-row-py:6px]",
+  cozy: "[--w-row-py:10px]",
+  comfortable: "[--w-row-py:14px]",
+};
+
