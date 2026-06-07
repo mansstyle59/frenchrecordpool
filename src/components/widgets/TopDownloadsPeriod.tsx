@@ -7,6 +7,7 @@ import WidgetSkeleton from "./WidgetSkeleton";
 import WidgetEmptyState from "./WidgetEmptyState";
 import EditorialFrame from "./EditorialFrame";
 import { HeaderActions, Segmented } from "./WidgetHeaderActions";
+import { itemStyle, itemClasses, itemCssVars, LAYOUT_DENSITY_CLASS } from "@/lib/widgetCommon";
 
 type Period = "7d" | "30d" | "all";
 const PERIODS: { id: Period; label: string; days: number | null }[] = [
@@ -78,12 +79,16 @@ export default function TopDownloadsPeriod({ config }: { config: any }) {
           ctaUrl="/new"
         />
       ) : (
-        <div className="rounded-2xl border border-border bg-card/40 backdrop-blur-sm overflow-hidden">
+        <div
+          className={`rounded-2xl border border-border bg-card/40 backdrop-blur-sm overflow-hidden ${itemClasses(config.items)} ${LAYOUT_DENSITY_CLASS[(config.layout?.density ?? "cozy") as keyof typeof LAYOUT_DENSITY_CLASS]}`}
+          style={{ ...itemCssVars(config.items), ...itemStyle(config.items) }}
+        >
           <TrackListHeader />
           {tracks.map((t, i) => (
             <TrackRow key={t.id} track={t} index={i} />
           ))}
         </div>
+
       )}
     </EditorialFrame>
   );

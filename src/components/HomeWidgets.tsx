@@ -39,6 +39,7 @@ import { titleStyle, bodyStyle } from "@/lib/widgetTypography";
 import {
   ANIM_VARIANTS, CONTAINER_CLASS, PAD_X, padYClasses, bgStyle,
   containerStyle, shellStyle, alignYClass,
+  itemStyle, itemClasses, itemCssVars, LAYOUT_DENSITY_CLASS,
   type WidgetCommon,
 } from "@/lib/widgetCommon";
 import DjShortsWidget from "@/components/DjShortsWidget";
@@ -712,10 +713,14 @@ function TrackGridWidget({ config, preview }: { config: any; preview: boolean })
           ctaUrl={config.see_all_url || "/new"}
         />
       ) : (
-        <div className="rounded-2xl border border-border bg-card/40 backdrop-blur-sm overflow-hidden">
+        <div
+          className={`rounded-2xl border border-border bg-card/40 backdrop-blur-sm overflow-hidden ${itemClasses(config.items)} ${LAYOUT_DENSITY_CLASS[(config.layout?.density ?? "cozy") as keyof typeof LAYOUT_DENSITY_CLASS]}`}
+          style={{ ...itemCssVars(config.items), ...itemStyle(config.items) }}
+        >
           <TrackListHeader />
           {tracks.map((t, i) => <TrackRow key={t.id} track={t} index={i} />)}
         </div>
+
       )}
     </EditorialFrame>
   );

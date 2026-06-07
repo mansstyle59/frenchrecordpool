@@ -24,6 +24,7 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import {
   DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors,
@@ -1285,7 +1286,195 @@ function TypographyEditor({ value, onChange }: { value: any; onChange: (v: any) 
 }
 
 
+
+/* ─── WidgetItemStyleEditor — apparence des cartes/lignes ─── */
+function WidgetItemStyleEditor({ value, onChange }: { value: any; onChange: (v: any) => void }) {
+  const v = value ?? {};
+  const set = (k: string, x: any) => onChange({ ...v, [k]: x });
+  return (
+    <details className="rounded-xl border border-border bg-card/40 p-3 group" open>
+      <summary className="cursor-pointer text-sm font-semibold flex items-center justify-between">
+        <span>Apparence des items (cartes / lignes)</span>
+        <Badge variant="outline" className="text-[10px]">Style</Badge>
+      </summary>
+      <div className="mt-4 grid grid-cols-2 gap-3">
+        <Field label="Type de fond">
+          <Select value={v.bg_kind ?? "none"} onValueChange={(x) => set("bg_kind", x === "none" ? undefined : x)}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">Aucun (défaut)</SelectItem>
+              <SelectItem value="color">Couleur unie</SelectItem>
+              <SelectItem value="glass">Verre dépoli</SelectItem>
+              <SelectItem value="gradient">Dégradé</SelectItem>
+            </SelectContent>
+          </Select>
+        </Field>
+        <Field label="Opacité fond (%)">
+          <Input type="number" min={0} max={100} value={v.bg_opacity ?? ""} placeholder="auto"
+            onChange={(e) => set("bg_opacity", e.target.value === "" ? undefined : Number(e.target.value))} />
+        </Field>
+        {(v.bg_kind === "color" || v.bg_kind === "gradient" || v.bg_kind === "glass") && (
+          <ColorField label="Fond" value={v.bg_color} onChange={(x) => set("bg_color", x)} />
+        )}
+        {v.bg_kind === "gradient" && (
+          <ColorField label="Fond 2 (dégradé)" value={v.bg_color_2} onChange={(x) => set("bg_color_2", x)} />
+        )}
+
+        <ColorField label="Bordure" value={v.border_color} onChange={(x) => set("border_color", x)} />
+        <Field label="Épaisseur bordure (px)">
+          <Input type="number" min={0} max={4} value={v.border_width ?? ""} placeholder="0"
+            onChange={(e) => set("border_width", e.target.value === "" ? undefined : Number(e.target.value))} />
+        </Field>
+
+        <Field label="Rayon (px)">
+          <Input type="number" min={0} max={64} value={v.radius ?? ""} placeholder="auto"
+            onChange={(e) => set("radius", e.target.value === "" ? undefined : Number(e.target.value))} />
+        </Field>
+        <Field label="Ombre">
+          <Select value={v.shadow ?? "none"} onValueChange={(x) => set("shadow", x === "none" ? undefined : x)}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {(["none","sm","md","lg","xl"] as const).map((s) => (
+                <SelectItem key={s} value={s}>{s === "none" ? "Aucune" : s.toUpperCase()}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </Field>
+
+        <Field label="Padding interne">
+          <Select value={v.padding ?? "md"} onValueChange={(x) => set("padding", x)}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">Aucun</SelectItem>
+              <SelectItem value="sm">Petit</SelectItem>
+              <SelectItem value="md">Moyen</SelectItem>
+              <SelectItem value="lg">Grand</SelectItem>
+            </SelectContent>
+          </Select>
+        </Field>
+        <Field label="Lift au survol">
+          <Select value={v.hover_lift ?? "none"} onValueChange={(x) => set("hover_lift", x === "none" ? undefined : x)}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">Aucun</SelectItem>
+              <SelectItem value="sm">Léger</SelectItem>
+              <SelectItem value="md">Moyen</SelectItem>
+              <SelectItem value="lg">Marqué</SelectItem>
+            </SelectContent>
+          </Select>
+        </Field>
+
+        <ColorField label="Texte principal" value={v.text_color} onChange={(x) => set("text_color", x)} />
+        <ColorField label="Texte secondaire" value={v.muted_color} onChange={(x) => set("muted_color", x)} />
+        <ColorField label="Texte meta (BPM/Key…)" value={v.meta_color} onChange={(x) => set("meta_color", x)} />
+
+        <div className="flex items-center gap-2 col-span-2">
+          <Switch checked={!!v.hover_glow} onCheckedChange={(x) => set("hover_glow", x)} />
+          <span className="text-sm">Halo lumineux au survol</span>
+        </div>
+      </div>
+      <Button variant="ghost" size="sm" className="text-xs h-7 mt-3" onClick={() => onChange({})}>
+        Réinitialiser l'apparence des items
+      </Button>
+    </details>
+  );
+}
+
+/* ─── WidgetLayoutEditor — disposition interne (grille / carrousel) ─── */
+function WidgetLayoutEditor({ value, onChange }: { value: any; onChange: (v: any) => void }) {
+  const v = value ?? {};
+  const set = (k: string, x: any) => onChange({ ...v, [k]: x });
+  return (
+    <details className="rounded-xl border border-border bg-card/40 p-3" open>
+      <summary className="cursor-pointer text-sm font-semibold flex items-center justify-between">
+        <span>Disposition interne</span>
+        <Badge variant="outline" className="text-[10px]">Layout</Badge>
+      </summary>
+      <div className="mt-4 grid grid-cols-2 gap-3">
+        <Field label="Mode d'affichage">
+          <Select value={v.mode ?? "auto"} onValueChange={(x) => set("mode", x === "auto" ? undefined : x)}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="auto">Auto (défaut du widget)</SelectItem>
+              <SelectItem value="list">Liste</SelectItem>
+              <SelectItem value="grid">Grille</SelectItem>
+              <SelectItem value="carousel">Carrousel</SelectItem>
+            </SelectContent>
+          </Select>
+        </Field>
+        <Field label="Densité">
+          <Select value={v.density ?? "cozy"} onValueChange={(x) => set("density", x)}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="compact">Compact</SelectItem>
+              <SelectItem value="cozy">Confort</SelectItem>
+              <SelectItem value="comfortable">Aéré</SelectItem>
+            </SelectContent>
+          </Select>
+        </Field>
+
+        <Field label="Colonnes (mobile)">
+          <Input type="number" min={1} max={6} value={v.columns_mobile ?? ""} placeholder="auto"
+            onChange={(e) => set("columns_mobile", e.target.value === "" ? undefined : Number(e.target.value))} />
+        </Field>
+        <Field label="Colonnes (tablette)">
+          <Input type="number" min={1} max={6} value={v.columns_tablet ?? ""} placeholder="auto"
+            onChange={(e) => set("columns_tablet", e.target.value === "" ? undefined : Number(e.target.value))} />
+        </Field>
+        <Field label="Colonnes (desktop)">
+          <Input type="number" min={1} max={6} value={v.columns_desktop ?? ""} placeholder="auto"
+            onChange={(e) => set("columns_desktop", e.target.value === "" ? undefined : Number(e.target.value))} />
+        </Field>
+        <Field label="Gap entre items">
+          <Select value={v.gap ?? "md"} onValueChange={(x) => set("gap", x)}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {(["none","sm","md","lg","xl"] as const).map((g) => (
+                <SelectItem key={g} value={g}>{g === "none" ? "Aucun" : g.toUpperCase()}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </Field>
+
+        <Field label="Largeur item carrousel (px)">
+          <Input type="number" min={120} max={480} value={v.item_width_px ?? ""} placeholder="auto"
+            onChange={(e) => set("item_width_px", e.target.value === "" ? undefined : Number(e.target.value))} />
+        </Field>
+        <Field label="Ratio vignettes">
+          <Select value={v.aspect ?? "auto"} onValueChange={(x) => set("aspect", x === "auto" ? undefined : x)}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="auto">Auto</SelectItem>
+              <SelectItem value="square">Carré (1:1)</SelectItem>
+              <SelectItem value="4:3">4:3</SelectItem>
+              <SelectItem value="16:9">16:9</SelectItem>
+              <SelectItem value="portrait">Portrait (3:4)</SelectItem>
+            </SelectContent>
+          </Select>
+        </Field>
+
+        <div className="flex items-center gap-2">
+          <Switch checked={v.show_index !== false} onCheckedChange={(x) => set("show_index", x)} />
+          <span className="text-sm">Afficher l'index #</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <Switch checked={v.show_meta !== false} onCheckedChange={(x) => set("show_meta", x)} />
+          <span className="text-sm">Afficher la meta (BPM/Key)</span>
+        </div>
+        <div className="flex items-center gap-2 col-span-2">
+          <Switch checked={v.show_actions !== false} onCheckedChange={(x) => set("show_actions", x)} />
+          <span className="text-sm">Afficher les actions (lecture, favori, téléchargement)</span>
+        </div>
+      </div>
+      <Button variant="ghost" size="sm" className="text-xs h-7 mt-3" onClick={() => onChange({})}>
+        Réinitialiser la disposition
+      </Button>
+    </details>
+  );
+}
+
 /* ─── Editor ─── */
+
 function Editor({ widget, onCancel, onSave, saving }: { widget: Widget; onCancel: () => void; onSave: (w: Widget) => void; saving: boolean }) {
   const [w, setW] = useState<Widget>(widget);
   const meta = TYPE_META[w.type];
@@ -1348,49 +1537,72 @@ function Editor({ widget, onCancel, onSave, saving }: { widget: Widget; onCancel
           </div>
         </div>
 
-        <TypeFields w={w} setC={setC} />
+        <Tabs defaultValue="content" className="w-full">
+          <TabsList className="grid grid-cols-4 w-full h-9">
+            <TabsTrigger value="content" className="text-[11px] uppercase tracking-wider">Contenu</TabsTrigger>
+            <TabsTrigger value="style" className="text-[11px] uppercase tracking-wider">Style</TabsTrigger>
+            <TabsTrigger value="layout" className="text-[11px] uppercase tracking-wider">Layout</TabsTrigger>
+            <TabsTrigger value="advanced" className="text-[11px] uppercase tracking-wider">Avancé</TabsTrigger>
+          </TabsList>
 
-        {/* ─── Parent dans la hiérarchie Section/Colonne ─── */}
-        {w.type !== "section" && parentChoices.length > 0 && (
-          <Field label={w.type === "column" ? "Section parente" : "Colonne parente (optionnel)"}>
-            <Select
-              value={w.parent_id ?? "__root__"}
-              onValueChange={(v) => setW((s) => ({ ...s, parent_id: v === "__root__" ? null : v }))}
-            >
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__root__">— Racine (rendu autonome) —</SelectItem>
-                {parentChoices.map((p) => (
-                  <SelectItem key={p.id} value={p.id!}>{parentLabel(p.id!)}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </Field>
-        )}
+          {/* ─── Contenu ─── */}
+          <TabsContent value="content" className="space-y-4 mt-4">
+            <TypeFields w={w} setC={setC} />
 
+            {w.type !== "section" && parentChoices.length > 0 && (
+              <Field label={w.type === "column" ? "Section parente" : "Colonne parente (optionnel)"}>
+                <Select
+                  value={w.parent_id ?? "__root__"}
+                  onValueChange={(v) => setW((s) => ({ ...s, parent_id: v === "__root__" ? null : v }))}
+                >
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__root__">— Racine (rendu autonome) —</SelectItem>
+                    {parentChoices.map((p) => (
+                      <SelectItem key={p.id} value={p.id!}>{parentLabel(p.id!)}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </Field>
+            )}
 
-        {TYPES_WITH_HEADER.has(w.type) && (
-          <Field label="Sous-titre / accroche (optionnel)">
-            <Input
-              value={w.config.subtitle ?? ""}
-              placeholder="Court texte affiché sous le titre du widget"
-              onChange={(e) => setC("subtitle", e.target.value)}
+            {TYPES_WITH_HEADER.has(w.type) && (
+              <Field label="Sous-titre / accroche (optionnel)">
+                <Input
+                  value={w.config.subtitle ?? ""}
+                  placeholder="Court texte affiché sous le titre du widget"
+                  onChange={(e) => setC("subtitle", e.target.value)}
+                />
+              </Field>
+            )}
+          </TabsContent>
+
+          {/* ─── Style ─── */}
+          <TabsContent value="style" className="space-y-4 mt-4">
+            {TYPES_WITH_TYPOGRAPHY.has(w.type) ? (
+              <TypographyEditor value={w.config.typo ?? {}} onChange={(v) => setC("typo", v)} />
+            ) : (
+              <p className="text-xs text-muted-foreground italic">Pas d'en-tête éditorial pour ce widget.</p>
+            )}
+            <WidgetItemStyleEditor value={w.config.items ?? {}} onChange={(v) => setC("items", v)} />
+          </TabsContent>
+
+          {/* ─── Layout ─── */}
+          <TabsContent value="layout" className="space-y-4 mt-4">
+            <DimensionsEditor value={w.config.common ?? {}} onChange={setCommon} />
+            <SpacingEditor value={w.config.common ?? {}} onChange={setCommon} />
+            <WidgetLayoutEditor value={w.config.layout ?? {}} onChange={(v) => setC("layout", v)} />
+          </TabsContent>
+
+          {/* ─── Avancé ─── */}
+          <TabsContent value="advanced" className="space-y-4 mt-4">
+            <TargetingEditor
+              value={{ audience: w.audience, devices: w.devices, starts_at: w.starts_at, ends_at: w.ends_at }}
+              onChange={(patch) => setW((s) => ({ ...s, ...patch }))}
             />
-          </Field>
-        )}
+          </TabsContent>
+        </Tabs>
 
-        {TYPES_WITH_TYPOGRAPHY.has(w.type) && (
-          <TypographyEditor value={w.config.typo ?? {}} onChange={(v) => setC("typo", v)} />
-        )}
-
-        <DimensionsEditor value={w.config.common ?? {}} onChange={setCommon} />
-
-        <SpacingEditor value={w.config.common ?? {}} onChange={setCommon} />
-
-        <TargetingEditor
-          value={{ audience: w.audience, devices: w.devices, starts_at: w.starts_at, ends_at: w.ends_at }}
-          onChange={(patch) => setW((s) => ({ ...s, ...patch }))}
-        />
 
         <div className="flex items-center gap-2 pt-2 border-t border-border">
           <Switch checked={w.is_active} onCheckedChange={(v) => setW((s) => ({ ...s, is_active: v }))} />

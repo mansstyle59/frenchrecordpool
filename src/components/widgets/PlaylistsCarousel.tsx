@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import HCarousel from "./HCarousel";
 import PlaylistCard, { type PlaylistCardData } from "./PlaylistCard";
 import WidgetHeader from "./WidgetHeader";
+import { itemStyle, itemClasses, LAYOUT_ASPECT_CLASS } from "@/lib/widgetCommon";
 
 interface Config {
   title?: string;
@@ -60,19 +61,31 @@ export default function PlaylistsCarousel({ config }: { config: any }) {
       />
 
       <HCarousel ariaLabel="Playlists">
-        {loading
-          ? Array.from({ length: 6 }).map((_, i) => (
-              <div
-                key={i}
-                className="snap-start shrink-0 w-44 md:w-56 aspect-square rounded-2xl bg-muted/40 animate-pulse"
-              />
-            ))
-          : items.map((p) => (
-              <div key={p.id} className="snap-start shrink-0 w-44 md:w-56">
-                <PlaylistCard playlist={p} />
-              </div>
-            ))}
+        {(() => {
+          const w = config.layout?.item_width_px;
+          const widthStyle = w ? { width: `${w}px` } : undefined;
+          const widthCls = w ? "snap-start shrink-0" : "snap-start shrink-0 w-44 md:w-56";
+          const aspectCls = LAYOUT_ASPECT_CLASS[(config.layout?.aspect ?? "auto") as keyof typeof LAYOUT_ASPECT_CLASS];
+          return loading
+            ? Array.from({ length: 6 }).map((_, i) => (
+                <div
+                  key={i}
+                  style={widthStyle}
+                  className={`${widthCls} ${aspectCls || "aspect-square"} rounded-2xl bg-muted/40 animate-pulse`}
+                />
+              ))
+            : items.map((p) => (
+                <div
+                  key={p.id}
+                  style={{ ...widthStyle, ...itemStyle(config.items) }}
+                  className={`${widthCls} ${aspectCls} ${itemClasses(config.items)}`}
+                >
+                  <PlaylistCard playlist={p} />
+                </div>
+              ));
+        })()}
       </HCarousel>
+
     </div>
   );
 }

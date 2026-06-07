@@ -1,82 +1,77 @@
-## Objectif phase 1
+# Pack widget home 100% personnalisable
 
-Passer du flat list actuel (`home_widgets` triés par `position`, regroupés par `col_span`) à une vraie hiérarchie **Section → Colonne → Widget**, façon Elementor/Webflow, sans casser l'existant.
+Objectif : transformer chaque widget en bloc entièrement éditable depuis l'admin (style WordPress/Elementor), avec un sous-éditeur à 4 onglets — **Contenu / Style / Layout / Avancé** — et un schéma de config partagé qui s'applique à tous les widgets de façon uniforme.
 
-C'est la fondation technique pour toutes les phases suivantes (responsive par device, templates, undo/redo, nouveaux widgets premium…). Si on ne fait pas ça d'abord, le reste sera bâti sur du sable.
+## 1. Schéma de config étendu (`src/lib/widgetCommon.ts`)
 
-## Modèle de données
+Ajout de deux nouveaux blocs partagés en plus de `WidgetCommon` (envelope) et `WidgetTypo` (header) déjà en place :
 
-On garde **une seule table** `home_widgets` (pas de migration douloureuse) en y ajoutant 2 colonnes :
+- **`WidgetItemStyle`** — apparence des items (cartes, lignes, vignettes) à l'intérieur du widget
+  - `bg_kind` (none / color / glass / gradient), `bg_color`, `bg_color_2`, `bg_opacity`
+  - `border_color`, `border_width`, `radius` (px)
+  - `text_color`, `muted_color`, `meta_color`
+  - `hover_bg`, `hover_lift` (none / sm / md / lg), `hover_glow` (bool)
+  - `shadow` (none / sm / md / lg / xl), `padding` (sm / md / lg)
+- **`WidgetLayout`** — disposition interne
+  - `mode` (auto / list / grid / carousel) — quand le widget le supporte
+  - `columns_mobile`, `columns_tablet`, `columns_desktop` (1..6)
+  - `gap` (none / sm / md / lg / xl)
+  - `item_width_px` (pour carrousels), `aspect` (auto / square / 4:3 / 16:9 / portrait)
+  - `density` (compact / cozy / comfortable)
+  - `show_index`, `show_meta`, `show_actions` (bools de visibilité)
 
-```text
-home_widgets
-├─ id, type, position, config, is_active, ...   (existant)
-├─ parent_id   uuid NULL  → self FK (section / colonne parente)
-└─ depth       int default 0  (0 = racine, 1 = colonne, 2 = widget enfant)
-```
+Helpers exportés : `itemStyle(s)`, `itemClasses(s)`, `gridClasses(l)`, `gapClass(l)` — appliqués via inline-style + classes Tailwind whitelistées.
 
-Deux nouveaux `type` :
-- `section`   → conteneur racine, config = `{ layout: "1" | "1-1" | "1-1-1" | "2-1" | "1-2", gap, bg, padding }`
-- `column`    → enfant direct d'une section, config = `{ span?: number }`
+## 2. Application uniforme aux widgets
 
-Les widgets existants restent inchangés ; un widget orphelin (`parent_id NULL`, type ≠ section) est traité comme une section implicite à 1 colonne pour rétro-compat.
+Tous les widgets de listing acceptent et propagent `config.items` + `config.layout` :
 
-## Rendu public (`HomeWidgets.tsx`)
+- **Listes de tracks** : `TopDownloadsPeriod`, `MostFavorited`, `RecentlyPlayed`, `TrackGridWidget` (HomeWidgets)
+- **Cartes** : `PlaylistsCarousel`, `FeaturedGenres`, `TrendingArtists`, `DjShortsWidget`, `TopGenreWidget`
+- **Bandeaux** : `WelcomeBanner`, `DjCharts`, `CustomPlaylistPlayer` reçoivent surtout `typo` + `items` (couleurs CTA/texte)
 
-- Charger tous les widgets actifs, construire un arbre via `parent_id`.
-- Renderer récursif :
-  - `section` → `<section>` avec grid CSS selon `layout`.
-  - `column`  → `<div>` cellule du grid, rend ses enfants empilés verticalement.
-  - autre    → `WidgetRenderer` existant.
-- Fallback : si un widget racine n'est pas une section, on l'enveloppe dans une mini-section implicite (compatibilité 100 % avec les pages déjà publiées).
-- Le `col_span` legacy reste supporté pour les widgets non encore migrés.
+Chaque carte/ligne enfant reçoit une prop `style`/`className` dérivée des helpers, sans toucher à sa logique métier.
 
-## Éditeur admin (`AdminHomeWidgets.tsx`)
+## 3. Éditeur admin à onglets (`AdminHomeWidgets.tsx`)
 
-1. **Arborescence visuelle** (panneau gauche) : tree view Section / Colonnes / Widgets avec icônes, rename, duplicate, hide, delete, drag-to-reorder.
-2. **DnD imbriqué** avec `@dnd-kit` (déjà installé) : 
-   - drag d'un widget entre colonnes,
-   - drag d'une colonne dans une autre section,
-   - drag d'une section pour réordonner.
-3. **Bouton "+ Ajouter une section"** avec presets de layout (1, 1/1, 1/1/1, 2/1, 1/2). Chaque preset crée la section + les colonnes enfants en une transaction.
-4. **Édition contextuelle** : clic sur un widget → panneau de réglages à droite (déjà existant, on l'accroche au nœud sélectionné dans l'arbre).
-5. **Aperçu live** : la prévisualisation utilise le même renderer récursif que la home publique.
+Refonte du panneau de config d'un widget en un composant `WidgetConfigTabs` avec 4 onglets :
 
-## Migration douce des données existantes
+- **Contenu** — champs spécifiques au widget (titre, sous-titre, eyebrow, limit, period, ids, see_all_url…)
+- **Style** — `WidgetTypo` (titre / sous-titre / eyebrow / accent bar) + `WidgetItemStyle` (cartes)
+- **Layout** — `WidgetCommon` (container, max-width, min-height, paddings responsives, alignement) + `WidgetLayout` (mode, colonnes, gap, densité, aspect)
+- **Avancé** — fond (color / gradient / image / overlay / blur), animations (type + délai), audience / devices / planification, ID/CSS class custom
 
-- Aucune donnée n'est déplacée automatiquement.
-- Bouton admin **"Convertir en sections"** : prend la home actuelle (flat list + `col_span`) et génère des sections/colonnes équivalentes en un clic. Réversible via undo de la migration (snapshot avant/après dans `cms_content_versions`).
+Les onglets sont rendus par un sous-composant générique recevant `(type, config, onChange)` ; les widgets qui n'ont pas besoin d'un onglet (ex. pas de layout grille) le voient grisé mais conservent la grille uniforme.
 
-## Ce qui n'est PAS dans cette phase
+## 4. Compatibilité
 
-Pour rester livrable rapidement, on **exclut** explicitement :
-- Réglages responsive indépendants Desktop/Tablette/Mobile (phase 2).
-- Nouveaux widgets premium — Hero vidéo/slider, Masonry, Timeline, Compteur, Social feeds, Formulaire avancé (phase 3).
-- Bibliothèque de templates 1 clic (phase 4).
-- Undo/redo global multi-étapes + autosave avec historique (phase 5).
-- Barre flottante de modification au survol du widget public (phase 6).
-- Lazy loading / optimisation Lighthouse (phase 7, transversale).
-
-À chaque fin de phase je te propose la suivante, tu valides l'ordre.
+- Tous les nouveaux champs sont **optionnels** ; les widgets existants continuent de fonctionner avec leur config actuelle.
+- Les helpers retournent des valeurs par défaut neutres → aucun visuel ne change tant que l'admin ne touche à rien.
+- Pas de migration SQL : `home_widgets.config` est `jsonb`, on étend simplement la forme.
 
 ## Détails techniques
 
-- Migration SQL : `ALTER TABLE home_widgets ADD COLUMN parent_id uuid REFERENCES home_widgets(id) ON DELETE CASCADE, ADD COLUMN depth int NOT NULL DEFAULT 0;` + index sur `parent_id`.
-- RLS inchangée (les nouvelles lignes héritent des mêmes policies admin/public).
-- Nouveaux composants :
-  - `src/components/widgets/SectionRenderer.tsx`
-  - `src/components/widgets/ColumnRenderer.tsx`
-  - `src/components/admin/widgets/WidgetTree.tsx`
-  - `src/components/admin/widgets/SectionLayoutPicker.tsx`
-- `HomeWidgets.tsx` : on extrait la logique de groupement actuelle et on branche le renderer récursif.
-- `AdminHomeWidgets.tsx` : refacto progressive — on garde l'éditeur existant et on lui ajoute le tree + DnD imbriqué à côté.
+```text
+src/lib/
+  widgetCommon.ts        + WidgetItemStyle, WidgetLayout, helpers
+  widgetTypography.ts    (inchangé)
+src/components/widgets/
+  WidgetItem.tsx         NEW — wrapper appliquant itemStyle aux cartes
+  *.tsx                  consomment config.items / config.layout
+src/components/HomeWidgets.tsx
+  TrackGridWidget / TopGenreWidget câblés sur le nouveau schéma
+src/pages/AdminHomeWidgets.tsx
+  WidgetConfigTabs        NEW — onglets Contenu/Style/Layout/Avancé
+  WidgetItemStyleEditor   NEW
+  WidgetLayoutEditor      NEW
+  (les éditeurs Typo et Common existants sont repositionnés dans les onglets)
+```
 
-## Livrables de cette phase
+## Livraison en 2 lots
 
-1. Migration SQL `parent_id` + `depth`.
-2. Renderer récursif côté public, 100 % rétrocompatible.
-3. Création de sections multi-colonnes côté admin avec DnD imbriqué.
-4. Arborescence latérale (rename / duplicate / hide / delete / move).
-5. Bouton "Convertir l'existant en sections".
+Vu la taille (~4000 lignes touchées), je propose :
 
-Une fois validé et mergé, on enchaîne sur la phase 2 (responsive par breakpoint).
+1. **Lot 1 — Fondations + éditeur** : schéma `WidgetItemStyle` + `WidgetLayout`, helpers, refonte de l'éditeur admin en onglets, branchement sur 3 widgets pilotes (TopDownloads, PlaylistsCarousel, TrackGridWidget) pour valider visuellement.
+2. **Lot 2 — Généralisation** : application aux widgets restants (FeaturedGenres, TrendingArtists, MostFavorited, RecentlyPlayed, DjShorts, DjCharts, WelcomeBanner, TopGenre, CustomPlaylistPlayer).
+
+Réponds "go" pour démarrer le Lot 1, ou indique des ajustements (ex. retirer le mode carrousel, garder uniquement la typo + le style des items, etc.).
