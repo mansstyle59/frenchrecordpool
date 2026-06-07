@@ -53,6 +53,8 @@ import RecentlyPlayed from "@/components/widgets/RecentlyPlayed";
 import EditorialFrame from "@/components/widgets/EditorialFrame";
 import WidgetSkeleton from "@/components/widgets/WidgetSkeleton";
 import WidgetEmptyState from "@/components/widgets/WidgetEmptyState";
+import WidgetHeader from "@/components/widgets/WidgetHeader";
+import { HeaderActions, Segmented } from "@/components/widgets/WidgetHeaderActions";
 import SectionShell, { gridClassesForLayout, type SectionLayout } from "@/components/widgets/SectionShell";
 import ColumnShell from "@/components/widgets/ColumnShell";
 import { useAuth } from "@/contexts/AuthContext";
@@ -663,56 +665,37 @@ function TrackGridWidget({ config, preview }: { config: any; preview: boolean })
   const Icon = config.sort_by === "popular" ? Headphones : Music2;
   const wordmark = config.sort_by === "popular" ? "TOP" : config.sort_by === "alphabetical" ? "A→Z" : "NEW";
   const kicker = config.sort_by === "popular" ? "POPULAIRES" : config.sort_by === "alphabetical" ? "CATALOGUE" : "NOUVEAUTÉS";
+  const eyebrow = config.sort_by === "popular" ? "Tendances" : config.sort_by === "alphabetical" ? "Catalogue" : "Sorties";
+
+  const tabOptions = tabsEnabled && genres.length > 0
+    ? [{ id: "__all__", label: "Tous" }, ...genres.map((g) => ({ id: g, label: g }))]
+    : [];
+
   return (
     <EditorialFrame wordmark={wordmark} kicker={kicker}>
-      <div className="flex items-end justify-between mb-4 gap-4">
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="w-1 h-9 rounded-full bg-gradient-to-b from-primary to-accent shrink-0" />
-          <h2 className="font-display text-2xl md:text-3xl font-bold flex items-center gap-2 truncate" style={titleStyle(config.typo)}>
-            <Icon className="h-5 w-5 text-primary shrink-0" />
-            {config.title || "Tracks"}
-          </h2>
-        </div>
-        {config.see_all_url && !preview && (
-          <Button asChild variant="ghost" size="sm">
-            <Link to={config.see_all_url}>Tout voir <ArrowRight className="ml-1 h-3.5 w-3.5" /></Link>
-          </Button>
-        )}
-      </div>
-
-      {/* Menu roulant de genres */}
-      {tabsEnabled && genres.length > 0 && (
-        <div className="relative -mx-1 mb-4">
-          <div className="flex gap-2 overflow-x-auto scrollbar-none px-1 pb-1 snap-x">
-            <button
-              onClick={() => setActiveGenre(null)}
-              className={`shrink-0 snap-start px-3 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wider border transition-all ${
-                activeGenre === null
-                  ? "bg-primary text-primary-foreground border-primary shadow-md shadow-primary/30"
-                  : "bg-card/60 border-border text-muted-foreground hover:text-foreground hover:border-primary/40"
-              }`}
-            >
-              Tous
-            </button>
-            {genres.map((g) => (
-              <button
-                key={g}
-                onClick={() => setActiveGenre(g)}
-                className={`shrink-0 snap-start px-3 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wider border transition-all ${
-                  activeGenre === g
-                    ? "bg-primary text-primary-foreground border-primary shadow-md shadow-primary/30"
-                    : "bg-card/60 border-border text-muted-foreground hover:text-foreground hover:border-primary/40"
-                }`}
-              >
-                {g}
-              </button>
-            ))}
-          </div>
-          {/* Fade edges */}
-          <div className="pointer-events-none absolute left-0 top-0 bottom-1 w-6 bg-gradient-to-r from-background to-transparent" />
-          <div className="pointer-events-none absolute right-0 top-0 bottom-1 w-6 bg-gradient-to-l from-background to-transparent" />
-        </div>
-      )}
+      <WidgetHeader
+        icon={Icon}
+        eyebrow={eyebrow}
+        title={config.title || "Tracks"}
+        subtitle={config.subtitle}
+        seeAllUrl={config.see_all_url}
+        typo={config.typo}
+        preview={preview}
+        right={
+          tabsEnabled && tabOptions.length > 0 ? (
+            <HeaderActions>
+              <div className="max-w-[min(70vw,520px)] overflow-x-auto scrollbar-none">
+                <Segmented<string>
+                  ariaLabel="Filtre par genre"
+                  value={activeGenre ?? "__all__"}
+                  onChange={(v) => setActiveGenre(v === "__all__" ? null : v)}
+                  options={tabOptions}
+                />
+              </div>
+            </HeaderActions>
+          ) : undefined
+        }
+      />
 
       {loading ? (
         <WidgetSkeleton variant="list" count={Math.min(config.limit || 8, 6)} />
@@ -760,20 +743,15 @@ function TopGenreWidget({ config, preview }: { config: any; preview: boolean }) 
   if (!genre || tracks.length === 0) return null;
   return (
     <div>
-      <div className="flex items-end justify-between mb-6 gap-4">
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="w-1 h-9 rounded-full bg-gradient-to-b from-primary to-accent shrink-0" />
-          <h2 className="font-display text-2xl md:text-3xl font-bold flex items-center gap-2 truncate" style={titleStyle(config.typo)}>
-            <TrendingUp className="h-5 w-5 text-primary shrink-0" />
-            {config.title || `Top ${genre}`}
-          </h2>
-        </div>
-        {!preview && (
-          <Button asChild variant="ghost" size="sm">
-            <Link to={`/tracks?genre=${encodeURIComponent(genre)}`}>Tout voir <ArrowRight className="ml-1 h-3.5 w-3.5" /></Link>
-          </Button>
-        )}
-      </div>
+      <WidgetHeader
+        icon={TrendingUp}
+        eyebrow="Genre populaire"
+        title={config.title || `Top ${genre}`}
+        subtitle={config.subtitle}
+        seeAllUrl={`/tracks?genre=${encodeURIComponent(genre)}`}
+        typo={config.typo}
+        preview={preview}
+      />
       <div className="rounded-2xl border border-border bg-card/40 backdrop-blur-sm overflow-hidden">
         <TrackListHeader />
         {tracks.map((t, i) => <TrackRow key={t.id} track={t} index={i} />)}
