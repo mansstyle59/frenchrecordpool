@@ -82,13 +82,13 @@ export default function DjLayout({ title, subtitle, actions, children }: Props) 
   }, [user, loading, navigate]);
 
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center text-muted-foreground">Chargement…</div>;
+    return <div className="min-h-dvh flex items-center justify-center text-muted-foreground">Chargement…</div>;
   }
   if (!user) return null;
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-background">
+      <div className="min-h-dvh flex w-full bg-background">
         <DjSidebar />
         <div className="flex-1 flex flex-col min-w-0">
           <header className="h-14 border-b border-border glass sticky top-0 z-30 flex items-center gap-3 px-4">
