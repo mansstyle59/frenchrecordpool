@@ -110,7 +110,7 @@ export function CmsProvider({ children }: { children: ReactNode }) {
     (async () => {
       try {
         if (realIsAdmin) {
-          const { data } = await supabase.from("cms_content").select("key,type,value_draft,value_published");
+          const { data } = await supabase.rpc("admin_get_cms_all" as any);
           if (cancelled) return;
           const pub: Record<string, any> = {};
           const dft: Record<string, any> = {};
