@@ -148,7 +148,7 @@ export default function AdminLayout({ title, subtitle, actions, children, wide }
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center text-muted-foreground">
+      <div className="min-h-dvh bg-background flex items-center justify-center text-muted-foreground">
         Chargement...
       </div>
     );
@@ -157,7 +157,7 @@ export default function AdminLayout({ title, subtitle, actions, children, wide }
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-background">
+      <div className="min-h-dvh flex w-full bg-background">
         <AdminSidebar />
         <div className="flex-1 flex flex-col min-w-0">
           <header className="h-14 border-b border-border glass sticky top-0 z-30 flex items-center gap-3 px-4">

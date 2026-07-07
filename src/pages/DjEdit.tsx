@@ -23,7 +23,16 @@ export default function DjEdit() {
     queryFn: async () => {
       const { data, error } = await supabase.from("tracks").select("*").eq("id", id!).maybeSingle();
       if (error) throw error;
-      return data as DbTrack | null;
+      if (!data) return null;
+      // Sensitive URL columns aren't readable via the table anymore; fetch them via the secure RPC.
+      const { data: urls } = await supabase.rpc("get_track_urls" as any, { _id: id! });
+      const u = Array.isArray(urls) ? urls[0] : null;
+      return {
+        ...(data as any),
+        download_url: u?.download_url ?? null,
+        acapella_url: u?.acapella_url ?? null,
+        instrumental_url: u?.instrumental_url ?? null,
+      } as DbTrack;
     },
   });
 

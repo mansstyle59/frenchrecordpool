@@ -324,7 +324,7 @@ function LiveEditorPanel({ draft, onChange, onUpload, onClose, onSave, saving }:
   return (
     <motion.aside
       initial={{ x: 420 }} animate={{ x: 0 }} exit={{ x: 420 }}
-      className="fixed top-0 right-0 h-screen w-full sm:w-[420px] z-50 bg-card/95 backdrop-blur-xl border-l border-border shadow-2xl flex flex-col"
+      className="fixed top-0 right-0 h-dvh w-full sm:w-[420px] z-50 bg-card/95 backdrop-blur-xl border-l border-border shadow-2xl flex flex-col"
     >
       <header className="flex items-center justify-between p-4 border-b border-border">
         <div className="flex items-center gap-2"><Eye className="h-4 w-4 text-primary" /><h3 className="font-display font-bold">Éditeur live</h3></div>

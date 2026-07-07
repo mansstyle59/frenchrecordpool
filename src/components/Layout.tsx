@@ -1,8 +1,8 @@
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
-  Search, Disc3, LogIn, LogOut, Shield, Mic2, Eye, EyeOff, User,
+  Search, Disc3, LogIn, LogOut, Shield, Mic2, Eye, EyeOff, User, Menu,
   Home, Sparkles, Music2, Download, CreditCard, Users as UsersIcon, Clapperboard,
-  ListMusic, Layers,
+  ListMusic, Layers, ChevronDown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,272 +16,346 @@ import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePlayer } from "@/contexts/PlayerContext";
 import {
-  Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
-  SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarProvider, SidebarTrigger,
-  SidebarHeader, SidebarFooter, SidebarSeparator,
-} from "@/components/ui/sidebar";
+  Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle,
+} from "@/components/ui/sheet";
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem,
+  DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { cn } from "@/lib/utils";
 
-// Navigation harmonisée — libellés courts, cohérents, icônes distinctes.
-const NAV_DISCOVER = [
-  { key: "nav.home", to: "/", label: "Accueil", icon: Home, end: true },
+// ─── Navigation config (DJcity-like: dense top nav + sub-nav) ──────────────
+const NAV_MAIN = [
   { key: "nav.new", to: "/new", label: "Nouveautés", icon: Sparkles },
-  { key: "nav.shorts", to: "/shorts", label: "Shorts", icon: Clapperboard },
-];
-
-const NAV_CATALOG = [
   { key: "nav.playlists", to: "/playlists", label: "Playlists", icon: ListMusic },
   { key: "nav.djs", to: "/remixers", label: "DJ & Remixers", icon: Mic2 },
   { key: "nav.artists", to: "/artists", label: "Artistes", icon: Music2 },
   { key: "nav.stems", to: "/stems", label: "Stems", icon: Layers },
+  { key: "nav.shorts", to: "/shorts", label: "Shorts", icon: Clapperboard },
 ];
 
-const NAV_ACCOUNT = [
-  { key: "nav.downloads", to: "/downloads", label: "Mes téléchargements", icon: Download },
-  { key: "nav.pricing", to: "/pricing", label: "Abonnements", icon: CreditCard },
+const NAV_SUB = [
+  { key: "nav.home", to: "/", label: "Accueil", end: true },
+  { key: "nav.new", to: "/new", label: "Nouveautés" },
+  { key: "nav.playlists", to: "/playlists", label: "Playlists" },
+  { key: "nav.djs", to: "/remixers", label: "DJ & Remixers" },
+  { key: "nav.artists", to: "/artists", label: "Artistes" },
+  { key: "nav.stems", to: "/stems", label: "Stems" },
+  { key: "nav.shorts", to: "/shorts", label: "Shorts" },
+  { key: "nav.pricing", to: "/pricing", label: "Abonnements" },
 ];
 
-function PublicSidebar({ onNavigate }: { onNavigate?: () => void }) {
+// ─── Mobile drawer ─────────────────────────────────────────────────────────
+function MobileMenu({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const { user, isAdmin, realIsAdmin, viewAsUser, setViewAsUser, profile, signOut } = useAuth();
 
+  const close = () => onOpenChange(false);
   const isActive = (to: string, end?: boolean) =>
     end ? pathname === to : pathname === to || pathname.startsWith(to + "/");
 
-  const handleSignOut = async () => {
-    await signOut();
-    onNavigate?.();
-    navigate("/");
-  };
-
-  const renderItem = (item: { key: string; to: string; label: string; icon: any; end?: boolean }) => (
-    <SidebarMenuItem key={item.to}>
-      <SidebarMenuButton asChild isActive={isActive(item.to, item.end)} tooltip={item.label}>
-        <NavLink to={item.to} end={item.end} onClick={onNavigate} className="flex items-center gap-2">
-          <item.icon className="h-4 w-4" />
-          <span><CmsText editKey={item.key}>{item.label}</CmsText></span>
-        </NavLink>
-      </SidebarMenuButton>
-    </SidebarMenuItem>
+  const Item = ({ to, label, icon: Icon, end }: any) => (
+    <NavLink
+      to={to}
+      end={end}
+      onClick={close}
+      className={cn(
+        "flex items-center gap-3 rounded-md px-3 py-3 text-sm font-medium min-h-11",
+        "transition-colors",
+        isActive(to, end)
+          ? "bg-primary/15 text-primary"
+          : "text-foreground/80 hover:bg-secondary hover:text-foreground",
+      )}
+    >
+      <Icon className="h-4 w-4 shrink-0" />
+      <span className="truncate">{label}</span>
+    </NavLink>
   );
 
   return (
-    <Sidebar collapsible="icon">
-      <SidebarHeader>
-        <Link to="/" onClick={onNavigate} className="flex items-center gap-2 px-2 py-2">
-          <Disc3 className="h-6 w-6 text-primary shrink-0 animate-pulse-glow" />
-          <span className="font-display font-bold gradient-text truncate group-data-[collapsible=icon]:hidden">
-            French Record Pool
-          </span>
-        </Link>
-      </SidebarHeader>
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent side="left" className="w-[86vw] max-w-sm p-0 flex flex-col safe-top safe-bottom">
+        <SheetHeader className="border-b border-border p-4">
+          <SheetTitle asChild>
+            <Link to="/" onClick={close} className="flex items-center gap-2">
+              <Disc3 className="h-6 w-6 text-primary animate-pulse-glow" />
+              <span className="font-display text-xl font-bold gradient-text">French Record Pool</span>
+            </Link>
+          </SheetTitle>
+        </SheetHeader>
 
-      <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel><CmsText editKey="nav.group.discover">Découvrir</CmsText></SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>{NAV_DISCOVER.map(renderItem)}</SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        <nav className="flex-1 overflow-y-auto p-3 space-y-6">
+          <div>
+            <p className="px-3 pb-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+              <CmsText editKey="nav.group.discover">Découvrir</CmsText>
+            </p>
+            <div className="space-y-1">
+              <Item to="/" label="Accueil" icon={Home} end />
+              {NAV_MAIN.map((n) => <Item key={n.to} {...n} />)}
+            </div>
+          </div>
 
-        <SidebarGroup>
-          <SidebarGroupLabel><CmsText editKey="nav.group.catalog">Catalogue</CmsText></SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>{NAV_CATALOG.map(renderItem)}</SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+          <div>
+            <p className="px-3 pb-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+              <CmsText editKey="nav.group.account">Mon compte</CmsText>
+            </p>
+            <div className="space-y-1">
+              <Item to="/downloads" label="Mes téléchargements" icon={Download} />
+              <Item to="/pricing" label="Abonnements" icon={CreditCard} />
+              {user && <Item to="/dashboard" label={profile?.dj_name || "Tableau de bord"} icon={User} />}
+              {user && <Item to="/dj" label="Espace DJ" icon={Mic2} />}
+              {isAdmin && <Item to="/admin" label="Administration" icon={Shield} />}
+            </div>
+          </div>
+        </nav>
 
-        <SidebarGroup>
-          <SidebarGroupLabel><CmsText editKey="nav.group.account">Mon compte</CmsText></SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>{NAV_ACCOUNT.map(renderItem)}</SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        <div className="border-t border-border p-3 space-y-1">
+          {realIsAdmin && (
+            <button
+              onClick={() => setViewAsUser(!viewAsUser)}
+              className="w-full flex items-center gap-3 rounded-md px-3 py-3 text-sm min-h-11 hover:bg-secondary"
+            >
+              {viewAsUser ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              <span>{viewAsUser ? "Repasser en admin" : "Aperçu utilisateur"}</span>
+            </button>
+          )}
+          {user ? (
+            <button
+              onClick={async () => { await signOut(); close(); navigate("/"); }}
+              className="w-full flex items-center gap-3 rounded-md px-3 py-3 text-sm min-h-11 hover:bg-secondary"
+            >
+              <LogOut className="h-4 w-4" />
+              <span>Se déconnecter</span>
+            </button>
+          ) : (
+            <div className="grid grid-cols-2 gap-2 pt-1">
+              <Button asChild variant="outline" className="min-h-11">
+                <Link to="/login" onClick={close}><LogIn className="h-4 w-4 mr-2" />Se connecter</Link>
+              </Button>
+              <Button asChild variant="hero" className="min-h-11">
+                <Link to="/signup" onClick={close}>Créer un compte</Link>
+              </Button>
+            </div>
+          )}
+        </div>
+      </SheetContent>
+    </Sheet>
+  );
+}
 
+// ─── Desktop main nav (visible ≥ lg) ───────────────────────────────────────
+function DesktopNav() {
+  const { pathname } = useLocation();
+  const isActive = (to: string) => pathname === to || pathname.startsWith(to + "/");
+  return (
+    <nav className="hidden lg:flex items-center gap-1">
+      {NAV_MAIN.map((n) => (
+        <NavLink
+          key={n.to}
+          to={n.to}
+          className={cn(
+            "px-3 py-2 rounded-md text-sm font-semibold tracking-wide transition-colors",
+            isActive(n.to)
+              ? "text-primary bg-primary/10"
+              : "text-foreground/75 hover:text-foreground hover:bg-secondary",
+          )}
+        >
+          <CmsText editKey={n.key}>{n.label}</CmsText>
+        </NavLink>
+      ))}
+    </nav>
+  );
+}
 
-        {user && (
-          <SidebarGroup>
-            <SidebarGroupLabel><CmsText editKey="nav.group.spaces">Mes espaces</CmsText></SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild isActive={pathname.startsWith("/dashboard")} tooltip="Tableau de bord">
-                    <NavLink to="/dashboard" onClick={onNavigate} className="flex items-center gap-2">
-                      <User className="h-4 w-4" />
-                      <span>{profile?.dj_name || <CmsText editKey="nav.dashboard">Tableau de bord</CmsText>}</span>
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild isActive={pathname.startsWith("/dj")} tooltip="Espace DJ">
-                    <NavLink to="/dj" onClick={onNavigate} className="flex items-center gap-2">
-                      <Mic2 className="h-4 w-4" />
-                      <span><CmsText editKey="nav.dj_space">Espace DJ</CmsText></span>
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                {isAdmin && (
-                  <SidebarMenuItem>
-                    <SidebarMenuButton asChild isActive={pathname.startsWith("/admin")} tooltip="Administration">
-                      <NavLink to="/admin" onClick={onNavigate} className="flex items-center gap-2 text-primary">
-                        <Shield className="h-4 w-4" />
-                        <span><CmsText editKey="nav.admin">Administration</CmsText></span>
-                      </NavLink>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                )}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        )}
-      </SidebarContent>
-
-      <SidebarFooter>
-        <SidebarSeparator />
-        {user ? (
-          <SidebarMenu>
-            {realIsAdmin && (
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  tooltip={viewAsUser ? "Repasser en admin" : "Aperçu utilisateur"}
-                  onClick={() => setViewAsUser(!viewAsUser)}
-                >
-                  {viewAsUser ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  <span>
-                    {viewAsUser
-                      ? <CmsText editKey="nav.back_to_admin">Repasser en admin</CmsText>
-                      : <CmsText editKey="nav.view_as_user">Aperçu utilisateur</CmsText>}
-                  </span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
+// ─── Sticky sub-nav pill row (mobile + tablet) ─────────────────────────────
+function SubNav() {
+  const { pathname } = useLocation();
+  const isActive = (to: string, end?: boolean) =>
+    end ? pathname === to : pathname === to || pathname.startsWith(to + "/");
+  return (
+    <div className="lg:hidden border-b border-border bg-background/80 backdrop-blur-md">
+      <div className="scroll-x scrollbar-none flex items-center gap-1.5 px-3 py-2">
+        {NAV_SUB.map((n) => (
+          <NavLink
+            key={n.to}
+            to={n.to}
+            end={n.end}
+            className={cn(
+              "shrink-0 rounded-full px-3 py-1.5 text-xs font-bold uppercase tracking-wider transition-colors",
+              isActive(n.to, n.end)
+                ? "bg-primary text-primary-foreground"
+                : "bg-secondary text-foreground/70 hover:text-foreground",
             )}
-            <SidebarMenuItem>
-              <SidebarMenuButton tooltip="Se déconnecter" onClick={handleSignOut}>
-                <LogOut className="h-4 w-4" />
-                <span><CmsText editKey="nav.signout">Se déconnecter</CmsText></span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        ) : (
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="Se connecter">
-                <Link to="/login" onClick={onNavigate} className="flex items-center gap-2">
-                  <LogIn className="h-4 w-4" />
-                  <span><CmsText editKey="nav.signin">Se connecter</CmsText></span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="Créer un compte" className="text-primary">
-                <Link to="/signup" onClick={onNavigate} className="flex items-center gap-2">
-                  <UsersIcon className="h-4 w-4" />
-                  <span><CmsText editKey="nav.signup">Créer un compte</CmsText></span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        )}
-      </SidebarFooter>
-    </Sidebar>
+          >
+            <CmsText editKey={n.key}>{n.label}</CmsText>
+          </NavLink>
+        ))}
+      </div>
+    </div>
   );
 }
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const [searchOpen, setSearchOpen] = useState(false);
-  const { user, isAdmin, profile } = useAuth();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const { user, isAdmin, profile, signOut } = useAuth();
+  const navigate = useNavigate();
   const { currentTrack } = usePlayer();
 
   return (
-    <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-background">
-        <PublicSidebar />
+    <div className="min-h-dvh flex flex-col w-full bg-background">
+      {/* ─── Top header ───────────────────────────────────────── */}
+      <header className="sticky top-0 z-40 glass safe-top border-b border-border">
+        <div className="container flex items-center gap-2 sm:gap-4 h-14 sm:h-16">
+          {/* Mobile burger */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="lg:hidden min-h-11 min-w-11"
+            aria-label="Ouvrir le menu"
+            onClick={() => setMenuOpen(true)}
+          >
+            <Menu className="h-5 w-5" />
+          </Button>
 
-        <div className="flex-1 flex flex-col min-w-0">
-          <header className="sticky top-0 z-40 glass safe-top border-b border-border">
-            <div className="flex items-center gap-2 sm:gap-3 h-14 sm:h-16 px-3 sm:px-4">
-              <SidebarTrigger />
+          {/* Logo */}
+          <Link to="/" className="flex items-center gap-2 shrink-0">
+            <Disc3 className="h-6 w-6 text-primary animate-pulse-glow" />
+            <span className="font-display text-lg sm:text-xl font-bold gradient-text hidden xs:inline">
+              French Record Pool
+            </span>
+          </Link>
 
+          {/* Desktop main nav */}
+          <div className="ml-6 flex-1">
+            <DesktopNav />
+          </div>
 
-              <div className="ml-auto flex items-center gap-2">
-                {searchOpen && (
-                  <Input
-                    placeholder="Rechercher un titre, remixeur..."
-                    className="w-48 lg:w-64 bg-secondary border-border"
-                    autoFocus
-                    onBlur={() => setSearchOpen(false)}
-                  />
-                )}
-                <Button variant="ghost" size="icon" onClick={() => setSearchOpen(!searchOpen)} aria-label="Rechercher">
-                  <Search className="h-4 w-4" />
-                </Button>
-                <ThemeToggle />
+          {/* Search (desktop inline / mobile toggle) */}
+          <div className="flex-1 lg:flex-none lg:w-72 max-w-md ml-auto lg:ml-0">
+            <div className="relative hidden md:block">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+              <Input
+                placeholder="Rechercher un titre, un artiste…"
+                className="pl-9 bg-secondary/60 border-border h-10"
+                aria-label="Rechercher"
+              />
+            </div>
+            {searchOpen && (
+              <div className="md:hidden absolute inset-x-0 top-full bg-background border-b border-border p-2">
+                <Input
+                  autoFocus
+                  placeholder="Rechercher…"
+                  className="bg-secondary border-border"
+                  onBlur={() => setSearchOpen(false)}
+                  aria-label="Rechercher"
+                />
+              </div>
+            )}
+          </div>
 
-                {user ? (
-                  <>
-                    <NotificationBell />
+          {/* Right actions */}
+          <div className="flex items-center gap-1 sm:gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="md:hidden min-h-11 min-w-11"
+              aria-label="Rechercher"
+              onClick={() => setSearchOpen((v) => !v)}
+            >
+              <Search className="h-5 w-5" />
+            </Button>
+            <ThemeToggle />
+
+            {user ? (
+              <>
+                <NotificationBell />
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="gap-2 min-h-11 hidden sm:inline-flex"
+                      aria-label="Menu utilisateur"
+                    >
+                      <div className="h-7 w-7 rounded-full bg-gradient-to-br from-primary to-accent grid place-items-center text-primary-foreground font-bold text-xs">
+                        {(profile?.dj_name || "U").slice(0, 1).toUpperCase()}
+                      </div>
+                      <span className="hidden md:inline text-sm font-semibold max-w-[100px] truncate">
+                        {profile?.dj_name || "Compte"}
+                      </span>
+                      <ChevronDown className="h-3.5 w-3.5 opacity-60" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56">
+                    <DropdownMenuLabel className="truncate">{profile?.dj_name || "Mon compte"}</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild><Link to="/dashboard"><User className="h-4 w-4 mr-2" />Tableau de bord</Link></DropdownMenuItem>
+                    <DropdownMenuItem asChild><Link to="/downloads"><Download className="h-4 w-4 mr-2" />Mes téléchargements</Link></DropdownMenuItem>
+                    <DropdownMenuItem asChild><Link to="/dj"><Mic2 className="h-4 w-4 mr-2" />Espace DJ</Link></DropdownMenuItem>
+                    <DropdownMenuItem asChild><Link to="/pricing"><CreditCard className="h-4 w-4 mr-2" />Abonnements</Link></DropdownMenuItem>
                     {isAdmin && (
-                      <Link to="/admin" className="hidden md:inline-flex">
-                        <Button variant="ghost" size="sm" className="gap-1">
-                          <Shield className="h-4 w-4" />
-                          <span className="hidden lg:inline">
-                            <CmsText editKey="nav.admin">Administration</CmsText>
-                          </span>
-                        </Button>
-                      </Link>
+                      <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem asChild><Link to="/admin" className="text-primary"><Shield className="h-4 w-4 mr-2" />Administration</Link></DropdownMenuItem>
+                      </>
                     )}
-                    <Link to="/dashboard" className="hidden sm:inline-flex">
-                      <Button variant="ghost" size="sm">
-                        {profile?.dj_name || <CmsText editKey="nav.dashboard">Tableau de bord</CmsText>}
-                      </Button>
-                    </Link>
-                  </>
-                ) : (
-                  <>
-                    <Link to="/login" className="hidden sm:inline-flex">
-                      <Button variant="ghost" size="sm" className="gap-1">
-                        <LogIn className="h-4 w-4" />
-                        <CmsText editKey="nav.signin">Se connecter</CmsText>
-                      </Button>
-                    </Link>
-                    <Link to="/signup" className="hidden sm:inline-flex">
-                      <Button variant="hero" size="sm">
-                        <CmsText editKey="nav.signup">Créer un compte</CmsText>
-                      </Button>
-                    </Link>
-                  </>
-                )}
-              </div>
-            </div>
-          </header>
-
-          <ViewAsUserBanner />
-
-          <main className={`flex-1 ${currentTrack ? "pb-20 sm:pb-16" : ""}`}>{children}</main>
-
-          <footer className={`border-t border-border py-8 mt-12 ${currentTrack ? "mb-20 sm:mb-16" : ""}`}>
-            <div className="container">
-              <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-                <div className="flex items-center gap-2">
-                  <Disc3 className="h-5 w-5 text-primary" />
-                  <span className="font-display font-semibold gradient-text">French Record Pool</span>
-                </div>
-                <div className="flex gap-6 text-sm text-muted-foreground">
-                  <CmsLink editKey="footer.link.new" defaultLabel="Nouveautés" defaultUrl="/new" className="hover:text-foreground transition-colors" />
-                  <CmsLink editKey="footer.link.djs" defaultLabel="DJ & Remixers" defaultUrl="/remixers" className="hover:text-foreground transition-colors" />
-                  <CmsLink editKey="footer.link.artists" defaultLabel="Artistes" defaultUrl="/artists" className="hover:text-foreground transition-colors" />
-                  <CmsLink editKey="footer.link.pricing" defaultLabel="Abonnements" defaultUrl="/pricing" className="hover:text-foreground transition-colors" />
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  <CmsText editKey="footer.copyright">© 2026 French Record Pool. Tous droits réservés.</CmsText>
-                </p>
-              </div>
-            </div>
-          </footer>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={async () => { await signOut(); navigate("/"); }}>
+                      <LogOut className="h-4 w-4 mr-2" />Se déconnecter
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </>
+            ) : (
+              <>
+                <Link to="/login" className="hidden sm:inline-flex">
+                  <Button variant="ghost" size="sm" className="gap-1 min-h-11">
+                    <LogIn className="h-4 w-4" />
+                    <span className="hidden md:inline"><CmsText editKey="nav.signin">Se connecter</CmsText></span>
+                  </Button>
+                </Link>
+                <Link to="/signup" className="hidden xs:inline-flex">
+                  <Button variant="hero" size="sm" className="min-h-11">
+                    <CmsText editKey="nav.signup">Créer un compte</CmsText>
+                  </Button>
+                </Link>
+              </>
+            )}
+          </div>
         </div>
-        <SupportLauncher />
-      </div>
-    </SidebarProvider>
+
+        <SubNav />
+      </header>
+
+      <MobileMenu open={menuOpen} onOpenChange={setMenuOpen} />
+
+      <ViewAsUserBanner />
+
+      <main className={cn("flex-1 min-w-0", currentTrack ? "pb-24 sm:pb-20" : "")}>{children}</main>
+
+      <footer className={cn("border-t border-border py-8 mt-12", currentTrack ? "mb-20 sm:mb-16" : "")}>
+        <div className="container">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+            <div className="flex items-center gap-2">
+              <Disc3 className="h-5 w-5 text-primary" />
+              <span className="font-display font-semibold gradient-text">French Record Pool</span>
+            </div>
+            <div className="flex flex-wrap justify-center gap-4 sm:gap-6 text-sm text-muted-foreground">
+              <CmsLink editKey="footer.link.new" defaultLabel="Nouveautés" defaultUrl="/new" className="hover:text-foreground transition-colors" />
+              <CmsLink editKey="footer.link.djs" defaultLabel="DJ & Remixers" defaultUrl="/remixers" className="hover:text-foreground transition-colors" />
+              <CmsLink editKey="footer.link.artists" defaultLabel="Artistes" defaultUrl="/artists" className="hover:text-foreground transition-colors" />
+              <CmsLink editKey="footer.link.pricing" defaultLabel="Abonnements" defaultUrl="/pricing" className="hover:text-foreground transition-colors" />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              <CmsText editKey="footer.copyright">© 2026 French Record Pool. Tous droits réservés.</CmsText>
+            </p>
+          </div>
+        </div>
+      </footer>
+
+      <SupportLauncher />
+    </div>
   );
 }
-

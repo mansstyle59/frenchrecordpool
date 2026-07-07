@@ -27,7 +27,7 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4 relative overflow-hidden">
+    <div className="min-h-dvh flex items-center justify-center bg-background p-4 relative overflow-hidden">
       {/* Tricolor decorative bars */}
       <div className="absolute top-0 left-0 right-0 h-1 flex">
         <div className="flex-1 bg-primary" />

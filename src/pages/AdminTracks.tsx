@@ -212,7 +212,18 @@ export default function AdminTracks() {
 
 
 
-  const openEdit = (track: DbTrack) => { setEditingTrack(track); setDialogOpen(true); };
+  const openEdit = async (track: DbTrack) => {
+    // Sensitive URLs aren't readable from the tracks table anymore — fetch them via the secure RPC.
+    const { data: urls } = await supabase.rpc("get_track_urls" as any, { _id: track.id });
+    const u = Array.isArray(urls) ? urls[0] : null;
+    setEditingTrack({
+      ...(track as any),
+      download_url: u?.download_url ?? null,
+      acapella_url: u?.acapella_url ?? null,
+      instrumental_url: u?.instrumental_url ?? null,
+    });
+    setDialogOpen(true);
+  };
   const openAdd = () => { setEditingTrack(null); setDialogOpen(true); };
 
   const handleDelete = async (id: string) => {
