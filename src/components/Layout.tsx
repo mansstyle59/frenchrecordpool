@@ -69,7 +69,7 @@ function MobileMenu({ open, onOpenChange }: { open: boolean; onOpenChange: (o: b
       )}
     >
       <Icon className="h-4 w-4 shrink-0" />
-      <span className="truncate"><CmsText editKey={`nav.${label}`} fallback={label}>{label}</CmsText></span>
+      <span className="truncate">{label}</span>
     </NavLink>
   );
 
