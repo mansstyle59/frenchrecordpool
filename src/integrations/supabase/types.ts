@@ -1195,6 +1195,26 @@ export type Database = {
       }
       admin_delete_track: { Args: { _id: string }; Returns: undefined }
       admin_delete_user: { Args: { _user_id: string }; Returns: undefined }
+      admin_get_cms_all: {
+        Args: never
+        Returns: {
+          created_at: string
+          key: string
+          published_at: string | null
+          published_by: string | null
+          type: string
+          updated_at: string
+          updated_by: string | null
+          value_draft: Json | null
+          value_published: Json | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "cms_content"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       admin_reject_track_revision: {
         Args: { _reason?: string; _revision_id: string }
         Returns: undefined
