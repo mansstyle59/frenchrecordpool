@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
+import { useWindowVirtualizer } from "@tanstack/react-virtual";
 import { Search, SlidersHorizontal, X, ArrowUpDown, Disc3, Calendar, Loader2 } from "lucide-react";
 import Layout from "@/components/Layout";
 import TrackRow, { TrackListHeader } from "@/components/TrackRow";
@@ -137,6 +138,39 @@ export default function NewReleases() {
     () => (sort === "newest" ? groupByDay(groupedVisible) : [{ day: "all", label: "", items: groupedVisible }]),
     [groupedVisible, sort],
   );
+
+  // ── Flatten sections into a linear item list for virtualization ─────
+  type FlatItem =
+    | { kind: "header"; key: string; label: string; count: number }
+    | { kind: "row"; key: string; group: TrackGroup; index: number; first: boolean; last: boolean };
+  const flatItems = useMemo<FlatItem[]>(() => {
+    const items: FlatItem[] = [];
+    let idx = 0;
+    for (const s of daySections) {
+      if (s.label) items.push({ kind: "header", key: `h-${s.day}`, label: s.label, count: s.items.length });
+      s.items.forEach((g, i) => {
+        items.push({
+          kind: "row",
+          key: `${s.day}-${g.key}`,
+          group: g,
+          index: idx++,
+          first: i === 0,
+          last: i === s.items.length - 1,
+        });
+      });
+    }
+    return items;
+  }, [daySections]);
+
+  // ── Row virtualization (window scroll) ─────────────────────────────
+  const listContainerRef = useRef<HTMLDivElement | null>(null);
+  const virtualizer = useWindowVirtualizer({
+    count: flatItems.length,
+    estimateSize: (i) => (flatItems[i]?.kind === "header" ? 44 : 76),
+    overscan: 8,
+    scrollMargin: listContainerRef.current?.offsetTop ?? 0,
+  });
+
 
   // ── Infinite scroll ────────────────────────────────────────────────
   const sentinelRef = useRef<HTMLDivElement | null>(null);
@@ -322,26 +356,44 @@ export default function NewReleases() {
           </div>
         ) : (
           <>
-            <div className="space-y-8">
-              {daySections.map((section) => (
-                <section key={section.day}>
-                  {section.label && (
-                    <div className="flex items-baseline justify-between mb-2 px-1">
-                      <h2 className="text-sm font-bold uppercase tracking-[0.2em] text-foreground/90 flex items-center gap-2">
-                        <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-                        {section.label}
-                      </h2>
-                      <span className="text-[10px] uppercase tracking-wider font-mono text-muted-foreground">
-                        {section.items.length} titre{section.items.length > 1 ? "s" : ""}
-                      </span>
-                    </div>
-                  )}
-                  <div className="rounded-2xl border border-border bg-card/40 backdrop-blur overflow-hidden shadow-lg shadow-primary/5">
-                    <TrackListHeader />
-                    {section.items.map((g, i) => <TrackGroupRow key={g.key} group={g} index={i} />)}
+            {/* Column header (kept outside the virtualized area) */}
+            <div className="rounded-t-2xl border border-b-0 border-border bg-card/40 backdrop-blur overflow-hidden">
+              <TrackListHeader />
+            </div>
+
+            {/* Virtualized rows */}
+            <div
+              ref={listContainerRef}
+              className="rounded-b-2xl border border-t-0 border-border bg-card/40 backdrop-blur overflow-hidden shadow-lg shadow-primary/5"
+              style={{ height: `${virtualizer.getTotalSize()}px`, position: "relative" }}
+            >
+              {virtualizer.getVirtualItems().map((v) => {
+                const item = flatItems[v.index];
+                if (!item) return null;
+                const top = v.start - (virtualizer.options.scrollMargin ?? 0);
+                return (
+                  <div
+                    key={item.key}
+                    data-index={v.index}
+                    ref={virtualizer.measureElement}
+                    style={{ position: "absolute", top: 0, left: 0, right: 0, transform: `translateY(${top}px)` }}
+                  >
+                    {item.kind === "header" ? (
+                      <div className="flex items-baseline justify-between px-4 py-2.5 bg-secondary/40 border-t border-b border-border/60">
+                        <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-foreground/90 flex items-center gap-2">
+                          <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+                          {item.label}
+                        </h2>
+                        <span className="text-[10px] uppercase tracking-wider font-mono text-muted-foreground">
+                          {item.count} titre{item.count > 1 ? "s" : ""}
+                        </span>
+                      </div>
+                    ) : (
+                      <TrackGroupRow group={item.group} index={item.index} />
+                    )}
                   </div>
-                </section>
-              ))}
+                );
+              })}
             </div>
 
             {/* Infinite-scroll sentinel */}
@@ -360,6 +412,7 @@ export default function NewReleases() {
               </p>
             )}
           </>
+
         )}
       </div>
     </Layout>
