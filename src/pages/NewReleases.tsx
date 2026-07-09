@@ -139,6 +139,39 @@ export default function NewReleases() {
     [groupedVisible, sort],
   );
 
+  // ── Flatten sections into a linear item list for virtualization ─────
+  type FlatItem =
+    | { kind: "header"; key: string; label: string; count: number }
+    | { kind: "row"; key: string; group: TrackGroup; index: number; first: boolean; last: boolean };
+  const flatItems = useMemo<FlatItem[]>(() => {
+    const items: FlatItem[] = [];
+    let idx = 0;
+    for (const s of daySections) {
+      if (s.label) items.push({ kind: "header", key: `h-${s.day}`, label: s.label, count: s.items.length });
+      s.items.forEach((g, i) => {
+        items.push({
+          kind: "row",
+          key: `${s.day}-${g.key}`,
+          group: g,
+          index: idx++,
+          first: i === 0,
+          last: i === s.items.length - 1,
+        });
+      });
+    }
+    return items;
+  }, [daySections]);
+
+  // ── Row virtualization (window scroll) ─────────────────────────────
+  const listContainerRef = useRef<HTMLDivElement | null>(null);
+  const virtualizer = useWindowVirtualizer({
+    count: flatItems.length,
+    estimateSize: (i) => (flatItems[i]?.kind === "header" ? 44 : 76),
+    overscan: 8,
+    scrollMargin: listContainerRef.current?.offsetTop ?? 0,
+  });
+
+
   // ── Infinite scroll ────────────────────────────────────────────────
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   const hasMore = visible < filtered.length;
